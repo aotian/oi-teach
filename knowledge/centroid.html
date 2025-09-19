@@ -1,0 +1,420 @@
+<!-- Chosen Palette: Warm Neutral Study -->
+<!-- Application Structure Plan: The application is designed as a guided discovery tour in four stages. 1) **The Problem:** We start with an intuitive real-world analogy (finding a central warehouse) to introduce the core problem that the centroid solves. This frames the "why." 2) **The Definition & Interactive Exploration:** This is the core interactive section. It formally defines the centroid and then allows users to freely explore by clicking any node. For each clicked node, the application visually "removes" it and calculates the resulting largest component, giving users a hands-on feel for the concept. 3) **The Algorithm:** After exploration, this section introduces a step-by-step, user-controlled process to systematically find the centroid. It walks through each node, calculates its score, and finds the minimum, making the algorithm's logic transparent. 4) **Properties & Code:** The final part summarizes key properties of centroids (e.g., there can be one or two) and provides a practical C++ implementation. This structure—Analogy, Definition, Free Exploration, Guided Algorithm, and Formalization—is designed to build understanding layer by layer. -->
+<!-- Visualization & Content Choices: 
+- Report Info: The concept of a tree's "balance point." -> Goal: To visualize how removing different nodes affects the balance of the remaining parts. -> Viz/Presentation Method: An interactive Canvas visualization of a tree. -> Interaction: Users can click any node. The canvas then highlights the selected node, grays out its connected edges, and displays the sizes of the resulting forest components. -> Justification: Canvas provides a dynamic and clear way to represent the tree's fragmentation, directly illustrating the definition of a centroid's score. NO SVG is used.
+- Report Info: The algorithm for finding the centroid. -> Goal: To show the systematic process of checking every node to find the best one. -> Viz/Presentation Method: A step-by-step guided mode. -> Interaction: The user clicks a "Next Step" button, which iterates through each node, highlighting it and displaying its calculated "largest component size" in a status panel and on the canvas. -> Justification: This controlled progression prevents the user from being overwhelmed and clearly shows the comparison process that leads to the optimal solution.
+- Report Info: The data needed for calculation (subtree sizes). -> Goal: To show the underlying data used by the algorithm. -> Viz/Presentation Method: Subtree sizes are calculated via a background DFS and then displayed on the canvas during the algorithm's execution. -> Justification: Displaying this data directly on the visualization connects the abstract numbers to the concrete tree structure.
+- Report Info: C++ implementation. -> Goal: Provide a practical code example for competitive programming or other applications. -> Viz/Presentation Method: A styled `<pre><code>` block with a copy button. -> Justification: This offers a ready-to-use takeaway for students.
+-->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>树的重心 (Centroid) 交互式学习应用</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Hiragrao Sans GB', 'WenQuanYi Micro Hei', 'Microsoft Yahei', sans-serif;
+            background-color: #f5f5f4; /* stone-100 */
+        }
+        .content-card {
+            background-color: #ffffff;
+            border: 1px solid #e7e5e4; /* stone-200 */
+            border-radius: 1.5rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .control-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .control-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .control-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        canvas { cursor: pointer; }
+        .result-item {
+            transition: all 0.3s ease-in-out;
+        }
+    </style>
+</head>
+<body class="text-stone-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+
+        <header class="text-center mb-12">
+            <h1 class="text-5xl font-extrabold text-stone-900 mb-4">树的重心：寻找最佳平衡点</h1>
+            <p class="text-xl text-stone-600 max-w-3xl mx-auto">在一个网络中，哪个节点是“中心”？让我们学习如何找到那个能让网络“四分五裂”后，最大碎片最小化的关键节点。</p>
+        </header>
+
+        <section id="problem" class="content-card">
+            <h2 class="text-3xl font-bold mb-4 text-stone-800">起点：物流公司的选址难题</h2>
+            <div class="prose max-w-none text-stone-700">
+                <p>想象一下，你是一家物流公司的网络规划师。公司有若干个仓库，通过道路连接成一个网络（一棵树）。现在需要建立一个总控制中心，但有一个特殊的要求：如果这个总控制中心因为任何原因（比如维护）而下线，需要暂时将网络断开。我们希望断开后，形成的各个独立的子网络中，<strong>最大的那个子网络的规模尽可能小</strong>，以方便管理。这个总控制中心的最佳选址，就是这棵树的“重心”。</p>
+                <p><strong>核心定义：</strong> 树的重心（Centroid）是一个节点，当从树中移除这个节点（以及所有与它相连的边）后，所形成的的若干个连通块（一棵森林）中，<strong>规模最大的那个连通块的节点数最小</strong>。</p>
+            </div>
+        </section>
+
+        <section id="interactive-demo" class="content-card">
+            <h2 class="text-3xl font-bold mb-6 text-stone-800">核心：交互式探索</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 rounded-2xl p-4 border border-stone-200 bg-stone-50 flex items-center justify-center">
+                    <canvas id="tree-canvas" width="600" height="500"></canvas>
+                </div>
+                <div class="flex flex-col space-y-4">
+                    <div class="p-4 rounded-xl border bg-stone-50">
+                        <h3 class="text-xl font-semibold mb-3 text-stone-700">交互控制器</h3>
+                        <div id="controls" class="flex flex-col space-y-3">
+                             <button id="find-centroid-btn" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-4 rounded-lg shadow-md control-button">1. 步进查找重心</button>
+                             <button id="next-step-btn" class="w-full bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-4 rounded-lg shadow-md control-button hidden">下一步</button>
+                             <button id="reset-btn" class="w-full bg-stone-500 hover:bg-stone-600 text-white font-bold py-3 px-4 rounded-lg shadow-md control-button">重置</button>
+                        </div>
+                    </div>
+                    <div class="p-4 rounded-xl border bg-stone-50 flex-grow">
+                        <h3 class="text-xl font-semibold text-stone-700 mb-2">状态面板</h3>
+                        <div id="status-text" class="mt-2 text-stone-600 min-h-[6em] bg-white p-3 rounded-md border text-base">欢迎！你可以在画布上点击任意节点，查看移除它之后的效果。或者，可以点击“步进查找重心”来系统地寻找答案。</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="results" class="content-card">
+            <h2 class="text-3xl font-bold mb-4 text-stone-800">算法的“记分牌”</h2>
+            <p class="prose max-w-none text-stone-700 mb-6">在步进查找过程中，我们会为每个节点计算一个“分数”，这个分数就是移除该节点后最大连通块的大小。分数最低的节点就是重心。这里会实时更新每个节点的计算结果。</p>
+            <div id="results-container" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+                <!-- 结果将由JS生成 -->
+            </div>
+        </section>
+        
+        <section id="code-and-complexity" class="content-card">
+             <h2 class="text-3xl font-bold mb-4 text-stone-800">性质与 C++ 实现</h2>
+             <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                <div>
+                     <div class="prose max-w-none text-stone-700">
+                        <h3 class="text-2xl font-bold mb-2 text-stone-800">重心的性质</h3>
+                        <ul class="list-disc list-inside space-y-2">
+                            <li>一棵树最多有两个重心。</li>
+                            <li>如果树有两个重心，那么它们一定是相邻的。</li>
+                            <li>增加或删除一个叶子节点，重心的位置最多移动一条边的距离。</li>
+                            <li>以树的重心为根时，所有子树的大小都不超过整棵树大小的一半。</li>
+                        </ul>
+                        <h3 class="text-2xl font-bold mt-6 mb-2 text-stone-800">算法与复杂度</h3>
+                        <p>寻找树的重心可以通过一次深度优先搜索（DFS）完成。在DFS的过程中，我们计算每个节点的子树大小。对于一个节点 `u`，移除它之后，形成的连通块包括它的每个子节点 `v` 构成的子树，以及剩下的部分 `N - size[u]`。我们只需要一次遍历就能算出所有节点的子树大小，并找到那个使 `max(N - size[u], max(size[v]))` 最小的节点 `u`。</p>
+                        <p>因此，整个算法的时间复杂度是 <strong class="text-amber-600">O(N)</strong>，其中 N 是节点的数量。</p>
+                    </div>
+                </div>
+                <div>
+                    <div class="relative">
+                        <button id="copy-btn" class="absolute top-2 right-2 bg-stone-200 hover:bg-stone-300 text-stone-700 text-xs font-bold py-1 px-2 rounded">复制</button>
+                        <pre class="bg-stone-800 text-white p-4 rounded-lg text-sm overflow-x-auto"><code id="code-block" class="language-cpp">#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+
+const int MAXN = 1000;
+std::vector&lt;int&gt; adj[MAXN];
+int N; // Number of nodes
+
+int subtree_size[MAXN];
+int min_max_comp = MAXN;
+std::vector&lt;int&gt; centroids;
+
+void dfs_size(int u, int p) {
+    subtree_size[u] = 1;
+    int max_comp_for_u = 0;
+    for (int v : adj[u]) {
+        if (v != p) {
+            dfs_size(v, u);
+            subtree_size[u] += subtree_size[v];
+            max_comp_for_u = std::max(max_comp_for_u, subtree_size[v]);
+        }
+    }
+    max_comp_for_u = std::max(max_comp_for_u, N - subtree_size[u]);
+
+    if (max_comp_for_u < min_max_comp) {
+        min_max_comp = max_comp_for_u;
+        centroids.clear();
+        centroids.push_back(u);
+    } else if (max_comp_for_u == min_max_comp) {
+        centroids.push_back(u);
+    }
+}
+
+void find_centroids() {
+    min_max_comp = N;
+    centroids.clear();
+    dfs_size(0, -1); // Assuming tree is connected and starts from node 0
+}
+</code></pre>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+<script>
+const nodes = [
+    { id: 0, name: 'A', x: 300, y: 50 }, { id: 1, name: 'B', x: 150, y: 150 },
+    { id: 2, name: 'C', x: 450, y: 150 }, { id: 3, name: 'D', x: 70, y: 250 },
+    { id: 4, name: 'E', x: 230, y: 250 }, { id: 5, name: 'F', x: 530, y: 250 },
+    { id: 6, name: 'G', x: 150, y: 350 }, { id: 7, name: 'H', x: 300, y: 350 },
+    { id: 8, name: 'I', x: 230, y: 450 }
+];
+const adj = { 0:[1,2], 1:[3,4], 2:[5], 3:[], 4:[6,7], 5:[], 6:[], 7:[8], 8:[] };
+const N = nodes.length;
+
+let state = {};
+
+const canvas = document.getElementById('tree-canvas');
+const ctx = canvas.getContext('2d');
+const findCentroidBtn = document.getElementById('find-centroid-btn');
+const nextStepBtn = document.getElementById('next-step-btn');
+const resetBtn = document.getElementById('reset-btn');
+const statusTextEl = document.getElementById('status-text');
+const resultsContainer = document.getElementById('results-container');
+const copyBtn = document.getElementById('copy-btn');
+const codeBlock = document.getElementById('code-block');
+
+function updateStatus(text) {
+    statusTextEl.textContent = text;
+}
+
+function initialize() {
+    state = {
+        phase: 'init', // init, exploring, stepping, done
+        subtreeSizes: new Array(N).fill(0),
+        maxCompSizes: new Array(N).fill(N),
+        centroids: [],
+        minMaxComp: N,
+        selectedNode: -1,
+        step: -1,
+    };
+    findCentroidBtn.disabled = false;
+    nextStepBtn.classList.add('hidden');
+    updateStatus('点击任意节点进行探索，或开始步进查找重心。');
+    draw();
+    renderResultItems();
+}
+
+function dfsSize(u, p) {
+    state.subtreeSizes[u] = 1;
+    for (const v of (adj[u] || [])) {
+        if (v !== p) {
+            dfsSize(v, u);
+            state.subtreeSizes[u] += state.subtreeSizes[v];
+        }
+    }
+}
+
+function calculateMaxComp(u) {
+    let maxComp = 0;
+    for (const v of (adj[u] || [])) {
+         // This assumes parent is recalculated or known, simpler to use subtree sizes.
+         // Let's pre-run dfs_size once to get all subtree sizes first for simplicity in this visualizer.
+        if (state.subtreeSizes[v] < state.subtreeSizes[u]) { // It's a child
+            maxComp = Math.max(maxComp, state.subtreeSizes[v]);
+        }
+    }
+    const parentComp = N - state.subtreeSizes[u];
+    maxComp = Math.max(maxComp, parentComp);
+    return maxComp;
+}
+
+function handleFindCentroid() {
+    state.phase = 'stepping';
+    state.step = -1; // -1 is pre-step, 0 to N-1 for nodes, N for result
+    findCentroidBtn.disabled = true;
+    nextStepBtn.classList.remove('hidden');
+    state.selectedNode = -1;
+    updateStatus('准备开始查找。点击“下一步”进行第一步：计算所有子树大小。');
+    draw();
+}
+
+function handleNextStep() {
+    if (state.step === -1) {
+        dfsSize(0, -1);
+        updateStatus('所有子树大小已计算。点击“下一步”开始检查第一个节点。');
+        state.step++;
+        return;
+    }
+
+    if (state.step < N) {
+        const u = state.step;
+        state.selectedNode = u;
+        state.maxCompSizes[u] = calculateMaxComp(u);
+        
+        if (state.maxCompSizes[u] < state.minMaxComp) {
+            state.minMaxComp = state.maxCompSizes[u];
+            state.centroids = [u];
+        } else if (state.maxCompSizes[u] === state.minMaxComp) {
+            state.centroids.push(u);
+        }
+        
+        updateStatus(`检查节点 ${nodes[u].name}: 最大连通块大小为 ${state.maxCompSizes[u]}. 当前最小值为 ${state.minMaxComp}.`);
+        renderResultItems();
+        draw();
+        state.step++;
+
+        if(state.step === N) {
+            nextStepBtn.textContent = "查看结果";
+        }
+        return;
+    }
+    
+    if (state.step === N) {
+        state.phase = 'done';
+        state.selectedNode = -1;
+        const centroidNames = state.centroids.map(id => nodes[id].name).join(', ');
+        updateStatus(`查找完成！重心是: ${centroidNames}。它们的最大连通块大小都是 ${state.minMaxComp}。`);
+        nextStepBtn.classList.add('hidden');
+        draw();
+    }
+}
+
+
+function handleCanvasClick(event) {
+    if (state.phase === 'stepping' || state.phase === 'done') return;
+
+    const rect = canvas.getBoundingClientRect();
+    const x = event.clientX - rect.left;
+    const y = event.clientY - rect.top;
+
+    for (const node of nodes) {
+        const dist = Math.sqrt((x - node.x) ** 2 + (y - node.y) ** 2);
+        if (dist < 20) {
+            state.phase = 'exploring';
+            state.selectedNode = node.id;
+            dfsSize(0, -1); // Rerun for calculation context
+            const maxComp = calculateMaxComp(node.id);
+            updateStatus(`选中节点 ${node.name}: 移除后，最大连通块大小为 ${maxComp}。`);
+            draw();
+            break;
+        }
+    }
+}
+
+
+function draw() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+    const isExploring = state.phase === 'exploring' || (state.phase === 'stepping' && state.step < N);
+
+    // Draw edges
+    for (let u = 0; u < N; u++) {
+        for (const v of (adj[u] || [])) {
+            if (u < v) {
+                ctx.beginPath();
+                ctx.moveTo(nodes[u].x, nodes[u].y);
+                ctx.lineTo(nodes[v].x, nodes[v].y);
+                ctx.strokeStyle = (isExploring && (u === state.selectedNode || v === state.selectedNode)) ? '#e7e5e4' : '#a8a29e';
+                ctx.lineWidth = 3;
+                ctx.stroke();
+            }
+        }
+    }
+    
+    // Draw nodes
+    for (const node of nodes) {
+        ctx.beginPath();
+        ctx.arc(node.x, node.y, 20, 0, 2 * Math.PI);
+        let fill = '#a8a29e'; // stone-400
+        if (state.selectedNode === node.id) fill = '#60a5fa'; // blue-400
+        if (state.phase === 'done' && state.centroids.includes(node.id)) fill = '#34d399'; // emerald-400
+        
+        ctx.fillStyle = fill;
+        ctx.fill();
+        ctx.strokeStyle = '#44403c';
+        ctx.lineWidth = 3;
+        ctx.stroke();
+        
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(node.name, node.x, node.y);
+    }
+
+    // Draw component sizes if exploring
+    if (isExploring && state.selectedNode !== -1) {
+        ctx.font = 'bold 16px sans-serif';
+        ctx.fillStyle = '#ef4444'; // red-500
+        const u = state.selectedNode;
+        let parentCompSize = N - state.subtreeSizes[u];
+        
+        // Draw sizes for child components
+        for(const v of (adj[u] || [])) {
+            if(state.subtreeSizes[v] < state.subtreeSizes[u]) {
+                const child = nodes[v];
+                ctx.fillText(state.subtreeSizes[v], child.x + 25, child.y - 25);
+            } else {
+                 // This is the parent, place its component size text
+                const parent = nodes[v];
+                ctx.fillText(parentCompSize, parent.x + 25, parent.y - 25);
+            }
+        }
+
+        // if the selected node is not the root, there is a parent component
+        if (state.subtreeSizes[u] < N) {
+            // Find parent to draw text next to it, which is not ideal.
+            // It's better to just put it somewhere obvious.
+            // Let's find the parent node. The logic above is slightly flawed. Let's fix.
+            const parent = findParent(u);
+            if(parent !== -1) {
+                 ctx.fillText(parentCompSize, nodes[parent].x, nodes[parent].y - 25);
+            }
+        }
+    }
+}
+
+function findParent(u, root = 0, p = -1) {
+     if (u === root) return -1;
+     for (const v of (adj[root] || [])) {
+         if (v !== p) {
+             if (v === u) return root;
+             const found = findParent(u, v, root);
+             if (found !== -1) return found;
+         }
+     }
+     return -1;
+}
+
+function renderResultItems() {
+    resultsContainer.innerHTML = '';
+    nodes.forEach(node => {
+        const div = document.createElement('div');
+        div.className = 'result-item p-3 rounded-lg border flex flex-col items-center';
+        const score = state.maxCompSizes[node.id];
+        
+        let bgColor = 'bg-stone-50';
+        if(score < N) bgColor = 'bg-sky-100';
+        if(state.centroids.includes(node.id) && score === state.minMaxComp) bgColor = 'bg-emerald-200';
+        
+        div.classList.add(bgColor);
+
+        div.innerHTML = `
+            <span class="text-xl font-bold">${node.name}</span>
+            <span class="text-sm text-stone-600">${score < N ? `得分: ${score}` : '未计算'}</span>
+        `;
+        resultsContainer.appendChild(div);
+    });
+}
+
+resetBtn.addEventListener('click', initialize);
+findCentroidBtn.addEventListener('click', handleFindCentroid);
+nextStepBtn.addEventListener('click', handleNextStep);
+canvas.addEventListener('click', handleCanvasClick);
+copyBtn.addEventListener('click', () => {
+    navigator.clipboard.writeText(codeBlock.innerText).then(() => {
+        copyBtn.textContent = '已复制!';
+        setTimeout(() => { copyBtn.textContent = '复制'; }, 2000);
+    });
+});
+
+window.onload = initialize;
+</script>
+</body>
+</html>
+

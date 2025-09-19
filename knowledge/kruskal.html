@@ -1,0 +1,403 @@
+<!-- Chosen Palette: Warm Neutral Study -->
+<!-- Application Structure Plan: The application is designed as a guided, interactive lesson. It's structured in a linear, pedagogical flow: 1) **Introduction:** A simple, real-world analogy (connecting islands) to introduce the MST problem. 2) **Core Algorithm:** A clear, step-by-step explanation of Kruskal's greedy approach. 3) **Interactive Demo:** The main component where users can step through the algorithm on a sample graph. This visualizes the sorting, edge selection, cycle detection (via DSU), and MST construction process. The step-by-step interaction is crucial for understanding the decision-making at each stage. 4) **The 'Cycle' Problem:** A dedicated section explaining *why* we need a mechanism like Disjoint Set Union (DSU), which is often a point of confusion. 5) **Code Implementation:** A final section providing a concrete C++ implementation that mirrors the logic shown in the demo. This structure (Analogy -> Theory -> Practice -> Deeper Dive -> Code) is chosen to build understanding layer by layer. -->
+<!-- Visualization & Content Choices: 
+- Report Info: The process of sorting edges and iterating through them. -> Goal: Show the greedy choice being made at each step. -> Viz/Presentation Method: An interactive Canvas visualization of a graph and a sorted HTML list of edges. -> Interaction: A "Next" button. On each click, the app highlights the next edge in the list, draws it on the canvas, and determines if it forms a cycle. -> Justification: This directly visualizes the core loop of the algorithm. Canvas is used for its flexibility in drawing and coloring nodes/edges dynamically to represent states (considered, added, discarded). NO SVG is used.
+- Report Info: Detecting cycles using Disjoint Set Union (DSU). -> Goal: Visually represent the "sets" or "components" of connected nodes. -> Viz/Presentation Method: Nodes in the same set are colored identically on the Canvas. -> Interaction: As edges are added to the MST, the colors of the components merge, visually representing the `union` operation. When an edge connecting two nodes of the same color is considered, it's marked as a cycle and discarded. -> Justification: This color-coding is a highly intuitive way to abstract away the DSU's internal mechanics (parent pointers, ranks) and focus on its functional purpose: tracking connected components.
+- Report Info: The final Minimum Spanning Tree (MST). -> Goal: Display the result clearly. -> Viz/Presentation Method: The final MST edges are shown in a distinct, bold color on the Canvas, while unused edges are grayed out. -> Interaction: The final state of the visualization. -> Justification: Provides a clear, final visual summary of the algorithm's output.
+- Report Info: C++ Code. -> Goal: Provide a practical, runnable example. -> Viz/Presentation Method: A styled `<pre><code>` block. -> Interaction: A 'Copy Code' button. -> Justification: Offers a tangible takeaway for students to experiment with.
+-->
+<!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kruskal 算法交互式学习应用</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Hiragino Sans GB', 'WenQuanYi Micro Hei', 'Microsoft Yahei', sans-serif;
+            background-color: #f5f5f4; /* stone-100 */
+        }
+        .content-card {
+            background-color: #ffffff;
+            border: 1px solid #e7e5e4; /* stone-200 */
+            border-radius: 1.5rem;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        .control-button {
+            transition: all 0.2s ease-in-out;
+        }
+        .control-button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+        }
+        .control-button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .edge-list-item {
+            transition: all 0.3s ease-in-out;
+        }
+        .edge-list-item.active {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(59, 130, 246, 0.5);
+        }
+    </style>
+</head>
+<body class="text-stone-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+
+        <header class="text-center mb-12">
+            <h1 class="text-5xl font-extrabold text-stone-900 mb-4">Kruskal算法：修建最短的总“道路”</h1>
+            <p class="text-xl text-stone-600 max-w-3xl mx-auto">给定一张布满潜在道路和修建成本的地图，如何用最低的总成本，将所有地点连接起来？</p>
+        </header>
+        
+        <section id="interactive-demo" class="content-card">
+            <h2 class="text-3xl font-bold mb-6 text-stone-800">交互式演示：一步一图</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div class="lg:col-span-2 rounded-2xl p-4 border border-stone-200 bg-stone-50 flex items-center justify-center">
+                    <canvas id="graph-canvas" width="600" height="400"></canvas>
+                </div>
+                <div class="flex flex-col space-y-4">
+                    <div class="p-4 rounded-xl border bg-stone-50">
+                        <h3 class="text-xl font-semibold mb-3 text-stone-700">控制器</h3>
+                        <div class="flex flex-col space-y-3">
+                             <button id="next-step-btn" class="w-full bg-sky-600 hover:bg-sky-700 text-white font-bold py-3 px-4 rounded-lg shadow-md control-button">下一步</button>
+                             <button id="reset-btn" class="w-full bg-stone-500 hover:bg-stone-600 text-white font-bold py-3 px-4 rounded-lg shadow-md control-button">重置</button>
+                        </div>
+                    </div>
+                     <div class="p-4 rounded-xl border bg-stone-50 flex-grow">
+                        <h3 class="text-xl font-semibold text-stone-700 mb-2">状态信息</h3>
+                        <div id="status-text" class="mt-2 text-stone-600 min-h-[4em] bg-white p-3 rounded-md border text-base">点击“下一步”开始。第一步是对所有边进行排序。</div>
+                        <h3 class="text-xl font-semibold text-stone-700 mt-4 mb-2">总权重</h3>
+                        <div id="total-weight" class="text-4xl font-bold text-emerald-600 text-center p-2 bg-white rounded-md border">0</div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="edge-list-section" class="content-card">
+            <h2 class="text-3xl font-bold mb-4 text-stone-800">待选边的列表（已按权重排序）</h2>
+            <div id="edge-list" class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            </div>
+        </section>
+
+        <section id="code" class="content-card">
+            <h2 class="text-3xl font-bold mb-4 text-stone-800">C++ 实现 (数组版)</h2>
+            <p class="prose max-w-none text-stone-700 mb-6">下面是一个完整的 C++ 实现，其中并查集使用了对初学者更友好的数组和函数方式。你可以复制并运行这段代码来测试我们上面演示的例子。</p>
+            <div class="relative">
+                <button id="copy-btn" class="absolute top-2 right-2 bg-stone-200 hover:bg-stone-300 text-stone-700 text-xs font-bold py-1 px-2 rounded">复制</button>
+                <pre class="bg-stone-800 text-white p-4 rounded-lg text-sm overflow-x-auto"><code id="code-block" class="language-cpp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+
+// 使用数组来表示并查集
+// parent[i] 存储元素 i 的父节点
+std::vector&lt;int&gt; parent;
+// rank[i] 存储以 i 为根的树的高度（用于按秩合并优化）
+std::vector&lt;int&gt; rank;
+
+// 边结构体
+struct Edge {
+    int u, v, weight;
+};
+
+// 比较函数，用于根据边的权重对边进行排序
+bool compareEdges(const Edge& a, const Edge& b) {
+    return a.weight &lt; b.weight;
+}
+
+// 并查集操作：初始化集合
+// 创建一个只包含一个元素 v 的新集合
+void make_set(int v) {
+    parent[v] = v;
+    rank[v] = 0;
+}
+
+// 并查集操作：查找元素的根节点（带路径压缩优化）
+// 找到包含元素 v 的集合的代表（根节点）
+int find_set(int v) {
+    if (v == parent[v])
+        return v;
+    // 路径压缩：将路径上的所有节点直接连接到根节点
+    return parent[v] = find_set(parent[v]);
+}
+
+// 并查集操作：合并两个集合（带按秩合并优化）
+// 合并包含元素 a 和 b 的两个集合
+void unite_sets(int a, int b) {
+    a = find_set(a);
+    b = find_set(b);
+    if (a != b) {
+        // 按秩合并：将高度较小的树合并到高度较大的树上
+        if (rank[a] &lt; rank[b])
+            std::swap(a, b);
+        parent[b] = a;
+        if (rank[a] == rank[b])
+            rank[a]++;
+    }
+}
+
+// Kruskal算法函数
+void kruskalMST(int V, std::vector&lt;Edge&gt;&amp; edges) {
+    // 1. 初始化并查集
+    parent.resize(V);
+    rank.resize(V);
+    for (int i = 0; i &lt; V; ++i) {
+        make_set(i);
+    }
+
+    // 2. 将所有边按权重从小到大排序
+    std::sort(edges.begin(), edges.end(), compareEdges);
+
+    std::vector&lt;Edge&gt; resultMST;
+    int totalWeight = 0;
+
+    // 3. 遍历排序后的边
+    for (const auto&amp; edge : edges) {
+        // 4. 检查边的两个顶点是否属于同一个集合
+        if (find_set(edge.u) != find_set(edge.v)) {
+            // 如果不属于同一个集合，说明加入这条边不会形成环路
+            // a. 将这条边加入最小生成树
+            resultMST.push_back(edge);
+            totalWeight += edge.weight;
+            // b. 合并这两个顶点所在的集合
+            unite_sets(edge.u, edge.v);
+        }
+    }
+
+    // 5. 打印结果
+    std::cout &lt;&lt; "最小生成树的边:" &lt;&lt; std::endl;
+    for (const auto&amp; edge : resultMST) {
+        std::cout &lt;&lt; edge.u &lt;&lt; " - " &lt;&lt; edge.v &lt;&lt; " (权重: " &lt;&lt; edge.weight &lt;&lt; ")" &lt;&lt; std::endl;
+    }
+    std::cout &lt;&lt; "最小生成树的总权重: " &lt;&lt; totalWeight &lt;&lt; std::endl;
+}
+
+int main() {
+    int V = 6; // 顶点数
+    std::vector&lt;Edge&gt; edges = {
+        {0, 1, 4}, {0, 2, 4},
+        {1, 2, 2}, {1, 3, 6},
+        {2, 3, 8}, {2, 4, 9},
+        {3, 4, 7}, {3, 5, 5},
+        {4, 5, 1}
+    };
+
+    kruskalMST(V, edges);
+
+    return 0;
+}
+</code></pre>
+            </div>
+        </section>
+
+    </div>
+
+<script>
+    const canvas = document.getElementById('graph-canvas');
+    const ctx = canvas.getContext('2d');
+    const nextStepBtn = document.getElementById('next-step-btn');
+    const resetBtn = document.getElementById('reset-btn');
+    const statusTextEl = document.getElementById('status-text');
+    const totalWeightEl = document.getElementById('total-weight');
+    const edgeListEl = document.getElementById('edge-list');
+    const copyBtn = document.getElementById('copy-btn');
+    const codeBlock = document.getElementById('code-block');
+
+    const V = 6;
+    const nodes = [
+        { id: 0, x: 100, y: 200 }, { id: 1, x: 250, y: 100 },
+        { id: 2, x: 250, y: 300 }, { id: 3, x: 400, y: 100 },
+        { id: 4, x: 400, y: 300 }, { id: 5, x: 550, y: 200 }
+    ];
+    const initialEdges = [
+        { u: 0, v: 1, weight: 4 }, { u: 0, v: 2, weight: 4 },
+        { u: 1, v: 2, weight: 2 }, { u: 1, v: 3, weight: 6 },
+        { u: 2, v: 3, weight: 8 }, { u: 2, v: 4, weight: 9 },
+        { u: 3, v: 4, weight: 7 }, { u: 3, v: 5, weight: 5 },
+        { u: 4, v: 5, weight: 1 }
+    ];
+
+    let state = {};
+
+    function DSU(n) {
+        const parent = Array.from({ length: n }, (_, i) => i);
+        const find = (i) => (parent[i] === i) ? i : (parent[i] = find(parent[i]));
+        const union = (i, j) => {
+            const rootI = find(i);
+            const rootJ = find(j);
+            if (rootI !== rootJ) {
+                parent[rootJ] = rootI;
+                return true;
+            }
+            return false;
+        };
+        const getParentArray = () => [...parent];
+        return { find, union, getParentArray };
+    }
+
+    function initialize() {
+        state = {
+            step: -1,
+            sortedEdges: [],
+            mstEdges: [],
+            totalWeight: 0,
+            dsu: DSU(V),
+            colors: ['#ef4444', '#f97316', '#84cc16', '#22c55e', '#06b6d4', '#8b5cf6']
+        };
+        nextStepBtn.disabled = false;
+        statusTextEl.textContent = '点击“下一步”开始。第一步是对所有边进行排序。';
+        totalWeightEl.textContent = '0';
+        draw();
+        renderEdgeList(initialEdges, false);
+    }
+    
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        const parent = state.dsu.getParentArray();
+        
+        // Draw all potential edges
+        initialEdges.forEach(edge => {
+            const nodeU = nodes[edge.u];
+            const nodeV = nodes[edge.v];
+            ctx.beginPath();
+            ctx.moveTo(nodeU.x, nodeU.y);
+            ctx.lineTo(nodeV.x, nodeV.y);
+            ctx.strokeStyle = '#d4d4d8'; // zinc-300
+            ctx.lineWidth = 2;
+            ctx.stroke();
+        });
+
+        // Draw MST edges
+        state.mstEdges.forEach(edge => {
+            const nodeU = nodes[edge.u];
+            const nodeV = nodes[edge.v];
+            ctx.beginPath();
+            ctx.moveTo(nodeU.x, nodeU.y);
+            ctx.lineTo(nodeV.x, nodeV.y);
+            ctx.strokeStyle = '#10b981'; // emerald-500
+            ctx.lineWidth = 4;
+            ctx.stroke();
+        });
+
+        // Highlight current edge if any
+        if (state.step >= 0 && state.step < state.sortedEdges.length) {
+            const edge = state.sortedEdges[state.step];
+            const nodeU = nodes[edge.u];
+            const nodeV = nodes[edge.v];
+            ctx.beginPath();
+            ctx.moveTo(nodeU.x, nodeU.y);
+            ctx.lineTo(nodeV.x, nodeV.y);
+            const isCycle = state.dsu.find(edge.u) === state.dsu.find(edge.v);
+            ctx.strokeStyle = isCycle ? '#ef4444' : '#3b82f6'; // red-500 or blue-500
+            ctx.lineWidth = 6;
+            ctx.stroke();
+        }
+
+        // Draw nodes
+        nodes.forEach(node => {
+            ctx.beginPath();
+            ctx.arc(node.x, node.y, 20, 0, 2 * Math.PI);
+            const root = state.dsu.find(node.id);
+            ctx.fillStyle = state.colors[root];
+            ctx.fill();
+            ctx.strokeStyle = 'white';
+            ctx.lineWidth = 4;
+            ctx.stroke();
+            ctx.fillStyle = 'white';
+            ctx.font = 'bold 20px sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'middle';
+            ctx.fillText(node.id, node.x, node.y);
+        });
+    }
+
+    function renderEdgeList(edges, sorted) {
+        edgeListEl.innerHTML = '';
+        edges.forEach((edge, index) => {
+            const div = document.createElement('div');
+            div.id = `edge-${index}`;
+            let borderColor = 'border-stone-200';
+            if (state.mstEdges.includes(edge)) {
+                borderColor = 'border-emerald-500';
+            } else if (sorted && state.step >= index && state.dsu.find(edge.u) === state.dsu.find(edge.v)) {
+                borderColor = 'border-red-500';
+            }
+            
+            div.className = `edge-list-item p-3 rounded-lg border-2 ${borderColor} flex flex-col items-center bg-stone-50`;
+            if (sorted && state.step === index) {
+                div.classList.add('active', 'border-blue-500');
+            }
+            
+            div.innerHTML = `
+                <span class="text-lg font-bold">${nodes[edge.u].id} ↔ ${nodes[edge.v].id}</span>
+                <span class="text-sm text-stone-600">权重: ${edge.weight}</span>
+            `;
+            edgeListEl.appendChild(div);
+        });
+    }
+
+    function nextStep() {
+        // Step -1 to 0: Sort edges
+        if (state.step === -1) {
+            state.sortedEdges = [...initialEdges].sort((a, b) => a.weight - b.weight);
+            statusTextEl.textContent = '边已排序。现在开始逐一检查。';
+            state.step++;
+            renderEdgeList(state.sortedEdges, true);
+            draw();
+            return;
+        }
+
+        if (state.step >= state.sortedEdges.length) {
+            statusTextEl.textContent = '算法完成！已找到最小生成树。';
+            nextStepBtn.disabled = true;
+            return;
+        }
+
+        const edge = state.sortedEdges[state.step];
+        const { u, v, weight } = edge;
+        
+        statusTextEl.innerHTML = `正在检查边 <strong>${u}-${v}</strong> (权重: ${weight})...`;
+
+        if (state.dsu.union(u, v)) {
+             setTimeout(() => {
+                statusTextEl.innerHTML += `<span class="text-emerald-600"> 不会形成环路，加入MST！</span>`;
+                state.mstEdges.push(edge);
+                state.totalWeight += weight;
+                totalWeightEl.textContent = state.totalWeight;
+                state.step++;
+                draw();
+                renderEdgeList(state.sortedEdges, true);
+             }, 1000);
+        } else {
+             setTimeout(() => {
+                statusTextEl.innerHTML += `<span class="text-red-600"> 会形成环路，舍弃！</span>`;
+                state.step++;
+                draw();
+                renderEdgeList(state.sortedEdges, true);
+            }, 1000);
+        }
+        
+        draw();
+        renderEdgeList(state.sortedEdges, true);
+    }
+    
+    nextStepBtn.addEventListener('click', nextStep);
+    resetBtn.addEventListener('click', initialize);
+    copyBtn.addEventListener('click', () => {
+        navigator.clipboard.writeText(codeBlock.innerText).then(() => {
+            copyBtn.textContent = '已复制!';
+            setTimeout(() => { copyBtn.textContent = '复制'; }, 2000);
+        });
+    });
+
+    window.onload = initialize;
+</script>
+</body>
+</html>
+
