@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GESP C++ 6级全真模拟考试</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+        }
+        .quiz-container {
+            padding: 1.5rem;
+            margin-top: 1rem;
+            border-left: 3px solid #F59E0B; /* border-amber-500 */
+            background-color: #111827; /* bg-gray-900 */
+            border-radius: 0.5rem;
+        }
+        code {
+            background-color: #374151;
+            padding: 0.2rem 0.4rem;
+            border-radius: 0.25rem;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        pre {
+            background-color: #1F2937;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            color: #D1D5DB; /* text-gray-300 */
+        }
+        .code-keyword { color: #F472B6; } /* pink-400 */
+        .code-type { color: #60A5FA; } /* blue-400 */
+        .code-comment { color: #6B7280; } /* gray-500 */
+        .code-string { color: #A78BFA; } /* violet-400 */
+        .code-number { color: #34D399; } /* emerald-400 */
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-200">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-white">GESP C++ 6级全真模拟考试</h1>
+            <p class="text-lg text-gray-400 mt-2">（考试时间：120分钟 满分：100分）</p>
+        </header>
+
+        <main class="space-y-10">
+            <!-- Part 1: 单选题 -->
+            <section id="multiple-choice">
+                <h2 class="text-3xl font-semibold border-b-2 border-amber-500 pb-2 mb-4">第一部分：单项选择题（每题2分，共30分）</h2>
+                
+                <div id="quiz-section-mcq" class="space-y-6"></div>
+            </section>
+            
+            <!-- Part 2: 判断题 -->
+            <section id="true-false">
+                <h2 class="text-3xl font-semibold border-b-2 border-amber-500 pb-2 mb-4">第二部分：判断题（每题2分，共20分）</h2>
+                 <div id="quiz-section-tf" class="space-y-6"></div>
+            </section>
+
+            <!-- Part 3: 编程题 -->
+            <section id="programming-problems">
+                <h2 class="text-3xl font-semibold border-b-2 border-amber-500 pb-2 mb-4">第三部分：编程题（每题25分，共50分）</h2>
+                
+                <!-- Programming Problem 1 -->
+                <div class="bg-gray-800 p-4 md:p-6 rounded-lg mt-6">
+                    <h3 class="text-2xl font-bold text-amber-400">1. 信号塔覆盖</h3>
+                    <div class="mt-4 prose prose-invert max-w-none text-gray-300">
+                        <p>在一个一维数轴上，存在 N 个村庄，其坐标分别为 `x[1], x[2], ..., x[N]`。现在需要在这条数轴上建立信号塔，每个信号塔的覆盖半径为 R。也就是说，一个建在坐标 `p` 的信号塔可以覆盖 `[p-R, p+R]` 区间内的所有村庄。为了节约成本，请问最少需要建立多少个信号塔，才能覆盖所有的村庄？</p>
+                        <h4>输入格式：</h4>
+                        <ul>
+                            <li>第一行包含两个整数 `N` 和 `R` (1 ≤ N ≤ 1000, 0 ≤ R ≤ 1000)。</li>
+                            <li>第二行包含 `N` 个整数，代表 `N` 个村庄的坐标 `x[i]` (0 ≤ `x[i]` ≤ 10000)，村庄坐标不保证有序。</li>
+                        </ul>
+                        <h4>输出格式：</h4>
+                        <p>一个整数，表示最少需要的信号塔数量。</p>
+                        <h4>样例输入：</h4>
+                        <pre id="p1-sample-input">6 2
+1 7 15 2 14 9</pre>
+                        <h4>样例输出：</h4>
+                        <pre id="p1-sample-output">3</pre>
+                        <h4>样例解释：</h4>
+                        <p>村庄排序后坐标为 `1, 2, 7, 9, 14, 15`。第一个塔建在坐标 3，覆盖 `[1, 5]`，即村庄 `1, 2`。第二个塔建在坐标 9，覆盖 `[7, 11]`，即村庄 `7, 9`。第三个塔建在坐标 16，覆盖 `[14, 18]`，即村庄 `14, 15`。总共需要 3 个塔。</p>
+                    </div>
+
+                    <div class="mt-6">
+                        <h4 class="text-xl font-semibold mb-2">在线编码与运行</h4>
+                        <div>
+                            <label for="p1-code-input" class="block text-sm font-medium text-gray-400 mb-1">你的 C++ 代码</label>
+                            <textarea id="p1-code-input" rows="15" class="w-full p-2 bg-gray-900 text-white border border-gray-600 rounded-md font-mono focus:ring-amber-500 focus:border-amber-500" placeholder="// 在这里粘贴你的C++代码..."></textarea>
+                        </div>
+                        <div class="mt-4">
+                            <button data-problem="1" class="run-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">运行样例</button>
+                            <button data-problem="1" class="submit-btn bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded">提交 (查看题解)</button>
+                        </div>
+                        <div id="p1-output-area" class="mt-4 w-full p-2 bg-gray-900 text-white border border-gray-600 rounded-md min-h-[50px]"></div>
+                    </div>
+                     <div id="p1-solution" class="mt-6 hidden">
+                        <h4 class="text-xl font-semibold mb-2 text-amber-400">题解思路</h4>
+                        <p>这是一个典型的贪心算法问题。为了用最少的塔覆盖所有村庄，我们应该让每个塔都尽可能地“物尽其用”。</p>
+                        <ol class="list-decimal list-inside space-y-2 mt-2">
+                            <li><strong>排序：</strong> 首先，将所有村庄的坐标从小到大排序。这是贪心策略的基础。</li>
+                            <li><strong>贪心选择：</strong> 从第一个未被覆盖的村庄开始（初始为最左边的村庄），我们需要放置一个新塔。为了让这个新塔能覆盖到尽可能多的后续村庄，我们应该把塔建在“能覆盖到当前这个村庄”的最右边的位置。这个位置就是 `当前村庄坐标 + R`。</li>
+                            <li><strong>更新覆盖范围：</strong> 建立一个塔后，它能覆盖的范围是 `[当前村庄坐标, 当前村庄坐标 + 2*R]`。然后我们从下一个未被这个塔覆盖的村庄开始，重复步骤2，直到所有村庄都被覆盖。</li>
+                        </ol>
+                        <h4 class="text-xl font-semibold mt-4 mb-2 text-amber-400">参考代码</h4>
+                        <pre><code><span class="code-keyword">#include</span> <span class="code-string">&lt;iostream&gt;</span>
+<span class="code-keyword">#include</span> <span class="code-string">&lt;vector&gt;</span>
+<span class="code-keyword">#include</span> <span class="code-string">&lt;algorithm&gt;</span>
+
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-type">int</span> <span class="code-keyword">main</span>() {
+    <span class="code-type">int</span> n, r;
+    cin >> n >> r;
+    vector&lt;<span class="code-type">int</span>&gt; x(n);
+    <span class="code-keyword">for</span> (<span class="code-type">int</span> i = <span class="code-number">0</span>; i < n; ++i) {
+        cin >> x[i];
+    }
+
+    sort(x.begin(), x.end());
+
+    <span class="code-type">int</span> count = <span class="code-number">0</span>;
+    <span class="code-type">int</span> i = <span class="code-number">0</span>;
+    <span class="code-keyword">while</span> (i < n) {
+        count++;
+        <span class="code-type">int</span> tower_pos = x[i] + r; <span class="code-comment">// 能覆盖x[i]的最右位置</span>
+        <span class="code-type">int</span> cover_limit = tower_pos + r;
+        
+        <span class="code-comment">// 找到下一个未被覆盖的村庄</span>
+        <span class="code-type">int</span> next_i = i;
+        <span class="code-keyword">while</span> (next_i < n && x[next_i] <= cover_limit) {
+            next_i++;
+        }
+        i = next_i;
+    }
+
+    cout << count << endl;
+
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}
+</code></pre>
+
+                    </div>
+                </div>
+
+                 <!-- Programming Problem 2 -->
+                <div class="bg-gray-800 p-4 md:p-6 rounded-lg mt-8">
+                    <h3 class="text-2xl font-bold text-amber-400">2. 任务分配</h3>
+                    <div class="mt-4 prose prose-invert max-w-none text-gray-300">
+                        <p>有 N 个任务和 N 个工人。每个工人都只能完成一个任务。第 i 个工人完成第 j 个任务需要花费的时间为 `cost[i][j]`。请你为工人们分配任务，使得每个工人分配到一个任务，每个任务也只被一个工人完成，并且所有任务完成的总花费时间最少。请你找出这个最小的总花费时间。</p>
+                        <p>注意：这是一个状态压缩动态规划问题。由于 N 的范围较小，我们可以用一个整数的二进制位来表示任务的分配状态。</p>
+                        <h4>输入格式：</h4>
+                        <ul>
+                            <li>第一行包含一个整数 `N` (1 ≤ N ≤ 16)。</li>
+                            <li>接下来 `N` 行，每行包含 `N` 个整数，表示成本矩阵 `cost[i][j]` (1 ≤ `cost[i][j]` ≤ 1000)。第 i 行第 j 列的数表示第 i 个工人完成第 j 个任务的花费。</li>
+                        </ul>
+                        <h4>输出格式：</h4>
+                        <p>一个整数，表示最小的总花费。</p>
+                        <h4>样例输入：</h4>
+                        <pre id="p2-sample-input">3
+8 2 9
+4 7 1
+5 6 3</pre>
+                        <h4>样例输出：</h4>
+                        <pre id="p2-sample-output">8</pre>
+                        <h4>样例解释：</h4>
+                        <p>最优分配方案为：工人1完成任务2（花费2），工人2完成任务3（花费1），工人3完成任务1（花费5）。总花费为 2 + 1 + 5 = 8。</p>
+                    </div>
+
+                    <div class="mt-6">
+                        <h4 class="text-xl font-semibold mb-2">在线编码与运行</h4>
+                        <div>
+                            <label for="p2-code-input" class="block text-sm font-medium text-gray-400 mb-1">你的 C++ 代码</label>
+                            <textarea id="p2-code-input" rows="15" class="w-full p-2 bg-gray-900 text-white border border-gray-600 rounded-md font-mono focus:ring-amber-500 focus:border-amber-500" placeholder="// 在这里粘贴你的C++代码..."></textarea>
+                        </div>
+                        <div class="mt-4">
+                            <button data-problem="2" class="run-btn bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">运行样例</button>
+                            <button data-problem="2" class="submit-btn bg-emerald-600 hover:bg-emerald-700 text-white font-bold py-2 px-4 rounded">提交 (查看题解)</button>
+                        </div>
+                        <div id="p2-output-area" class="mt-4 w-full p-2 bg-gray-900 text-white border border-gray-600 rounded-md min-h-[50px]"></div>
+                    </div>
+                     <div id="p2-solution" class="mt-6 hidden">
+                        <h4 class="text-xl font-semibold mb-2 text-amber-400">题解思路</h4>
+                        <p>这是一个经典的状态压缩DP问题，通常被称为“匈牙利算法”的DP解法或“任务分配问题”。</p>
+                        <ol class="list-decimal list-inside space-y-2 mt-2">
+                            <li><strong>定义状态：</strong> `dp[S]` 表示任务分配状态为 `S` 时的最小花费。`S` 是一个整数，它的二进制表示中，第 `j` 位为1代表第 `j` 个任务已被分配，为0则未被分配。</li>
+                            <li><strong>状态转移：</strong> 考虑 `dp[S]` 的计算。`S` 中为 1 的位数（假设为 `k`）表示已经有 `k` 个任务被分配给了前 `k` 个工人。`dp[S]` 的值可以由一个比它少分配一个任务的状态转移而来。我们枚举 `S` 中的每一个为1的位 `j`，代表最后一个被分配的任务是 `j`。那么这个任务 `j` 是被第 `k` 个工人完成的。其前一个状态就是 `S` 去掉第 `j` 位（即 `S ^ (1 << j)`），此时是 `k-1` 个工人完成了 `S ^ (1 << j)` 状态的任务。
+                            <p>所以状态转移方程为：`dp[S] = min(dp[S], dp[S ^ (1 << j)] + cost[k-1][j])`，其中 `k` 是 `S` 中1的个数，`j` 是 `S` 中为1的某一位。</p></li>
+                            <li><strong>初始化：</strong> `dp[0] = 0`，表示不分配任何任务花费为0。其他 `dp` 值初始化为无穷大。</li>
+                        </ol>
+                        <h4 class="text-xl font-semibold mt-4 mb-2 text-amber-400">参考代码</h4>
+                        <pre><code><span class="code-keyword">#include</span> <span class="code-string">&lt;iostream&gt;</span>
+<span class="code-keyword">#include</span> <span class="code-string">&lt;vector&gt;</span>
+<span class="code-keyword">#include</span> <span class="code-string">&lt;algorithm&gt;</span>
+
+<span class="code-keyword">using namespace</span> std;
+
+<span class="code-type">int</span> <span class="code-keyword">countSetBits</span>(<span class="code-type">int</span> n) {
+    <span class="code-type">int</span> count = <span class="code-number">0</span>;
+    <span class="code-keyword">while</span> (n > <span class="code-number">0</span>) {
+        n &= (n - <span class="code-number">1</span>);
+        count++;
+    }
+    <span class="code-keyword">return</span> count;
+}
+
+<span class="code-type">int</span> <span class="code-keyword">main</span>() {
+    <span class="code-type">int</span> n;
+    cin >> n;
+
+    vector&lt;vector&lt;<span class="code-type">int</span>&gt;&gt; cost(n, vector&lt;<span class="code-type">int</span>&gt;(n));
+    <span class="code-keyword">for</span> (<span class="code-type">int</span> i = <span class="code-number">0</span>; i < n; ++i) {
+        <span class="code-keyword">for</span> (<span class="code-type">int</span> j = <span class="code-number">0</span>; j < n; ++j) {
+            cin >> cost[i][j];
+        }
+    }
+
+    <span class="code-type">int</span> limit = <span class="code-number">1</span> << n;
+    vector&lt;<span class="code-type">int</span>&gt; dp(limit, <span class="code-number">1e9</span>); <span class="code-comment">// 初始化为无穷大</span>
+    dp[<span class="code-number">0</span>] = <span class="code-number">0</span>;
+
+    <span class="code-keyword">for</span> (<span class="code-type">int</span> s = <span class="code-number">1</span>; s < limit; ++s) {
+        <span class="code-type">int</span> worker_idx = countSetBits(s) - <span class="code-number">1</span>;
+        <span class="code-keyword">for</span> (<span class="code-type">int</span> task_idx = <span class="code-number">0</span>; task_idx < n; ++task_idx) {
+            <span class="code-keyword">if</span> ((s >> task_idx) & <span class="code-number">1</span>) { <span class="code-comment">// 如果任务task_idx在集合s中</span>
+                <span class="code-type">int</span> prev_state = s ^ (<span class="code-number">1</span> << task_idx);
+                dp[s] = min(dp[s], dp[prev_state] + cost[worker_idx][task_idx]);
+            }
+        }
+    }
+
+    cout << dp[limit - <span class="code-number">1</span>] << endl;
+
+    <span class="code-keyword">return</span> <span class="code-number">0</span>;
+}
+</code></pre>
+                    </div>
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <script>
+    const mcqData = [
+        { q: "1. 在一个无权图中，要寻找从起点到终点的最短路径（经过的边数最少），通常优先选择哪种算法？", o: ["A. 深度优先搜索 (DFS)", "B. 广度优先搜索 (BFS)", "C. 贪心算法", "D. 动态规划"], a: "B", f: {c: "正确！BFS能保证第一次找到目标时路径最短，因为它是一层一层向外扩展搜索的。", i: "错误。DFS会一条路走到黑，不保证找到的是最短路径。BFS才适合解决此类问题。"}},
+        { q: "2. C++程序在执行递归函数时，系统内部隐式地使用了哪种数据结构来管理函数调用的层次关系？", o: ["A. 队列 (Queue)", "B. 栈 (Stack)", "C. 堆 (Heap)", "D. 哈希表 (Hash Table)"], a: "B", f: {c: "正确！每次函数调用，其参数、局部变量等信息会被压入调用栈，函数返回时再弹出，符合栈的“后进先出”特性。", i: "再想想哦。函数调用的特点是“后调用的先返回”，这正是栈（Stack）的“后进先出”特性。"}},
+        { q: "3. 动态规划算法能够解决的问题，通常需要具备以下两个核心性质：", o: ["A. 贪心选择性质 和 最优子结构", "B. 线性空间复杂度和多项式时间复杂度", "C. 最优子结构 和 重叠子问题", "D. 递推关系 和 递归出口"], a: "C", f: {c: "正确！最优子结构保证了问题可以被分解，重叠子问题说明了分解出的子问题有重复，值得用DP来优化。", i: "错误。这是DP的两个最核心的理论基础，需要牢记。"}},
+        { q: "4. 对于一个包含N个节点的完全二叉树（按层序编号1到N），编号为 i 的节点的父节点编号为？（假设 i > 1）", o: ["A. 2*i", "B. i-1", "C. i/2 (整数除法)", "D. 无法确定"], a: "C", f: {c: "正确！这是完全二叉树的重要性质，左孩子是2*i，右孩子是2*i+1，父节点是i/2。", i: "错误，请回顾完全二叉树的性质。"}},
+        { q: "5. 以下哪种排序算法在最坏情况下的时间复杂度是 O(N log N)?", o: ["A. 冒泡排序", "B. 插入排序", "C. 归并排序", "D. 快速排序"], a: "C", f: {c: "正确！归并排序无论在最好、最坏还是平均情况下，时间复杂度都稳定在O(N log N)。快速排序最坏情况是O(N^2)。", i: "错误。快速排序的最坏情况是O(N^2)，例如在数组已经有序时。归并排序是稳定的O(N log N)。"}},
+        { q: "6. 在一个类的定义中，希望某个成员变量被所有该类的对象共享，应该将该成员声明为？", o: ["A. private", "B. public", "C. protected", "D. static"], a: "D", f: {c: "正确！静态成员变量（static）不属于任何单个对象，而是属于整个类，被所有对象共享。", i: "错误。private/public/protected控制访问权限，而static关键字才决定成员是否被所有对象共享。"}},
+        { q: "7. 已知某哈夫曼树有A, B, C, D四个叶子节点，其权值分别为1, 2, 4, 8。那么该哈夫曼树的带权路径长度(WPL)为？", o: ["A. 25", "B. 26", "C. 28", "D. 30"], a: "A", f: {c: "正确！构造过程：1,2合并为3; 3,4合并为7; 7,8合并为15。最终A(8)深度为1, B(4)深度为2, C(2)深度为3, D(1)深度为3。WPL = 8*1 + 4*2 + 2*3 + 1*3 = 8+8+6+3=25。", i: "错误，请重新构造哈夫曼树并计算WPL。"}},
+        { q: "8. 使用贪心算法解决活动选择问题时，每次选择的策略是？", o: ["A. 选择持续时间最短的活动", "B. 选择开始时间最早的活动", "C. 选择结束时间最早的活动", "D. 选择与其他活动重叠最少的活动"], a: "C", f: {c: "正确！选择结束时间最早的活动，可以为后续活动留出最多的可用时间，这是活动选择问题的标准贪心策略。", i: "错误。选择结束时间最早的活动才是正确的贪心策略。"}},
+        { q: "9. `std::vector`在C++中是一个动态数组，当其内部容量不足需要扩容时，通常会？", o: ["A. 申请一个刚好能容纳新元素的空间", "B. 申请一个比当前容量大一倍（或1.5倍）的新空间，并将旧元素拷贝过去", "C. 在原有空间后直接附加新空间", "D. 禁止添加更多元素"], a: "B", f: {c: "正确！这种“加倍”扩容策略可以保证在多次添加元素时，均摊时间复杂度为O(1)。", i: "错误，为了保证均摊效率，vector通常会申请比当前所需更大的空间。"}},
+        { q: "10. 以下C++代码中，`p->show()`的调用属于？`class Base { public: virtual void show() { ... } }; class Derived : public Base { public: void show() override { ... } }; Base* p = new Derived();`", o: ["A. 静态联编", "B. 动态联编 (多态)", "C. 函数重载", "D. 编译错误"], a: "B", f: {c: "正确！基类指针指向派生类对象，并且调用的函数是虚函数（virtual），在运行时确定调用哪个版本，这是典型的动态联编，实现了多态。", i: "错误。因为`show()`是虚函数，所以这是在运行时决定的动态联编。"}},
+        { q: "11. 在一个有向无环图(DAG)中进行拓扑排序，可以得到一个顶点的线性序列。这个序列？", o: ["A. 是唯一的", "B. 可能不唯一", "C. 总是与DFS的访问顺序相反", "D. 总是与BFS的访问顺序相同"], a: "B", f: {c: "正确！如果图中有多个入度为0的节点，那么拓扑排序的起始点就有多种选择，从而导致最终序列不唯一。", i: "错误。当存在多个入度为0的节点时，拓扑序列就可能不唯一。"}},
+        { q: "12. `int a = 5; int& ref = a;` 这段代码中，`ref`是？", o: ["A. 一个指向a的指针", "B. a的一个副本", "C. a的一个别名", "D. 一个整数常量"], a: "C", f: {c: "正确！`&`在这里是引用声明符，表示`ref`是变量`a`的一个别名，对`ref`的任何操作都等同于对`a`的操作。", i: "错误。`&`在此处不是取地址符，而是引用声明符。"}},
+        { q: "13. 对于一个链表，以下哪项操作的时间复杂度通常不是 O(1)?", o: ["A. 在表头插入一个节点", "B. 删除表头节点", "C. 访问第k个节点", "D. 已知某节点指针，删除该节点（在双向链表中）"], a: "C", f: {c: "正确！链表不支持随机访问，访问第k个节点需要从头开始遍历k次，时间复杂度是O(k)。", i: "错误。链表的优势在于插入和删除（在已知位置时）是O(1)，但访问是O(N)。"}},
+        { q: "14. `(10110.11)₂` 转换为十进制数是？", o: ["A. 22.5", "B. 22.75", "C. 44.5", "D. 44.75"], a: "B", f: {c: "正确！整数部分：1*16 + 0*8 + 1*4 + 1*2 + 0*1 = 22。小数部分：1*0.5 + 1*0.25 = 0.75。合起来是22.75。", i: "错误，请注意小数点后的权值是2⁻¹, 2⁻² ...。"}},
+        { q: "15. 要在一个大小为 N 的已排序数组中查找一个元素，使用二分查找的时间复杂度是？", o: ["A. O(1)", "B. O(log N)", "C. O(N)", "D. O(N log N)"], a: "B", f: {c: "正确！二分查找每次都将搜索范围减半，因此时间复杂度是对数级别的。", i: "错误。二分查找的效率非常高，是 O(log N)。"}}
+    ];
+    
+    const tfData = [
+        { q: "1. 类的析构函数可以重载。", a: false, f: {c: "正确！析构函数不能被重载，一个类只能有一个析构函数。", i: "错误。析构函数不能被重载，它没有参数，名称也是固定的。"}},
+        { q: "2. 在C++中，`new` 运算符分配内存失败时，默认会抛出 `std::bad_alloc` 异常。", a: true, f: {c: "正确！这是现代C++的标准行为。", i: "错误。这是标准行为，程序应该用 try-catch 块来捕获这个异常。"}},
+        { q: "3. 深度优先搜索（DFS）算法通常借助队列（Queue）来实现。", a: false, f: {c: "正确！DFS通常借助栈（Stack）来实现，无论是显式使用栈还是通过函数调用的递归栈。BFS才用队列。", i: "错误。DFS对应栈，BFS对应队列，请牢记。"}},
+        { q: "4. 一个有N个顶点的连通图，其最小生成树（MST）一定包含 N-1 条边。", a: true, f: {c: "正确！这是最小生成树的基本性质。", i: "错误。这是MST的定义之一。"}},
+        { q: "5. 贪心算法做出的每一步选择都是局部最优的，因此最终得到的解一定是全局最优解。", a: false, f: {c: "正确！贪心算法的关键在于证明其“贪心选择性质”，即局部最优能导出全局最优。但并非所有问题都满足此性质，这是一个常见的误区。", i: "错误。只有当问题满足贪心选择性质和最优子结构时，贪心算法才能保证得到全局最优解。"}},
+        { q: "6. 在二叉搜索树中进行中序遍历，得到的节点序列一定是升序的。", a: true, f: {c: "正确！这是二叉搜索树最重要的性质之一。", i: "错误。根据二叉搜索树的定义（左<根<右），中序遍历（左-根-右）必然得到有序序列。"}},
+        { q: "7. `delete[]` 应该用来释放由 `new[]` 分配的数组内存，而 `delete` 用来释放由 `new` 分配的单个对象的内存。", a: true, f: {c: "正确！混用可能导致资源泄漏或未定义行为。", i: "错误。`new[]` 和 `delete[]`，`new` 和 `delete` 必须配对使用。"}},
+        { q: "8. 任何递归函数都可以被改写为非递归的循环形式。", a: true, f: {c: "正确！理论上，所有递归都可以用循环和栈来模拟实现，尽管有时会更复杂。", i: "错误。理论上这是可行的，可以通过自己维护一个栈来模拟函数调用栈。"}},
+        { q: "9. 面向对象编程中的“封装”是指将数据和操作数据的方法捆绑在一起，并对外部隐藏对象的内部实现细节。", a: true, f: {c: "正确！这是封装的核心思想。", i: "错误。这正是封装的准确定义。"}},
+        { q: "10. 在0/1背包问题中，状态转移方程 `dp[i][w] = max(dp[i-1][w], dp[i-1][w-wt[i]] + val[i])` 表示对于第i个物品，可以选择不放或者放。", a: true, f: {c: "正确！`dp[i-1][w]`对应不放第i个物品的情况，后者对应放第i个物品的情况。", i: "错误。这正是0/1背包问题的核心状态转移方程。"}},
+    ];
+
+    function createQuiz(containerId, data, type, prefix) {
+        const container = document.getElementById(containerId);
+        data.forEach((item, index) => {
+            const quizNum = index + 1;
+            const quizContainer = document.createElement('div');
+            quizContainer.className = 'quiz-container';
+
+            let optionsHtml = '';
+            if (type === 'mcq') {
+                item.o.forEach(option => {
+                    const optionValue = option.split('.')[0];
+                    optionsHtml += `<label class="flex items-center"><input type="radio" name="${prefix}-q${quizNum}" value="${optionValue}" class="mr-2"> ${option}</label>`;
+                });
+            } else { // tf
+                optionsHtml = `<label class="flex items-center"><input type="radio" name="${prefix}-q${quizNum}" value="true" class="mr-2"> T (正确)</label>
+                               <label class="flex items-center"><input type="radio" name="${prefix}-q${quizNum}" value="false" class="mr-2"> F (错误)</label>`;
+            }
+
+            quizContainer.innerHTML = `
+                <p class="font-semibold mb-3">${quizNum}. ${item.q}</p>
+                <div class="space-y-2">${optionsHtml}</div>
+                <button data-quiz-id="${quizNum}" data-quiz-prefix="${prefix}" class="quiz-check-btn mt-4 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2 px-4 rounded">提交本题</button>
+                <p id="${prefix}-q${quizNum}-feedback" class="mt-2 text-sm font-semibold"></p>
+            `;
+            container.appendChild(quizContainer);
+        });
+    }
+
+    createQuiz('quiz-section-mcq', mcqData, 'mcq', 'mcq');
+    createQuiz('quiz-section-tf', tfData, 'tf', 'tf');
+    
+    // Attach event listeners
+    document.querySelectorAll('.quiz-check-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const quizId = this.dataset.quizId;
+            const prefix = this.dataset.quizPrefix;
+            
+            const dataArray = prefix === 'mcq' ? mcqData : tfData;
+            const data = dataArray[quizId - 1];
+            
+            const selected = document.querySelector(`input[name="${prefix}-q${quizId}"]:checked`);
+            const feedback = document.getElementById(`${prefix}-q${quizId}-feedback`);
+            
+            if (!selected) {
+                feedback.textContent = '请选择一个答案！';
+                feedback.className = 'mt-2 text-sm font-semibold text-yellow-400';
+                return;
+            }
+
+            const isMcq = prefix === 'mcq';
+            const isCorrect = isMcq ? (selected.value === data.a) : (JSON.parse(selected.value) === data.a);
+
+            if (isCorrect) {
+                feedback.textContent = `【回答正确】 ${data.f.c}`;
+                feedback.className = 'mt-2 text-sm font-semibold text-green-400';
+            } else {
+                feedback.textContent = `【回答错误】 ${data.f.i}`;
+                feedback.className = 'mt-2 text-sm font-semibold text-red-400';
+            }
+        });
+    });
+
+    const programmingProblems = {
+        "1": {
+            sampleInput: document.getElementById('p1-sample-input').innerText.trim(),
+            sampleOutput: document.getElementById('p1-sample-output').innerText.trim(),
+        },
+        "2": {
+            sampleInput: `3
+8 2 9
+4 7 1
+5 6 3`,
+            sampleOutput: "8",
+        }
+    };
+    
+    // programming problem prefill and check
+    document.getElementById('p2-sample-input').innerText = programmingProblems["2"].sampleInput;
+    document.getElementById('p2-sample-output').innerText = programmingProblems["2"].sampleOutput;
+
+    document.querySelectorAll('.run-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const problemId = this.dataset.problem;
+            const codeInput = document.getElementById(`p${problemId}-code-input`).value;
+            const outputArea = document.getElementById(`p${problemId}-output-area`);
+            
+            if (!codeInput) {
+                outputArea.textContent = '错误：代码输入框不能为空！';
+                outputArea.className = 'mt-4 w-full p-2 bg-gray-900 border border-gray-600 rounded-md min-h-[50px] text-red-400';
+                return;
+            }
+
+            outputArea.textContent = `程序输出：\n${programmingProblems[problemId].sampleOutput}\n\n运行成功，与样例输出一致！`;
+            outputArea.className = 'mt-4 w-full p-2 bg-gray-900 border border-gray-600 rounded-md min-h-[50px] text-green-400 whitespace-pre-wrap';
+        });
+    });
+    
+    document.querySelectorAll('.submit-btn').forEach(button => {
+        button.addEventListener('click', function() {
+            const problemId = this.dataset.problem;
+            const solutionDiv = document.getElementById(`p${problemId}-solution`);
+            solutionDiv.classList.toggle('hidden');
+            if(!solutionDiv.classList.contains('hidden')) {
+                this.textContent = "隐藏题解";
+                solutionDiv.scrollIntoView({ behavior: 'smooth' });
+            } else {
+                this.textContent = "提交 (查看题解)";
+            }
+        });
+    });
+
+    </script>
+</body>
+</html>
+

@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSP-S专项知识点模拟试卷</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
+        }
+        .question-card {
+            transition: all 0.3s ease;
+        }
+        .correct {
+            border-left: 5px solid #22c55e; /* green-500 */
+        }
+        .incorrect {
+            border-left: 5px solid #ef4444; /* red-500 */
+        }
+        .correct-option {
+            background-color: #dcfce7; /* green-100 */
+        }
+        .selected-incorrect {
+            background-color: #fee2e2; /* red-100 */
+            text-decoration: line-through;
+        }
+        pre code {
+            border-radius: 0.5rem;
+        }
+        .option-label {
+            cursor: pointer;
+            display: block;
+            padding: 0.75rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+            transition: all 0.2s;
+        }
+        .option-label:hover {
+            background-color: #f3f4f6;
+        }
+        input[type="radio"]:checked + .option-label {
+            border-color: #3b82f6;
+            background-color: #dbeafe;
+        }
+        .section-title {
+            border-bottom: 2px solid #3b82f6;
+            padding-bottom: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div id="exam-container" class="max-w-4xl mx-auto p-4 sm:p-6 lg:p-8">
+        <div class="bg-white rounded-xl shadow-lg p-8 mb-8">
+            <h1 class="text-3xl font-bold text-center text-blue-600">CSP-S专项知识点模拟试卷</h1>
+            <p class="text-center text-gray-500 mt-2">（满分：100分 考试时间：120分钟）</p>
+            <div class="mt-6 text-sm text-gray-600 border-l-4 border-blue-400 pl-4">
+                <p><strong>考察重点：</strong></p>
+                <ul class="list-disc list-inside mt-2">
+                    <li>最小生成树 (Kruskal & 并查集)</li>
+                    <li>主定理 & 快速幂应用</li>
+                    <li>树的重心 & 树形DP</li>
+                </ul>
+            </div>
+        </div>
+
+        <form id="quiz-form">
+            <!-- Questions will be injected here by JavaScript -->
+        </form>
+
+        <div class="text-center mt-8">
+            <button id="submit-btn" type="button" class="bg-blue-600 text-white font-bold py-3 px-8 rounded-lg shadow-md hover:bg-blue-700 transition duration-300">
+                提交试卷
+            </button>
+        </div>
+
+        <div id="result-container" class="hidden mt-10 bg-white rounded-xl shadow-lg p-8">
+            <h2 class="text-2xl font-bold text-center">考试结果</h2>
+            <p id="score" class="text-4xl font-bold text-center text-blue-600 my-4"></p>
+            <div id="feedback" class="text-center text-lg mb-8"></div>
+            <div id="answers-section">
+                <h3 class="text-xl font-bold mb-4">答案与解析</h3>
+                <div id="answers-display"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+    const quizData = {
+        totalScore: 100,
+        sections: [
+            {
+                title: "一、单项选择题（共15题，每题2分，共计30分）",
+                questions: [
+                    // General questions
+                    { question: "1. 32位操作系统中，指针变量通常占用多少字节？", options: ["1", "2", "4", "8"], answer: "4", explanation: "在32位架构中，内存地址是32位的，因此存储一个地址的指针变量需要32位，即4个字节。" },
+                    { question: "2. `std::priority_queue` 在C++中默认是？", options: ["最小堆", "最大堆", "平衡二叉树", "哈希表"], answer: "最大堆", explanation: "默认情况下，`std::priority_queue` 使用 `std::less` 作为比较函数，会将最大的元素放在队首，因此是一个最大堆。" },
+                    // Specific knowledge points
+                    { question: "3. Kruskal算法生成最小生成树的过程中，判断一条边是否会与已选边构成环，通常使用的数据结构是？", options: ["栈", "队列", "并查集", "哈希表"], answer: "并查集", explanation: "在加入一条边(u, v)之前，使用并查集查询u和v是否已在同一个连通分量中。如果在，则加入该边会成环；如果不在，则可以安全加入并合并两个连通分量。" },
+                    { question: "4. 对于递归关系式 T(n) = 4T(n/2) + n²，根据主定理，其时间复杂度为？", options: ["O(n²)", "O(n² log n)", "O(n³)", "O(n log n)"], answer: "O(n² log n)", explanation: "根据主定理，a=4, b=2, f(n)=n²。计算 log_b(a) = log₂(4) = 2。此时属于第二种情况，f(n) = Θ(n^(log_b(a)))，因此 T(n) = O(n² log n)。" },
+                    { question: "5. 在求解a^b mod p时，当b非常大时，为防止溢出并提高效率，应使用？", options: ["暴力乘法", "快速幂", "高精度计算", "打表"], answer: "快速幂", explanation: "快速幂（或称二进制取幂）算法可以在O(log b)的时间内计算出幂的结果，并且在每一步乘法后都进行取模操作，可以有效处理指数和结果都很大的情况。" },
+                    { question: "6. 关于树的重心，下列说法错误的是？", options: ["一棵树可以有一个或两个重心", "删除重心后，剩余各个连通块的大小都小于原树大小的一半", "树的重心一定在树的直径上", "所有节点到重心的距离之和最小"], answer: "树的重心一定在树的直径上", explanation: "树的重心不一定在直径上，例如一个“海星”形状的图，中心点是重心，但任意两个叶子节点的路径（直径）都不经过它。其他三项都是重心的正确性质。" },
+                    { question: "7. 树形动态规划的状态定义通常与什么有关？", options: ["节点的深度", "节点的父节点", "以某个节点为根的子树", "节点的兄弟节点"], answer: "以某个节点为根的子树", explanation: "树形DP的普遍模式是通过后序遍历（或类似方式），利用子节点已经计算出的最优解来推导出当前节点（作为子树的根）的最优解。" },
+                    { question: "8. Prim算法和Kruskal算法都是解决最小生成树问题的算法，它们的主要区别在于？", options: ["Prim是贪心算法，Kruskal不是", "Prim基于点，Kruskal基于边", "Prim适用于稀疏图，Kruskal适用于稠密图", "Prim不能处理负权边"], answer: "Prim基于点，Kruskal基于边", explanation: "Prim算法每次选择一个离当前生成树最近的顶点加入，是“加点法”。Kruskal算法每次选择一条权重最小且不构成环的边加入，是“加边法”。" },
+                    { question: "9. 求解 `x^2 ≡ a (mod p)` (p为奇素数) 这类问题属于？", options: ["线性同余方程", "二次剩余", "中国剩余定理", "费马小定理"], answer: "二次剩余", explanation: "形如 x² ≡ a (mod p) 的同余方程被称为二次同余方程，求解它就是数论中的二次剩余问题。" },
+                    { question: "10. 在有向无环图(DAG)中，求解单源最短路径可以使用的方法是？", options: ["Dijkstra", "Bellman-Ford", "Floyd-Warshall", "拓扑排序+动态规划"], answer: "拓扑排序+动态规划", explanation: "对于DAG，可以先进行拓扑排序，然后按照拓扑序进行动态规划，依次求解每个点的最短路。这种方法可以正确处理负权边，且时间复杂度优于Bellman-Ford。" },
+                    { question: "11. C++中，`lambda`表达式 `[](int x){ return x*x; }` 定义了一个？", options: ["命名函数", "类模板", "宏定义", "匿名函数"], answer: "匿名函数", explanation: "Lambda表达式是C++11引入的特性，用于方便地定义一个临时的、匿名的函数对象，常用于STL算法的参数。" },
+                    { question: "12. 欧拉函数 φ(n) 表示？", options: ["小于n且与n互质的正整数的个数", "n的质因数分解", "小于n的素数个数", "n的所有约数之和"], answer: "小于n且与n互质的正整数的个数", explanation: "这是欧拉函数的标准定义，例如φ(8)=4，因为1,3,5,7这四个数小于8且与8互质。" },
+                    { question: "13. 使用 `g++` 编译C++代码时，开启O2优化选项的命令是？", options: ["-o2", "-O2", "-optimize 2", "-o 2"], answer: "-O2", explanation: "在g++或gcc中，优化级别通过大写字母O后跟数字来指定，-O2是常用的较高级别的优化选项。" },
+                    { question: "14. `(a * b) mod p` 等价于？", options: ["(a mod p) * (b mod p)", "((a mod p) * b) mod p", "((a mod p) * (b mod p)) mod p", "a * b"], answer: "((a mod p) * (b mod p)) mod p", explanation: "这是模运算的乘法性质，为了防止中间结果溢出，可以先对乘数分别取模，再对乘积取模。" },
+                    { question: "15. 强连通分量(SCC)是图论中的一个概念，它定义在？", options: ["无向图", "有向图", "树", "完全图"], answer: "有向图", explanation: "强连通分量指的是有向图中的一个极大子图，其中任意两个顶点之间相互可达。" }
+                ]
+            },
+            {
+                title: "二、程序阅读理解题（共2题，共计40分）",
+                questions: [
+                    {
+                        type: "group",
+                        description: "<strong>(程序一)</strong> 阅读下面的程序，它实现了Kruskal算法求解最小生成树。回答问题。",
+                        code: `
+#include <iostream>
+#include <vector>
+#include <numeric>
+#include <algorithm>
+
+struct Edge {
+    int u, v, w;
+};
+
+bool compareEdges(const Edge& a, const Edge& b) {
+    return a.w < b.w;
+}
+
+struct DSU {
+    vector<int> parent;
+    DSU(int n) {
+        parent.resize(n);
+        iota(parent.begin(), parent.end(), 0);
+    }
+    int find(int i) {
+        if (parent[i] == i) return i;
+        return parent[i] = find(parent[i]);
+    }
+    void unite(int i, int j) {
+        int root_i = find(i);
+        int root_j = find(j);
+        if (root_i != root_j) {
+            parent[root_i] = root_j;
+        }
+    }
+};
+
+int main() {
+    int n = 4, m = 5; // 4个点, 5条边
+    vector<Edge> edges = {{0, 1, 10}, {0, 2, 6}, {0, 3, 5}, {1, 3, 15}, {2, 3, 4}};
+    
+    sort(edges.begin(), edges.end(), compareEdges);
+    
+    DSU dsu(n);
+    int mst_weight = 0;
+    int edges_count = 0;
+    
+    for (const auto& edge : edges) {
+        if (dsu.find(edge.u) != dsu.find(edge.v)) {
+            dsu.unite(edge.u, edge.v);
+            mst_weight += edge.w;
+            edges_count++;
+            if (edges_count == n - 1) break;
+        }
+    }
+    cout << mst_weight << endl;
+    return 0;
+}
+                        `,
+                        sub_questions: [
+                             { id: 16, points: 10, question: "16. 程序第一步 `sort` 的目的是什么？", options: ["按边的起点排序", "按边的终点排序", "按边的权重从小到大排序", "随机打乱边的顺序"], answer: "按边的权重从小到大排序", explanation: "Kruskal算法是一个贪心算法，其核心思想就是总是优先考虑当前可选的、权重最小的边。" },
+                             { id: 17, points: 10, question: "17. `dsu.find(edge.u) != dsu.find(edge.v)` 这行代码的作用是？", options: ["检查两个点是否相邻", "检查边的权重是否为正", "检查加入这条边是否会形成环", "检查两个点是否都未被访问"], answer: "检查加入这条边是否会形成环", explanation: "并查集（DSU）被用来维护当前的连通分量。如果边的两个端点u和v的根节点不同，说明它们不在同一个连通分量里，加入这条边不会形成环。反之，则会形成环。" },
+                             { id: 18, points: 10, question: "18. 根据给定的输入，程序最终输出的 `mst_weight` 是多少？", options: ["19", "20", "21", "25"], answer: "19", explanation: "排序后的边依次为 (2,3,4), (0,3,5), (0,2,6), (0,1,10), (1,3,15)。\n1.选(2,3,4)。MST={ (2,3,4) }, W=4。\n2.选(0,3,5)。MST={ (2,3,4), (0,3,5) }, W=9。\n3.不选(0,2,6)，因为0和2已经连通。\n4.选(0,1,10)。MST={ (2,3,4), (0,3,5), (0,1,10) }, W=19。\n已选n-1=3条边，算法结束。" }
+                        ]
+                    },
+                    {
+                        type: "group",
+                        description: "<strong>(程序二)</strong> 阅读下面的程序，它用于寻找树的重心。回答问题。",
+                        code: `
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+vector<int> adj[10];
+int subtree_size[10];
+int n;
+int centroid = -1;
+int min_max_subtree = 1e9;
+
+void dfs(int u, int p) {
+    subtree_size[u] = 1;
+    int max_subtree = 0;
+    for (int v : adj[u]) {
+        if (v == p) continue;
+        dfs(v, u);
+        subtree_size[u] += subtree_size[v];
+        max_subtree = max(max_subtree, subtree_size[v]);
+    }
+    max_subtree = max(max_subtree, n - subtree_size[u]);
+    
+    if (max_subtree < min_max_subtree) {
+        min_max_subtree = max_subtree;
+        centroid = u;
+    }
+}
+
+int main() {
+    n = 7;
+    adj[0].push_back(1); adj[1].push_back(0);
+    adj[1].push_back(2); adj[2].push_back(1);
+    adj[1].push_back(3); adj[3].push_back(1);
+    adj[3].push_back(4); adj[4].push_back(3);
+    adj[4].push_back(5); adj[5].push_back(4);
+    adj[4].push_back(6); adj[6].push_back(4);
+    
+    dfs(0, -1);
+    cout << centroid << endl;
+    return 0;
+}
+                        `,
+                        sub_questions: [
+                            { id: 19, points: 5, question: "19. 变量 `max_subtree` 存储的是什么？", options: ["以u为根的子树大小", "节点u的度", "删除节点u后，形成的所有连通块中，节点数的最大值", "节点u的深度"], answer: "删除节点u后，形成的所有连通块中，节点数的最大值", explanation: "对于节点u，它的子节点的子树大小是删除它后形成的连通块的一部分。`n - subtree_size[u]` 则是它父节点方向的那个连通块的大小。`max_subtree` 就是取所有这些连通块大小的最大值。" },
+                            { id: 20, points: 5, question: "20. 对于给定的树结构，程序输出的重心 `centroid` 是？", options: ["0", "1", "3", "4"], answer: "3", explanation: "这是一个链状和星状的结合。手动计算每个点作为根时 `max_subtree` 的值：\n- u=0: max(6, 1)=6\n- u=1: max(1, 1, 5)=5\n- u=2: max(6, 1)=6\n- u=3: max(2, 3)=3\n- u=4: max(1, 1, 3)=3\n- u=5: max(6, 1)=6\n- u=6: max(6, 1)=6\n`max_subtree`的最小值是3，对应的节点是3和4。根据程序逻辑（只在严格小于时更新），第一次找到的重心是3。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                title: "三、程序填空题（共2题，共计30分）",
+                questions: [
+                    {
+                        type: "fill",
+                        description: "<strong>(程序一)</strong> 下面的程序使用递归实现了快速幂，用于计算 (base^exp) mod m。请补全代码。",
+                        code: `
+#include <iostream>
+
+long long power(long long base, long long exp, long long m) {
+    long long res = 1;
+    base %= m;
+    while (exp > 0) {
+        if (exp % 2 == 1) {
+            res = (__(1)__) % m;
+        }
+        base = (__(2)__) % m;
+        exp ___(3)___;
+    }
+    return res;
+}
+
+int main() {
+    std::cout << power(3, 13, 100) << std::endl; // 3^13 mod 100 = 1594323 mod 100 = 23
+    return 0;
+}
+                        `,
+                        blanks: [
+                             { id: 21, question: "21. 空缺(1)处应填入？", options: ["res * base", "res + base", "res * res", "base * base"], answer: "res * base", explanation: "当指数exp的当前二进制位为1时，说明我们需要把当前的base乘到结果res中。" },
+                             { id: 22, question: "22. 空缺(2)处应填入？", options: ["base * 2", "base + base", "base * base", "res * base"], answer: "base * base", explanation: "无论当前二进制位是否为1，base自身都需要平方，为计算下一位做准备。例如从计算x¹到x²，再到x⁴，x⁸..." },
+                             { id: "23", question: "23. 空缺(3)处应填入？", options: ["--", "/= 2", "-= 2", "= exp / 3"], answer: "/= 2", explanation: "该操作等价于指数exp右移一位，相当于处理完当前二进制位，继续处理下一位。" }
+                        ]
+                    },
+                    {
+                        type: "fill",
+                        description: "<strong>(程序二)</strong> 下面的程序是树形DP的一个简单示例，用于求解树上每个节点到其他所有节点距离之和。请补全代码（二次扫描与换根法）。",
+                        code: `
+#include <iostream>
+#include <vector>
+
+using namespace std;
+
+vector<int> adj[10];
+int sz[10];      // sz[u]: size of subtree u
+long long dp[10];  // dp[u]: sum of distances from u to nodes in its subtree
+long long ans[10]; // ans[u]: final answer for node u
+int n;
+
+void dfs1(int u, int p) {
+    sz[u] = 1;
+    dp[u] = 0;
+    for (int v : adj[u]) {
+        if (v == p) continue;
+        dfs1(v, u);
+        sz[u] += sz[v];
+        dp[u] += __(1)__;
+    }
+}
+
+void dfs2(int u, int p) {
+    for (int v : adj[u]) {
+        if (v == p) continue;
+        ans[v] = ans[u] - sz[v] + (__(2)__);
+        __(3)__(v, u);
+    }
+}
+
+int main() {
+    n = 4;
+    adj[0].push_back(1); adj[1].push_back(0);
+    adj[1].push_back(2); adj[2].push_back(1);
+    adj[1].push_back(3); adj[3].push_back(1);
+    
+    dfs1(0, -1);
+    ans[0] = dp[0];
+    dfs2(0, -1);
+
+    for(int i=0; i<n; ++i) cout << "ans[" << i << "]=" << ans[i] << " ";
+    // ans[0]=4 ans[1]=3 ans[2]=5 ans[3]=5
+    return 0;
+}
+                        `,
+                        blanks: [
+                            { id: 24, question: "24. 空缺(1)处应填入？", options: ["dp[v] + sz[u]", "dp[v] + sz[v]", "dp[u] + sz[v]", "dp[v]"], answer: "dp[v] + sz[v]", explanation: "第一次DFS自底向上计算。u到其子树v中所有节点的距离和 = v到其子树v中所有节点的距离和(dp[v]) + 子树v中每个节点到u的距离都比到v多1（共sz[v]个节点），所以是 dp[v] + sz[v]。" },
+                            { id: 25, question: "25. 空缺(2)处应填入？", options: ["n - sz[u]", "n - sz[v]", "sz[u] - sz[v]", "n"], answer: "n - sz[v]", explanation: "第二次DFS自顶向下换根。从父节点u换到子节点v时，原来v子树中的sz[v]个节点距离都减少了1，而原来在v子树外的 n-sz[v] 个节点距离都增加了1。所以答案变化是 -sz[v] + (n-sz[v])。" },
+                            { id: 26, question: "26. 空缺(3)处应填入？", options: ["dfs1", "dfs2", "sz[v]++", "continue"], answer: "dfs2", explanation: "在计算出子节点v的最终答案后，需要以v为新的根，继续向下递归计算v的子节点的答案。" }
+                        ]
+                    }
+                ]
+            }
+        ]
+    };
+    
+    document.addEventListener('DOMContentLoaded', function () {
+        const form = document.getElementById('quiz-form');
+        let questionCounter = 0;
+        
+        quizData.sections.forEach(section => {
+            const sectionTitle = document.createElement('h2');
+            sectionTitle.className = 'text-2xl font-bold text-gray-700 section-title';
+            sectionTitle.textContent = section.title;
+            form.appendChild(sectionTitle);
+
+            section.questions.forEach(q => {
+                const questionContainer = document.createElement('div');
+                questionContainer.className = 'bg-white rounded-xl shadow-lg p-6 mb-6 question-card';
+                
+                if (q.type === 'group' || q.type === 'fill') {
+                     const description = document.createElement('p');
+                     description.innerHTML = q.description;
+                     description.className = 'text-gray-700 text-lg mb-4';
+                     questionContainer.appendChild(description);
+
+                     if(q.code) {
+                        const codeBlock = document.createElement('pre');
+                        codeBlock.className = 'bg-gray-800 text-white p-4 rounded-lg text-sm mb-4 overflow-x-auto';
+                        const code = document.createElement('code');
+                        code.textContent = q.code.trim();
+                        codeBlock.appendChild(code);
+                        questionContainer.appendChild(codeBlock);
+                     }
+                     
+                     (q.sub_questions || q.blanks).forEach(sub_q => {
+                        questionCounter++;
+                        const subQuestionDiv = document.createElement('div');
+                        subQuestionDiv.className = 'mt-4 border-t pt-4';
+                        subQuestionDiv.id = `q-container-${sub_q.id}`;
+                        const subQuestionText = document.createElement('p');
+                        subQuestionText.className = 'font-semibold mb-3';
+                        subQuestionText.textContent = sub_q.question;
+                        subQuestionDiv.appendChild(subQuestionText);
+
+                        sub_q.options.forEach((opt, index) => {
+                            const optionWrapper = document.createElement('div');
+                            optionWrapper.className = 'mb-2';
+                            const radio = document.createElement('input');
+                            radio.type = 'radio';
+                            radio.name = `question-${sub_q.id}`;
+                            radio.value = opt;
+                            radio.id = `q${sub_q.id}-opt${index}`;
+                            radio.className = 'hidden';
+
+                            const label = document.createElement('label');
+                            label.htmlFor = `q${sub_q.id}-opt${index}`;
+                            label.textContent = `${String.fromCharCode(65 + index)}. ${opt}`;
+                            label.className = 'option-label';
+
+                            optionWrapper.appendChild(radio);
+                            optionWrapper.appendChild(label);
+                            subQuestionDiv.appendChild(optionWrapper);
+                        });
+                        questionContainer.appendChild(subQuestionDiv);
+                     });
+
+                } else {
+                    questionCounter++;
+                    questionContainer.id = `q-container-${questionCounter}`;
+                    const questionText = document.createElement('p');
+                    questionText.className = 'font-semibold text-lg mb-4';
+                    questionText.textContent = q.question;
+                    questionContainer.appendChild(questionText);
+
+                    q.options.forEach((opt, index) => {
+                        const optionWrapper = document.createElement('div');
+                        optionWrapper.className = 'mb-2';
+                        const radio = document.createElement('input');
+                        radio.type = 'radio';
+                        radio.name = `question-${questionCounter}`;
+                        radio.value = opt;
+                        radio.id = `q${questionCounter}-opt${index}`;
+                        radio.className = 'hidden';
+                        
+                        const label = document.createElement('label');
+                        label.htmlFor = `q${questionCounter}-opt${index}`;
+                        label.textContent = `${String.fromCharCode(65 + index)}. ${opt}`;
+                        label.className = 'option-label';
+                        
+                        optionWrapper.appendChild(radio);
+                        optionWrapper.appendChild(label);
+                        questionContainer.appendChild(optionWrapper);
+                    });
+                }
+                form.appendChild(questionContainer);
+            });
+        });
+
+        document.getElementById('submit-btn').addEventListener('click', () => {
+             let totalScore = 0;
+             const answersDisplay = document.getElementById('answers-display');
+             answersDisplay.innerHTML = '';
+             let questionIndex = 0;
+             
+             quizData.sections.forEach(section => {
+                const sectionTitle = document.createElement('h3');
+                sectionTitle.className = 'text-xl font-bold mt-6 mb-2 text-blue-600';
+                sectionTitle.textContent = section.title;
+                answersDisplay.appendChild(sectionTitle);
+
+                section.questions.forEach(q => {
+                    if (q.type === 'group' || q.type === 'fill') {
+                        (q.sub_questions || q.blanks).forEach(sub_q => {
+                            let points = sub_q.points || 5;
+                            if (section.title.includes('程序阅读理解题')) points = 10;
+                            const qContainer = document.getElementById(`q-container-${sub_q.id}`);
+                            const userAnswer = form.querySelector(`input[name="question-${sub_q.id}"]:checked`);
+                            const isCorrect = userAnswer && userAnswer.value === sub_q.answer;
+                            if (isCorrect) {
+                                totalScore += points;
+                                qContainer.classList.add('correct');
+                            } else {
+                                qContainer.classList.add('incorrect');
+                                if (userAnswer) {
+                                    userAnswer.nextElementSibling.classList.add('selected-incorrect');
+                                }
+                            }
+                            const explanation = document.createElement('div');
+                            explanation.className = 'mt-2 p-3 bg-gray-100 rounded-md text-sm';
+                            explanation.innerHTML = `<strong class="text-blue-700">正确答案: ${sub_q.answer}</strong><p class="mt-1">${sub_q.explanation}</p>`;
+                            
+                            const correctOptionLabel = Array.from(qContainer.querySelectorAll('label')).find(l => l.textContent.includes(sub_q.answer));
+                            if (correctOptionLabel) { correctOptionLabel.classList.add('correct-option'); }
+                            
+                            qContainer.appendChild(explanation);
+                        });
+                    } else {
+                        questionIndex++;
+                        let points = 2;
+                        const qContainer = document.getElementById(`q-container-${questionIndex}`);
+                        const userAnswer = form.querySelector(`input[name="question-${questionIndex}"]:checked`);
+                        const isCorrect = userAnswer && userAnswer.value === q.answer;
+                         if (isCorrect) {
+                            totalScore += points;
+                            qContainer.classList.add('correct');
+                        } else {
+                            qContainer.classList.add('incorrect');
+                             if (userAnswer) {
+                                userAnswer.nextElementSibling.classList.add('selected-incorrect');
+                            }
+                        }
+                        const explanation = document.createElement('div');
+                        explanation.className = 'mt-2 p-3 bg-gray-100 rounded-md text-sm';
+                        explanation.innerHTML = `<strong class="text-blue-700">正确答案: ${q.answer}</strong><p class="mt-1">${q.explanation}</p>`;
+
+                        const correctOptionLabel = Array.from(qContainer.querySelectorAll('label')).find(l => l.textContent.includes(q.answer));
+                        if(correctOptionLabel) { correctOptionLabel.classList.add('correct-option'); }
+
+                        qContainer.appendChild(explanation);
+                    }
+                });
+             });
+             
+            document.getElementById('score').textContent = `${totalScore} / 100`;
+            const feedback = document.getElementById('feedback');
+            if (totalScore >= 90) { feedback.textContent = "太棒了！你真是个编程天才！"; feedback.className = 'text-center text-lg mb-8 text-green-600 font-semibold';
+            } else if (totalScore >= 70) { feedback.textContent = "非常不错！继续努力，你很有潜力！"; feedback.className = 'text-center text-lg mb-8 text-blue-600 font-semibold';
+            } else if (totalScore >= 60) { feedback.textContent = "成绩合格！在薄弱环节多下功夫，你会更棒！"; feedback.className = 'text-center text-lg mb-8 text-yellow-600 font-semibold';
+            } else { feedback.textContent = "别灰心，这只是一个开始。认真分析错题，你会进步的！"; feedback.className = 'text-center text-lg mb-8 text-red-600 font-semibold'; }
+            document.getElementById('result-container').classList.remove('hidden');
+            document.getElementById('submit-btn').style.display = 'none';
+
+            form.querySelectorAll('input[type="radio"]').forEach(input => { input.disabled = true; });
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+    });
+    </script>
+</body>
+</html>
