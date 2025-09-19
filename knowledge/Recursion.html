@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>递归交互式学习</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Custom styles for Inter font and general aesthetics */
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0f4f8; /* Light blue-gray background */
+            color: #334155; /* Darker text color */
+        }
+        .container {
+            max-width: 900px;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 0.75rem; /* rounded-xl */
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05); /* shadow-lg */
+        }
+        .btn-primary {
+            background-color: #4f46e5; /* indigo-600 */
+            color: #ffffff;
+            padding: 0.75rem 1.5rem; /* py-3 px-6 */
+            border-radius: 0.5rem; /* rounded-lg */
+            transition: background-color 0.3s ease;
+        }
+        .btn-primary:hover {
+            background-color: #4338ca; /* indigo-700 */
+        }
+        .input-field {
+            border: 1px solid #cbd5e1; /* border-slate-300 */
+            border-radius: 0.5rem; /* rounded-lg */
+            padding: 0.5rem 1rem; /* py-2 px-4 */
+            width: 100%;
+        }
+        .code-block {
+            background-color: #1e293b; /* slate-800 */
+            color: #e2e8f0; /* slate-200 */
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-family: 'SFMono-Regular', Consolas, 'Liberation Mono', Menlo, Courier, monospace;
+            overflow-x: auto;
+        }
+        .highlight {
+            background-color: #fcd34d; /* amber-300 */
+            color: #1e293b; /* slate-800 */
+            padding: 0.125rem 0.25rem;
+            border-radius: 0.25rem;
+        }
+    </style>
+</head>
+<body class="p-6">
+    <div class="container mx-auto p-8 card">
+        <h1 class="text-4xl font-extrabold text-center mb-8 text-indigo-700">递归交互式学习方案</h1>
+
+        <!-- Section 1: 什么是递归？ -->
+        <div class="mb-10 p-6 card">
+            <h2 class="text-3xl font-bold mb-4 text-indigo-600">1. 什么是递归？</h2>
+            <p class="text-lg mb-4 leading-relaxed">
+                <span class="font-semibold text-indigo-500">递归 (Recursion)</span> 是一种编程技巧，指的是一个函数在执行过程中调用自身。这就像一面镜子反射另一面镜子一样。
+            </p>
+            <p class="text-lg mb-4 leading-relaxed">
+                要正确使用递归，需要满足两个关键条件：
+            </p>
+            <ul class="list-disc list-inside text-lg space-y-2 mb-4">
+                <li>
+                    <span class="font-semibold text-green-600">基本情况 (Base Case):</span> 递归必须有一个或多个基本情况，这些情况可以直接解决，不再进行递归调用。这是递归停止的条件，防止无限循环。
+                </li>
+                <li>
+                    <span class="font-semibold text-blue-600">递归步骤 (Recursive Step):</span> 函数在其中调用自身，但每次调用都将问题规模缩小，使其逐渐接近基本情况。
+                </li>
+            </ul>
+            <p class="text-lg leading-relaxed">
+                如果缺少基本情况，递归将永远不会停止，导致栈溢出错误。
+            </p>
+        </div>
+
+        <!-- Section 2: 经典案例：阶乘函数 -->
+        <div class="mb-10 p-6 card">
+            <h2 class="text-3xl font-bold mb-4 text-indigo-600">2. 经典案例：阶乘函数</h2>
+            <p class="text-lg mb-4 leading-relaxed">
+                阶乘是一个很好的递归例子。一个正整数 $n$ 的阶乘（表示为 $n!$）是所有小于或等于 $n$ 的正整数的乘积。
+            </p>
+            <p class="text-lg mb-4 leading-relaxed">
+                例如：$5! = 5 \times 4 \times 3 \times 2 \times 1 = 120$
+            </p>
+            <p class="text-lg mb-4 leading-relaxed">
+                我们可以用递归来定义它：
+            </p>
+            <ul class="list-disc list-inside text-lg space-y-2 mb-4">
+                <li>
+                    <span class="font-semibold text-green-600">基本情况:</span> $0! = 1$ 或 $1! = 1$
+                </li>
+                <li>
+                    <span class="font-semibold text-blue-600">递归步骤:</span> $n! = n \times (n-1)!$
+                </li>
+            </ul>
+
+            <h3 class="text-2xl font-semibold mb-3 text-indigo-500">JavaScript 实现：</h3>
+            <pre class="code-block mb-4"><code>function factorial(n) {
+    // 基本情况：如果 n 是 0 或 1，返回 1
+    if (n === 0 || n === 1) {
+        return 1;
+    }
+    // 递归步骤：n 乘以 (n-1) 的阶乘
+    return n * factorial(n - 1);
+}</code></pre>
+
+            <h3 class="text-2xl font-semibold mb-3 text-indigo-500">交互式演示：计算阶乘</h3>
+            <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-4">
+                <input type="number" id="factorialInput" placeholder="输入一个非负整数" class="input-field flex-grow" min="0" value="5">
+                <button id="calculateFactorialBtn" class="btn-primary">计算阶乘</button>
+            </div>
+            <div id="factorialResult" class="text-xl font-bold text-center text-gray-800 mb-4 p-3 border border-slate-300 rounded-lg bg-slate-50">
+                结果将显示在这里
+            </div>
+            <h3 class="text-2xl font-semibold mb-3 text-indigo-500">执行步骤可视化：</h3>
+            <div id="factorialSteps" class="bg-gray-100 p-4 rounded-lg text-gray-700 text-sm overflow-auto max-h-60">
+                <!-- 阶乘计算步骤将在这里显示 -->
+            </div>
+        </div>
+
+        <!-- Section 3: 另一个例子：斐波那契数列 -->
+        <div class="mb-10 p-6 card">
+            <h2 class="text-3xl font-bold mb-4 text-indigo-600">3. 另一个例子：斐波那契数列</h2>
+            <p class="text-lg mb-4 leading-relaxed">
+                斐波那契数列是一个数列，其中每个数字是前两个数字的和。
+            </p>
+            <p class="text-lg mb-4 leading-relaxed">
+                数列开始于 $0$ 和 $1$ (或 $1$ 和 $1$)：$0, 1, 1, 2, 3, 5, 8, 13, \dots$
+            </p>
+            <p class="text-lg mb-4 leading-relaxed">
+                递归定义：
+            </p>
+            <ul class="list-disc list-inside text-lg space-y-2 mb-4">
+                <li>
+                    <span class="font-semibold text-green-600">基本情况:</span> $F(0) = 0$, $F(1) = 1$
+                </li>
+                <li>
+                    <span class="font-semibold text-blue-600">递归步骤:</span> $F(n) = F(n-1) + F(n-2)$ (对于 $n > 1$)
+                </li>
+            </ul>
+
+            <h3 class="text-2xl font-semibold mb-3 text-indigo-500">JavaScript 实现：</h3>
+            <pre class="code-block mb-4"><code>function fibonacci(n) {
+    // 基本情况
+    if (n === 0) {
+        return 0;
+    }
+    if (n === 1) {
+        return 1;
+    }
+    // 递归步骤
+    return fibonacci(n - 1) + fibonacci(n - 2);
+}</code></pre>
+
+            <h3 class="text-2xl font-semibold mb-3 text-indigo-500">交互式演示：计算斐波那契数</h3>
+            <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-4">
+                <input type="number" id="fibonacciInput" placeholder="输入一个非负整数" class="input-field flex-grow" min="0" value="7">
+                <button id="calculateFibonacciBtn" class="btn-primary">计算斐波那契数</button>
+            </div>
+            <div id="fibonacciResult" class="text-xl font-bold text-center text-gray-800 mb-4 p-3 border border-slate-300 rounded-lg bg-slate-50">
+                结果将显示在这里
+            </div>
+            <h3 class="text-2xl font-semibold mb-3 text-indigo-500">执行步骤可视化：</h3>
+            <div id="fibonacciSteps" class="bg-gray-100 p-4 rounded-lg text-gray-700 text-sm overflow-auto max-h-60">
+                <!-- 斐波那契计算步骤将在这里显示 -->
+            </div>
+        </div>
+
+        <!-- Section 4: 练习题 -->
+        <div class="mb-10 p-6 card">
+            <h2 class="text-3xl font-bold mb-4 text-indigo-600">4. 练习题：求和函数</h2>
+            <p class="text-lg mb-4 leading-relaxed">
+                编写一个递归函数，计算从 $1$ 到 $n$ 的所有整数之和。
+            </p>
+            <p class="text-lg mb-4 leading-relaxed">
+                例如：`sumUpTo(3)` 应该返回 $1 + 2 + 3 = 6$。
+            </p>
+
+            <h3 class="text-2xl font-semibold mb-3 text-indigo-500">提示：</h3>
+            <ul class="list-disc list-inside text-lg space-y-2 mb-4">
+                <li><span class="font-semibold">基本情况：</span>当 $n$ 是 $0$ 或 $1$ 时，和是多少？</li>
+                <li><span class="font-semibold">递归步骤：</span>如何将问题分解成更小的子问题？</li>
+            </ul>
+
+            <h3 class="text-2xl font-semibold mb-3 text-indigo-500">你的代码：</h3>
+            <textarea id="sumUpToCode" class="code-block w-full h-40 mb-4 resize-y" placeholder="在这里编写你的 sumUpTo 函数...">function sumUpTo(n) {
+    // 在这里编写你的代码
+    // 提示：
+    // 基本情况：如果 n === 0，返回 0
+    // 递归步骤：返回 n + sumUpTo(n - 1)
+}</textarea>
+            <div class="flex flex-col sm:flex-row items-center space-y-4 sm:space-y-0 sm:space-x-4 mb-4">
+                <input type="number" id="sumUpToInput" placeholder="输入一个非负整数" class="input-field flex-grow" min="0" value="4">
+                <button id="testSumUpToBtn" class="btn-primary">测试你的函数</button>
+            </div>
+            <div id="sumUpToResult" class="text-xl font-bold text-center text-gray-800 mb-4 p-3 border border-slate-300 rounded-lg bg-slate-50">
+                测试结果将显示在这里
+            </div>
+        </div>
+
+        <!-- Section 5: 总结 -->
+        <div class="p-6 card">
+            <h2 class="text-3xl font-bold mb-4 text-indigo-600">5. 总结</h2>
+            <p class="text-lg leading-relaxed">
+                递归是一个强大而优雅的编程工具，但理解其工作原理（特别是基本情况和递归步骤）至关重要。它常用于解决可以分解为相同类型子问题的问题。
+            </p>
+            <p class="text-lg mt-4 leading-relaxed">
+                希望这个交互式方案能帮助你更好地理解递归！
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript for interactivity
+
+        // Factorial Calculation
+        document.getElementById('calculateFactorialBtn').addEventListener('click', () => {
+            const n = parseInt(document.getElementById('factorialInput').value);
+            const resultDiv = document.getElementById('factorialResult');
+            const stepsDiv = document.getElementById('factorialSteps');
+            stepsDiv.innerHTML = ''; // Clear previous steps
+
+            if (isNaN(n) || n < 0) {
+                resultDiv.textContent = '请输入一个有效的非负整数。';
+                return;
+            }
+
+            let stepLog = [];
+
+            // Recursive factorial function with logging
+            function factorialWithLog(num) {
+                stepLog.push(`调用 factorial(${num})`);
+                if (num === 0 || num === 1) {
+                    stepLog.push(`  基本情况：factorial(${num}) 返回 1`);
+                    return 1;
+                }
+                const subResult = factorialWithLog(num - 1);
+                const currentResult = num * subResult;
+                stepLog.push(`  递归步骤：factorial(${num}) 返回 ${num} * ${subResult} = ${currentResult}`);
+                return currentResult;
+            }
+
+            const result = factorialWithLog(n);
+            resultDiv.textContent = `阶乘(${n}) = ${result}`;
+            stepsDiv.innerHTML = stepLog.map(step => `<p>${step}</p>`).join('');
+            stepsDiv.scrollTop = stepsDiv.scrollHeight; // Scroll to bottom
+        });
+
+        // Fibonacci Calculation
+        document.getElementById('calculateFibonacciBtn').addEventListener('click', () => {
+            const n = parseInt(document.getElementById('fibonacciInput').value);
+            const resultDiv = document.getElementById('fibonacciResult');
+            const stepsDiv = document.getElementById('fibonacciSteps');
+            stepsDiv.innerHTML = ''; // Clear previous steps
+
+            if (isNaN(n) || n < 0) {
+                resultDiv.textContent = '请输入一个有效的非负整数。';
+                return;
+            }
+
+            let stepLog = [];
+            let callCount = {}; // To track calls and avoid excessive logging for repeated calls in Fibonacci
+
+            function fibonacciWithLog(num) {
+                const callId = `fib(${num})`;
+                if (!callCount[callId]) {
+                    callCount[callId] = 0;
+                }
+                callCount[callId]++;
+
+                // Only log the first time a specific call is made for clarity
+                if (callCount[callId] === 1) {
+                    stepLog.push(`调用 fibonacci(${num})`);
+                }
+
+                if (num === 0) {
+                    if (callCount[callId] === 1) {
+                         stepLog.push(`  基本情况：fibonacci(0) 返回 0`);
+                    }
+                    return 0;
+                }
+                if (num === 1) {
+                    if (callCount[callId] === 1) {
+                        stepLog.push(`  基本情况：fibonacci(1) 返回 1`);
+                    }
+                    return 1;
+                }
+
+                const res1 = fibonacciWithLog(num - 1);
+                const res2 = fibonacciWithLog(num - 2);
+                const currentResult = res1 + res2;
+                if (callCount[callId] === 1) { // Log only for the original call context
+                    stepLog.push(`  递归步骤：fibonacci(${num}) 返回 ${res1} + ${res2} = ${currentResult}`);
+                }
+                return currentResult;
+            }
+
+            const result = fibonacciWithLog(n);
+            resultDiv.textContent = `斐波那契(${n}) = ${result}`;
+            stepsDiv.innerHTML = stepLog.map(step => `<p>${step}</p>`).join('');
+            stepsDiv.scrollTop = stepsDiv.scrollHeight; // Scroll to bottom
+        });
+
+
+        // Practice Problem: Sum Up To
+        document.getElementById('testSumUpToBtn').addEventListener('click', () => {
+            const n = parseInt(document.getElementById('sumUpToInput').value);
+            const resultDiv = document.getElementById('sumUpToResult');
+            const userCode = document.getElementById('sumUpToCode').value;
+
+            if (isNaN(n) || n < 0) {
+                resultDiv.textContent = '请输入一个有效的非负整数。';
+                return;
+            }
+
+            try {
+                // Dynamically evaluate the user's function
+                // WARNING: eval() can be dangerous if user input is not controlled.
+                // For this learning context, it's acceptable.
+                const sumUpTo = new Function('n', userCode + '\nreturn sumUpTo(n);');
+                const result = sumUpTo(n);
+
+                // Check for correctness
+                const expectedResult = (n * (n + 1)) / 2; // Formula for sum of 1 to n
+
+                if (result === expectedResult) {
+                    resultDiv.innerHTML = `你的函数计算结果：<span class="text-green-600 font-bold">${result}</span> (正确！)`;
+                } else {
+                    resultDiv.innerHTML = `你的函数计算结果：<span class="text-red-600 font-bold">${result}</span> (错误！期望值是 ${expectedResult})`;
+                }
+
+            } catch (error) {
+                resultDiv.innerHTML = `<span class="text-red-600 font-bold">代码错误：</span> ${error.message}`;
+                console.error("User code error:", error);
+            }
+        });
+
+        // Set initial values for inputs
+        document.addEventListener('DOMContentLoaded', () => {
+            document.getElementById('factorialInput').value = 5;
+            document.getElementById('fibonacciInput').value = 7;
+            document.getElementById('sumUpToInput').value = 4;
+        });
+
+    </script>
+</body>
+</html>

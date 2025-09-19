@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式 BFS 算法学习</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Chosen Palette: Calm Harmony */
+        /* Application Structure Plan: The application is structured as a single-page, multi-section interactive module. This design breaks down the complex topic of BFS into digestible parts: Introduction, Core Concepts, a central Interactive Visualization, and finally Applications/Analysis. This step-by-step, tab-based navigation is chosen over a long scroll because it creates a structured, guided learning path, reducing cognitive load and allowing users to focus on one concept at a time. The interactive visualization is the centerpiece, designed to turn abstract steps into a concrete, controllable process, which is the most effective way to teach an algorithm. */
+        /* Visualization & Content Choices: Report Info: BFS algorithm steps. -> Goal: Teach the process. -> Viz/Presentation: Interactive graph visualization using HTML divs for nodes/edges, and dynamic divs for Queue/Visited sets. -> Interaction: User-controlled "Next Step" and "Reset" buttons to walk through the algorithm. -> Justification: This direct manipulation and visualization is far more effective for learning than static text or diagrams. It clarifies how data structures (Queue, Visited) change in real-time. -> Library/Method: Vanilla JavaScript for logic, Tailwind CSS for layout and styling. This approach avoids external libraries like SVG or Mermaid, keeping the app lightweight and demonstrating that complex visualizations can be achieved with standard web technologies. */
+        /* CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. */
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
+            background-color: #f8fafc; /* slate-50 */
+        }
+        .nav-btn {
+            transition: all 0.3s ease;
+            border-bottom: 2px solid transparent;
+        }
+        .nav-btn.active {
+            border-bottom-color: #4f46e5; /* indigo-600 */
+            color: #4f46e5;
+        }
+        .graph-node {
+            position: absolute;
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: #1e293b; /* slate-800 */
+            background-color: #ffffff;
+            border: 2px solid #cbd5e1; /* slate-300 */
+            transition: all 0.3s ease;
+            z-index: 10;
+        }
+        .graph-node.visited {
+            background-color: #dcfce7; /* green-100 */
+            border-color: #22c55e; /* green-500 */
+        }
+        .graph-node.current {
+            border-color: #facc15; /* yellow-400 */
+            transform: scale(1.1);
+            box-shadow: 0 0 15px rgba(250, 204, 21, 0.7);
+        }
+        .graph-edge {
+            position: absolute;
+            height: 2px;
+            background-color: #94a3b8; /* slate-400 */
+            transform-origin: 0 0;
+            z-index: 5;
+        }
+        .status-box {
+            min-height: 50px;
+            background-color: #f1f5f9; /* slate-100 */
+        }
+        .log-message {
+            border-left: 3px solid #64748b; /* slate-500 */
+        }
+        .code-block {
+            background-color: #1e293b; /* slate-800 */
+            color: #e2e8f0; /* slate-200 */
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+        .code-keyword { color: #818cf8; } /* indigo-400 */
+        .code-type { color: #7dd3fc; } /* sky-300 */
+        .code-comment { color: #64748b; } /* slate-500 */
+        .code-string { color: #a5b4fc; } /* indigo-300 */
+        .code-preprocessor { color: #f87171; } /* red-400 */
+        .code-function { color: #a78bfa; } /* violet-400 */
+    </style>
+</head>
+<body class="text-slate-700">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-800">广度优先搜索 (BFS) 交互式学习</h1>
+            <p class="mt-2 text-lg text-slate-500">一个将抽象算法变得具体可视的指南</p>
+        </header>
+
+        <nav class="flex justify-center border-b border-slate-200 mb-8">
+            <button class="nav-btn active px-4 py-2 text-lg font-medium text-slate-500" onclick="showSection('intro')">介绍</button>
+            <button class="nav-btn px-4 py-2 text-lg font-medium text-slate-500" onclick="showSection('visualizer')">算法可视化与代码</button>
+            <button class="nav-btn px-4 py-2 text-lg font-medium text-slate-500" onclick="showSection('details')">核心与应用</button>
+        </nav>
+
+        <main>
+            <section id="intro">
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-sm">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4">什么是广度优先搜索 (BFS)？</h2>
+                    <p class="mb-4 text-base leading-relaxed">
+                        广度优先搜索（BFS）是一种用于遍历或搜索树或图的算法。它从一个起始节点（根节点）开始，首先探索完所有与起始节点直接相连的邻居节点，然后再按照“先来后到”的顺序，逐一访问这些邻居节点的邻居节点。这个过程会一层一层地向外扩展，直到找到了目标节点或者遍历完所有可达的节点。
+                    </p>
+                    <div class="bg-indigo-50 p-4 rounded-lg text-center">
+                        <p class="text-indigo-700 font-medium">
+                            💡 你可以把它想象成在水面上扔一块石头，激起的涟漪会从中心点开始，一圈一圈地向外扩散。BFS 的搜索方式就和这个过程非常相似。
+                        </p>
+                    </div>
+                     <p class="mt-6 text-base leading-relaxed">
+                        在本指南的“算法可视化与代码”部分，你将能亲手操作并观察这一过程，并查看其 C++ 实现。准备好后，请点击上方导航栏开始探索。
+                    </p>
+                </div>
+            </section>
+
+            <section id="visualizer" class="hidden">
+                 <div class="text-center mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800">实时观察 BFS</h2>
+                    <p class="text-slate-500 mt-1">点击“下一步”来逐步执行算法，或点击“重置”从头开始。</p>
+                </div>
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="lg:col-span-2 bg-white p-4 rounded-lg shadow-sm relative" style="height: 450px;">
+                        <div id="graph-container"></div>
+                    </div>
+                    <div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <h3 class="font-bold text-lg mb-2 text-slate-800">控制面板</h3>
+                            <div class="flex space-x-2 mb-4">
+                                <button id="start-btn" class="w-full bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-indigo-700 transition">开始/重置</button>
+                                <button id="next-step-btn" class="w-full bg-slate-600 text-white font-bold py-2 px-4 rounded-lg hover:bg-slate-700 transition" disabled>下一步</button>
+                            </div>
+                            <div class="space-y-4">
+                                <div>
+                                    <h4 class="font-semibold text-slate-600 mb-1">队列 (Queue):</h4>
+                                    <div id="queue-box" class="status-box p-2 rounded-md flex items-center space-x-2 overflow-x-auto"></div>
+                                </div>
+                                <div>
+                                    <h4 class="font-semibold text-slate-600 mb-1">已访问集合 (Visited Set):</h4>
+                                    <div id="visited-box" class="status-box p-2 rounded-md flex items-center flex-wrap gap-2"></div>
+                                </div>
+                            </div>
+                        </div>
+                         <div class="bg-white p-4 rounded-lg shadow-sm mt-4">
+                            <h3 class="font-bold text-lg mb-2 text-slate-800">执行日志</h3>
+                            <div id="log-box" class="h-32 overflow-y-auto space-y-2 pr-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="mt-12">
+                    <h2 class="text-2xl font-bold text-slate-800 mb-4 text-center">C++ 代码实现</h2>
+                     <div class="code-block">
+<pre><code><span class="code-preprocessor">#include &lt;iostream&gt;</span>
+<span class="code-preprocessor">#include &lt;vector&gt;</span>
+<span class="code-preprocessor">#include &lt;queue&gt;</span>
+<span class="code-preprocessor">#include &lt;list&gt;</span>
+
+<span class="code-comment">// 使用邻接表来表示图的类</span>
+<span class="code-keyword">class</span> <span class="code-type">Graph</span> {
+<span class="code-keyword">private</span>:
+    <span class="code-comment">// 顶点的数量</span>
+    <span class="code-type">int</span> numVertices;
+    <span class="code-comment">// 邻接表。adj[i] 是一个包含顶点 i 所有邻居的列表。</span>
+    <span class="code-type">std::vector&lt;std::list&lt;int&gt;&gt;</span> adj;
+
+<span class="code-keyword">public</span>:
+    <span class="code-comment">// 构造函数，用于初始化图，分配顶点空间</span>
+    <span class="code-function">Graph</span>(<span class="code-type">int</span> vertices) {
+        numVertices = vertices;
+        adj.resize(numVertices);
+    }
+
+    <span class="code-comment">// 添加一条从顶点 v 到顶点 w 的有向边</span>
+    <span class="code-keyword">void</span> <span class="code-function">addEdge</span>(<span class="code-type">int</span> v, <span class="code-type">int</span> w) {
+        adj[v].push_back(w);
+    }
+
+    <span class="code-comment">// 从给定的源点 s 开始执行 BFS 遍历</span>
+    <span class="code-keyword">void</span> <span class="code-function">BFS</span>(<span class="code-type">int</span> s) {
+        <span class="code-comment">// 1. 初始化</span>
+        <span class="code-type">std::vector&lt;bool&gt;</span> visited(numVertices, <span class="code-keyword">false</span>);
+        <span class="code-type">std::queue&lt;int&gt;</span> queue;
+
+        <span class="code-comment">// 2. 开始搜索</span>
+        visited[s] = <span class="code-keyword">true</span>;
+        queue.push(s);
+
+        std::cout &lt;&lt; <span class="code-string">"BFS 遍历顺序: "</span>;
+
+        <span class="code-comment">// 3. 循环遍历</span>
+        <span class="code-keyword">while</span> (!queue.empty()) {
+            <span class="code-type">int</span> u = queue.front();
+            std::cout &lt;&lt; u &lt;&lt; <span class="code-string">" "</span>;
+            queue.pop();
+
+            <span class="code-comment">// 遍历当前顶点 u 的所有邻居</span>
+            <span class="code-keyword">for</span> (<span class="code-type">int</span> v : adj[u]) {
+                <span class="code-keyword">if</span> (!visited[v]) {
+                    visited[v] = <span class="code-keyword">true</span>;
+                    queue.push(v);
+                }
+            }
+        }
+        std::cout &lt;&lt; std::endl;
+    }
+};
+
+<span class="code-comment">// 主函数，程序的入口</span>
+<span class="code-type">int</span> <span class="code-function">main</span>() {
+    <span class="code-type">Graph</span> g(6);
+
+    g.addEdge(0, 1);
+    g.addEdge(0, 2);
+    g.addEdge(1, 3);
+    g.addEdge(1, 4);
+    g.addEdge(2, 5);
+    g.addEdge(4, 5);
+
+    std::cout &lt;&lt; <span class="code-string">"从顶点 0 开始进行广度优先遍历:"</span> &lt;&lt; std::endl;
+    g.BFS(0);
+
+    std::cout &lt;&lt; <span class="code-string">"\n从顶点 1 开始进行广度优先遍历:"</span> &lt;&lt; std::endl;
+    g.BFS(1);
+
+    <span class="code-keyword">return</span> 0;
+}
+</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <section id="details" class="hidden">
+                <div class="space-y-6">
+                    <div class="bg-white p-6 md:p-8 rounded-lg shadow-sm">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-4">算法核心步骤</h2>
+                        <ol class="list-decimal list-inside space-y-3">
+                            <li><strong>初始化</strong>: 创建一个先进先出 (FIFO) 的**队列**用于存放待访问节点，以及一个**访问记录** (Visited Set) 来避免重复访问。</li>
+                            <li><strong>开始搜索</strong>: 将**起始节点**放入队列，并标记为“已访问”。</li>
+                            <li><strong>循环遍历</strong>: 当队列不为空时，从队列头部取出一个节点 `u`。</li>
+                            <li><strong>处理邻居</strong>: 遍历 `u` 的所有**未被访问过**的邻居节点 `v`，将它们标记为“已访问”并放入队列尾部。</li>
+                            <li><strong>结束</strong>: 当队列为空，搜索结束。</li>
+                        </ol>
+                    </div>
+
+                    <div class="bg-white p-6 md:p-8 rounded-lg shadow-sm">
+                        <h2 class="text-2xl font-bold text-slate-800 mb-4">为什么 BFS 能找到最短路径？</h2>
+                        <p class="mb-4">在**无权图**（所有边的权重都相同，可视为1）中，BFS 保证能找到从起点到任何其他可达节点的最短路径。这是因为它按层级进行搜索。第一层找到的节点路径长度为1，第二层为2，以此类推。由于它是逐层扩展的，所以第一次到达某个目标节点时所经过的路径，必然是所有可能路径中最短的一条。</p>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <h3 class="text-xl font-bold text-slate-800 mb-3">主要应用场景</h3>
+                            <ul class="space-y-2">
+                                <li class="flex items-start"><span class="mr-2 text-indigo-500">➔</span>无权图最短路径问题</li>
+                                <li class="flex items-start"><span class="mr-2 text-indigo-500">➔</span>寻找图的连通分量</li>
+                                <li class="flex items-start"><span class="mr-2 text-indigo-500">➔</span>网络爬虫</li>
+                                <li class="flex items-start"><span class="mr-2 text-indigo-500">➔</span>拓扑排序</li>
+                                <li class="flex items-start"><span class="mr-2 text-indigo-500">➔</span>解决迷宫等谜题</li>
+                            </ul>
+                        </div>
+                        <div class="bg-white p-6 rounded-lg shadow-sm">
+                            <h3 class="text-xl font-bold text-slate-800 mb-3">时空复杂度</h3>
+                            <div class="space-y-2">
+                                <p><strong>时间复杂度: O(V + E)</strong><br><span class="text-sm text-slate-500">V = 顶点数, E = 边数。每个顶点和每条边都只访问一次。</span></p>
+                                <p><strong>空间复杂度: O(V)</strong><br><span class="text-sm text-slate-500">在最坏情况下，队列可能需要存储所有顶点。</span></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+    </div>
+
+    <script>
+        const sections = ['intro', 'visualizer', 'details'];
+        const navButtons = document.querySelectorAll('.nav-btn');
+        const sectionElements = {
+            intro: document.getElementById('intro'),
+            visualizer: document.getElementById('visualizer'),
+            details: document.getElementById('details')
+        };
+
+        function showSection(sectionId) {
+            sections.forEach(id => {
+                sectionElements[id].classList.add('hidden');
+            });
+            sectionElements[sectionId].classList.remove('hidden');
+
+            navButtons.forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.getAttribute('onclick').includes(`'${sectionId}'`)) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        // --- BFS Visualizer Logic ---
+        const graphContainer = document.getElementById('graph-container');
+        const startBtn = document.getElementById('start-btn');
+        const nextStepBtn = document.getElementById('next-step-btn');
+        const queueBox = document.getElementById('queue-box');
+        const visitedBox = document.getElementById('visited-box');
+        const logBox = document.getElementById('log-box');
+
+        const graph = {
+            0: [1, 2],
+            1: [0, 3, 4],
+            2: [0, 5],
+            3: [1],
+            4: [1, 5],
+            5: [2, 4]
+        };
+
+        const nodePositions = {
+            0: { x: 100, y: 200 },
+            1: { x: 250, y: 100 },
+            2: { x: 250, y: 300 },
+            3: { x: 400, y: 50 },
+            4: { x: 400, y: 150 },
+            5: { x: 400, y: 250 }
+        };
+
+        let queue = [];
+        let visited = new Set();
+        let currentNode = null;
+        let bfsGenerator;
+        
+        function addLog(message, isImportant = false) {
+            const p = document.createElement('p');
+            p.textContent = message;
+            p.className = 'log-message text-sm p-1 rounded-r-md';
+            if(isImportant) p.classList.add('font-semibold', 'text-indigo-700');
+            logBox.appendChild(p);
+            logBox.scrollTop = logBox.scrollHeight;
+        }
+
+        function createNodeElement(id) {
+            const node = document.createElement('div');
+            node.id = `node-${id}`;
+            node.className = 'graph-node';
+            node.textContent = id;
+            node.style.left = `${nodePositions[id].x}px`;
+            node.style.top = `${nodePositions[id].y}px`;
+            return node;
+        }
+
+        function createEdgeElement(from, to) {
+            const pos1 = nodePositions[from];
+            const pos2 = nodePositions[to];
+            const dx = pos2.x - pos1.x;
+            const dy = pos2.y - pos1.y;
+            const distance = Math.sqrt(dx * dx + dy * dy);
+            const angle = Math.atan2(dy, dx) * 180 / Math.PI;
+
+            const edge = document.createElement('div');
+            edge.className = 'graph-edge';
+            edge.style.width = `${distance}px`;
+            edge.style.transform = `rotate(${angle}deg)`;
+            edge.style.left = `${pos1.x + 25}px`;
+            edge.style.top = `${pos1.y + 25}px`;
+            return edge;
+        }
+        
+        function drawGraph() {
+            graphContainer.innerHTML = '';
+            const drawnEdges = new Set();
+
+            Object.keys(graph).forEach(nodeId => {
+                graph[nodeId].forEach(neighborId => {
+                    const edgeId1 = `${nodeId}-${neighborId}`;
+                    const edgeId2 = `${neighborId}-${nodeId}`;
+                    if (!drawnEdges.has(edgeId1) && !drawnEdges.has(edgeId2)) {
+                        graphContainer.appendChild(createEdgeElement(nodeId, neighborId));
+                        drawnEdges.add(edgeId1);
+                    }
+                });
+            });
+
+            Object.keys(graph).forEach(nodeId => {
+                graphContainer.appendChild(createNodeElement(nodeId));
+            });
+        }
+
+        function updateUI() {
+            // Update nodes
+            Object.keys(graph).forEach(id => {
+                const nodeEl = document.getElementById(`node-${id}`);
+                nodeEl.classList.remove('current', 'visited');
+                if (id == currentNode) {
+                    nodeEl.classList.add('current');
+                }
+                if (visited.has(parseInt(id))) {
+                    nodeEl.classList.add('visited');
+                }
+            });
+
+            // Update queue box
+            queueBox.innerHTML = '';
+            queue.forEach(id => {
+                const nodeEl = document.createElement('div');
+                nodeEl.className = 'w-8 h-8 rounded-md bg-white border-2 border-slate-400 flex items-center justify-center font-bold flex-shrink-0';
+                nodeEl.textContent = id;
+                queueBox.appendChild(nodeEl);
+            });
+            
+            // Update visited box
+            visitedBox.innerHTML = '';
+            visited.forEach(id => {
+                const nodeEl = document.createElement('div');
+                nodeEl.className = 'w-8 h-8 rounded-full bg-green-500 text-white flex items-center justify-center font-bold flex-shrink-0';
+                nodeEl.textContent = id;
+                visitedBox.appendChild(nodeEl);
+            });
+        }
+
+        function* bfsSteps(startNode) {
+            addLog(`--- BFS 从节点 ${startNode} 开始 ---`, true);
+            
+            queue.push(startNode);
+            visited.add(startNode);
+            addLog(`将起始节点 ${startNode} 入队并标记为已访问。`);
+            yield;
+
+            while (queue.length > 0) {
+                currentNode = queue.shift();
+                addLog(`从队列中取出节点 ${currentNode}。`, true);
+                yield;
+
+                const neighbors = graph[currentNode];
+                addLog(`检查节点 ${currentNode} 的邻居: ${neighbors.join(', ')}。`);
+                yield;
+
+                for (const neighbor of neighbors) {
+                    if (!visited.has(neighbor)) {
+                        visited.add(neighbor);
+                        queue.push(neighbor);
+                        addLog(`邻居 ${neighbor} 未被访问，将其入队并标记。`);
+                        yield;
+                    } else {
+                         addLog(`邻居 ${neighbor} 已被访问，跳过。`);
+                         yield;
+                    }
+                }
+                currentNode = null;
+            }
+            addLog("--- 队列为空，BFS 结束 ---", true);
+        }
+
+        function reset() {
+            queue = [];
+            visited.clear();
+            currentNode = null;
+            logBox.innerHTML = '';
+            nextStepBtn.disabled = true;
+            drawGraph();
+            updateUI();
+        }
+
+        startBtn.addEventListener('click', () => {
+            reset();
+            const startNode = 0;
+            bfsGenerator = bfsSteps(startNode);
+            nextStepBtn.disabled = false;
+            addLog("可视化已重置，准备开始。");
+            updateUI();
+        });
+
+        nextStepBtn.addEventListener('click', () => {
+            if (bfsGenerator) {
+                const result = bfsGenerator.next();
+                updateUI();
+                if (result.done) {
+                    nextStepBtn.disabled = true;
+                }
+            }
+        });
+
+        // Initial setup
+        drawGraph();
+
+    </script>
+</body>
+</html>

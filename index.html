@@ -2,22 +2,197 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>童澄 csp 备考目录</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025 童澄 CSP-J/S 备考主页</title>
     <style>
-        body { font-family: sans-serif; max-width: 800px; margin: 40px auto; padding: 20px; line-height: 1.6; }
-        h1 { text-align: center; }
-        ul { list-style-type: none; padding: 0; }
-        li { margin: 10px 0; }
-        a { display: block; padding: 15px; background-color: #f0f8ff; border-radius: 8px; text-decoration: none; color: #0056b3; font-size: 18px; transition: all 0.2s; }
-        a:hover { background-color: #e0f0ff; transform: scale(1.02); }
+        /* --- 基础和布局样式 --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #34495e;
+            border-left: 5px solid #3498db;
+            padding-left: 15px;
+            margin-top: 40px;
+        }
+
+        /* --- 知识点二级菜单样式 --- */
+        .knowledge-menu {
+            list-style-type: none;
+            padding: 0;
+        }
+        .category {
+            background-color: #ecf0f1;
+            padding: 12px 20px;
+            border-radius: 5px;
+            margin-bottom: 8px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1.1em;
+            transition: background-color 0.3s;
+        }
+        .category:hover {
+            background-color: #dce4e7;
+        }
+        .category::after {
+            content: '+'; /* 初始为加号 */
+            font-size: 1.4em;
+            color: #3498db;
+            transition: transform 0.3s ease;
+        }
+        .category.active::after {
+            content: '−'; /* 激活时变为减号 */
+            transform: rotate(180deg);
+        }
+        .subcategory-list {
+            list-style-type: none;
+            padding-left: 20px;
+            max-height: 0; /* 默认隐藏 */
+            overflow: hidden;
+            transition: max-height 0.4s ease-out; /* 平滑过渡动画 */
+        }
+        .subcategory-list li {
+            margin: 10px 0;
+        }
+        .subcategory-list a {
+            display: block;
+            padding: 8px 15px;
+            color: #2980b9;
+            text-decoration: none;
+            border-radius: 5px;
+            border-left: 3px solid transparent;
+            transition: all 0.3s;
+        }
+        .subcategory-list a:hover {
+            background-color: #f0f8ff;
+            border-left-color: #3498db;
+        }
+
+        /* --- 模拟试卷列表样式 --- */
+        .quiz-list {
+            list-style-type: none;
+            padding: 0;
+        }
+        .quiz-list li {
+            margin: 10px 0;
+        }
+        .quiz-list a {
+            display: block;
+            padding: 15px;
+            background-color: #f0f8ff;
+            border-radius: 8px;
+            text-decoration: none;
+            color: #0056b3;
+            font-size: 18px;
+            transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .quiz-list a:hover {
+            background-color: #e0f0ff;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
     </style>
 </head>
 <body>
-    <h1>CSP-S 模拟试卷合集</h1>
-    <ul>
-        <li><a href="csp j组新增专项.html">csp j组新增专项</a></li>
-        <li><a href="csp s组新增专项.html">csp s组新增专项</a></li>
-        <li><a href="2025 csp-s 模拟试卷.html">2025 csp-s 模拟试卷</a></li>
-        </ul>
+
+    <div class="container">
+        <h1>CSP-J/S 备考中心</h1>
+
+        <section id="knowledge-points">
+            <h2>知识点梳理</h2>
+            <ul class="knowledge-menu">
+                <li>
+                    <div class="category">数据结构</div>
+                    <ul class="subcategory-list">
+                        <li><a href="knowledge/stack.html">栈</a></li>
+                        <li><a href="knowledge/tree.html">树</a></li>
+                        <li><a href="#">树与二叉树</a></li>
+                        <li><a href="#">并查集</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <div class="category">核心算法</div>
+                    <ul class="subcategory-list">
+                        <li><a href="knowledge/Recursion.html">递归</a></li>
+                        <li><a href="knowledge/binary.html">二分</a></li>
+                        <li><a href="knowledge/bfs.html">bfs</a></li>
+                        <li><a href="knowledge/doubling.html">倍增</a></li>
+                        <li><a href="#">排序算法（快排、归并）</a></li>
+                        <li><a href="#">搜索（DFS、BFS）</a></li>
+                        <li><a href="#">动态规划 (DP)</a></li>
+                        <li><a href="#">图论（最短路、最小生成树）</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <div class="category">C++语言与STL</div>
+                    <ul class="subcategory-list">
+                        <li><a href="#">常用容器 (vector, map, set)</a></li>
+                        <li><a href="#">算法库 (sort, lower_bound)</a></li>
+                        <li><a href="#">输入输出优化</a></li>
+                    </ul>
+                </li>
+                </ul>
+        </section>
+
+        <section id="quiz-section">
+            <h2>模拟试卷练习</h2>
+            <ul class="quiz-list">
+                <li><a href="csp j组新增专项.html">csp j组新增专项</a></li>
+                <li><a href="csp s组新增专项.html">csp s组新增专项</a></li>
+                <li><a href="2025 csp-s 模拟试卷.html">2025 csp-s 模拟试卷</a></li>
+            </ul>
+        </section>
+    </div>
+
+    <script>
+    // 这段 JavaScript 代码负责实现二级菜单的点击展开/收起功能
+    document.addEventListener('DOMContentLoaded', function () {
+        const categories = document.querySelectorAll('.category');
+
+        categories.forEach(category => {
+            category.addEventListener('click', function () {
+                // 切换自身的 active class，用于改变 +/- 图标
+                this.classList.toggle('active');
+
+                // 获取下一个兄弟元素，也就是子菜单 ul
+                const subcategoryList = this.nextElementSibling;
+
+                // 判断子菜单当前是否是展开状态
+                if (subcategoryList.style.maxHeight) {
+                    // 如果是展开的，则将其 maxHeight 设置为 null 来收起
+                    subcategoryList.style.maxHeight = null;
+                } else {
+                    // 如果是收起的，则将其 maxHeight 设置为内容的实际高度来展开
+                    subcategoryList.style.maxHeight = subcategoryList.scrollHeight + "px";
+                }
+            });
+        });
+    });
+    </script>
+
 </body>
 </html>

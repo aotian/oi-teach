@@ -1,0 +1,343 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式栈（Stack）概念演示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutral Harmony -->
+    <!-- Application Structure Plan: The SPA is designed as a top-to-bottom learning journey. It starts with a high-level definition (What is a Stack?), moves to a hands-on interactive visualization (How does it work?), details the specific mechanics (Core Operations), and finally connects the concept to the real world (Applications). This linear, progressive disclosure of information allows users to build knowledge layer by layer, from abstract theory to practical application, which is a highly effective pedagogical approach for complex topics. The interactive visualizer is the centerpiece, allowing for kinesthetic learning. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Stack Definition & LIFO principle -> Goal: Inform -> Presentation: Clear text blocks -> Justification: Foundational knowledge needs to be presented directly and clearly at the start.
+        - Report Info: push, pop operations -> Goal: Explore/Understand -> Viz/Presentation: Custom HTML/CSS/JS visual stack -> Interaction: User-controlled push/pop buttons with an input field. The stack visually updates with animations. -> Justification: This is the most critical part. Direct manipulation makes the abstract LIFO concept tangible and memorable. It's learning by doing.
+        - Report Info: top, empty, size operations -> Goal: Reinforce -> Presentation: Dynamic text readouts -> Interaction: These fields update automatically based on user actions (push/pop). -> Justification: Provides immediate feedback and reinforces the state changes of the stack.
+        - Report Info: Detailed operation descriptions -> Goal: Detail/Reference -> Presentation: Grid of cards -> Interaction: Simple hover states. -> Justification: Organizes detailed information into digestible, easily scannable chunks for reference.
+        - Report Info: Stack Applications -> Goal: Contextualize -> Presentation: Grid of cards with Unicode icons -> Interaction: Simple hover states. -> Justification: Connects the abstract data structure to concrete, real-world examples, answering the "why should I learn this?" question. Icons aid quick recognition.
+        - Library/Method: All visuals and interactions are built with Vanilla JS and styled with Tailwind CSS to keep the application lightweight and fully self-contained. No external charting libraries are needed as the primary visualization is custom.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f5f5f4; /* stone-100 */
+            color: #1c1917; /* stone-900 */
+        }
+        .stack-container {
+            min-height: 320px;
+            max-width: 200px;
+            border: 3px dashed #a8a29e; /* stone-400 */
+            background-color: #fafaf9; /* stone-50 */
+            transition: background-color 0.3s ease;
+        }
+        .stack-container.stack-empty {
+            background-color: #f5f5f4; /* stone-100 */
+        }
+        .stack-item {
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+            transform-origin: bottom;
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+        .fade-out {
+            animation: fadeOut 0.5s ease-in forwards;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes fadeOut {
+            from { opacity: 1; transform: scale(1); }
+            to { opacity: 0; transform: scale(0.5); }
+        }
+        .btn {
+            transition: all 0.2s ease-in-out;
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+        }
+        .btn:active {
+            transform: translateY(0);
+            box-shadow: none;
+        }
+        .section-card {
+            background-color: #ffffff;
+            border: 1px solid #e7e5e4; /* stone-200 */
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            transition: all 0.3s ease;
+        }
+        .section-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 25px -5px rgba(0,0,0,0.1), 0 10px 10px -5px rgba(0,0,0,0.04);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white shadow-sm py-4">
+        <div class="container mx-auto px-4 text-center">
+            <h1 class="text-3xl md:text-4xl font-bold text-stone-800">交互式栈（Stack）概念演示</h1>
+            <p class="text-stone-500 mt-1">一个将抽象概念可视化的Web应用</p>
+        </div>
+    </header>
+
+    <main class="container mx-auto p-4 md:p-8">
+        
+        <!-- 1. 定义部分 -->
+        <section id="definition" class="mb-12">
+            <div class="bg-white rounded-lg shadow p-6 md:p-8">
+                <h2 class="text-2xl font-bold text-teal-700 mb-4">什么是栈？</h2>
+                <p class="text-lg text-stone-700 leading-relaxed mb-4">
+                    在计算机科学中，栈是一种非常重要且基础的抽象数据类型。它的工作方式就像我们生活中的一叠盘子或者一个子弹匣：你只能在最顶部进行操作。
+                </p>
+                <div class="bg-teal-50 border-l-4 border-teal-500 text-teal-800 p-4 rounded-r-lg">
+                    <p class="font-semibold">核心原则：后进先出 (LIFO - Last-In, First-Out)</p>
+                    <p class="mt-1">这意味着最后一个被放入（压入）栈的元素，将会是第一个被取出（弹出）的元素。这个原则是栈所有行为的基础。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 交互式可视化部分 -->
+        <section id="interactive-demo" class="mb-12">
+            <div class="bg-white rounded-lg shadow p-6 md:p-8">
+                <h2 class="text-2xl font-bold text-teal-700 mb-2">动手试一试</h2>
+                <p class="text-stone-600 mb-6">通过下面的控件与栈进行交互，直观地感受LIFO原则。</p>
+                
+                <div class="flex flex-col lg:flex-row gap-8 items-start justify-center">
+                    
+                    <!-- 控制面板 -->
+                    <div class="w-full lg:w-1/3 space-y-4">
+                        <div class="space-y-2">
+                            <label for="stack-input" class="font-semibold text-stone-700">要压入栈的整数:</label>
+                            <input type="number" id="stack-input" class="w-full p-3 border border-stone-300 rounded-lg focus:ring-2 focus:ring-teal-500 focus:border-teal-500 transition" placeholder="例如: 10">
+                        </div>
+                        <button id="push-btn" class="w-full btn bg-teal-600 text-white font-bold py-3 px-4 rounded-lg hover:bg-teal-700">
+                            压入 (Push)
+                        </button>
+                        <button id="pop-btn" class="w-full btn bg-amber-500 text-white font-bold py-3 px-4 rounded-lg hover:bg-amber-600">
+                            弹出 (Pop)
+                        </button>
+                        <div id="message-log" class="text-sm text-stone-500 h-6 text-center transition-opacity duration-300"></div>
+                    </div>
+
+                    <!-- 栈的可视化 -->
+                    <div class="w-full lg:w-auto flex flex-col items-center">
+                        <p class="font-bold text-lg mb-2">栈顶 (Top)</p>
+                        <div class="w-full stack-container rounded-t-lg p-2 flex flex-col-reverse items-center gap-2" id="stack-visual">
+                            <p id="empty-text" class="text-stone-400 self-center my-auto">栈是空的</p>
+                        </div>
+                        <div class="w-full bg-stone-700 text-white text-center font-mono p-2 rounded-b-lg">栈底</div>
+                    </div>
+
+                    <!-- 状态显示 -->
+                    <div class="w-full lg:w-1/3 space-y-3">
+                        <div class="section-card p-4">
+                            <p class="text-sm font-semibold text-stone-500">栈顶元素 (Top)</p>
+                            <p id="top-value" class="text-2xl font-bold text-teal-600 h-8">-</p>
+                        </div>
+                        <div class="section-card p-4">
+                            <p class="text-sm font-semibold text-stone-500">栈大小 (Size)</p>
+                            <p id="size-value" class="text-2xl font-bold text-teal-600">0</p>
+                        </div>
+                        <div class="section-card p-4">
+                            <p class="text-sm font-semibold text-stone-500">是否为空? (Empty)</p>
+                            <p id="empty-value" class="text-2xl font-bold text-teal-600">是</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <!-- 3. 核心操作 -->
+        <section id="operations" class="mb-12">
+            <h2 class="text-2xl font-bold text-teal-700 mb-6 text-center">核心操作详解</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="section-card">
+                    <h3 class="font-bold text-lg text-stone-800 mb-2">push(element)</h3>
+                    <p class="text-stone-600">将一个新元素添加到栈的顶部。这是向栈中添加数据的唯一方式。</p>
+                </div>
+                <div class="section-card">
+                    <h3 class="font-bold text-lg text-stone-800 mb-2">pop()</h3>
+                    <p class="text-stone-600">移除栈顶的元素。如果栈为空，此操作通常会失败或报错。</p>
+                </div>
+                <div class="section-card">
+                    <h3 class="font-bold text-lg text-stone-800 mb-2">top() / peek()</h3>
+                    <p class="text-stone-600">返回栈顶的元素，但并不会将其从栈中移除。可以用来“窥视”下一个将要被弹出的元素。</p>
+                </div>
+                <div class="section-card">
+                    <h3 class="font-bold text-lg text-stone-800 mb-2">empty()</h3>
+                    <p class="text-stone-600">检查栈是否为空。如果栈中没有任何元素，返回 `true`，否则返回 `false`。</p>
+                </div>
+                <div class="section-card">
+                    <h3 class="font-bold text-lg text-stone-800 mb-2">size()</h3>
+                    <p class="text-stone-600">返回栈中当前元素的数量。这是一个非常有用的状态检查操作。</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. 应用场景 -->
+        <section id="applications">
+            <h2 class="text-2xl font-bold text-teal-700 mb-6 text-center">栈的实际应用</h2>
+             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div class="section-card flex items-start space-x-4">
+                    <span class="text-3xl">⚙️</span>
+                    <div>
+                        <h3 class="font-bold text-lg text-stone-800">函数调用栈</h3>
+                        <p class="text-stone-600 mt-1">程序运行时，使用栈来管理函数的调用顺序、局部变量和返回地址。</p>
+                    </div>
+                </div>
+                <div class="section-card flex items-start space-x-4">
+                    <span class="text-3xl">🧮</span>
+                    <div>
+                        <h3 class="font-bold text-lg text-stone-800">表达式求值</h3>
+                        <p class="text-stone-600 mt-1">用于将我们熟悉的数学表达式（中缀）转换为计算机更容易处理的后缀表达式（逆波兰表示法）并计算结果。</p>
+                    </div>
+                </div>
+                <div class="section-card flex items-start space-x-4">
+                    <span class="text-3xl">⚖️</span>
+                    <div>
+                        <h3 class="font-bold text-lg text-stone-800">括号匹配</h3>
+                        <p class="text-stone-600 mt-1">在编译器和代码编辑器中，用来检查代码中的括号 `()` `[]` `{}` 是否成对出现且正确嵌套。</p>
+                    </div>
+                </div>
+                <div class="section-card flex items-start space-x-4">
+                    <span class="text-3xl">⏪</span>
+                    <div>
+                        <h3 class="font-bold text-lg text-stone-800">浏览器历史记录</h3>
+                        <p class="text-stone-600 mt-1">浏览器的“后退”按钮功能就是通过一个栈来实现的，每次访问新页面就压入栈。</p>
+                    </div>
+                </div>
+                <div class="section-card flex items-start space-x-4">
+                    <span class="text-3xl">↩️</span>
+                    <div>
+                        <h3 class="font-bold text-lg text-stone-800">撤销/重做 (Undo/Redo)</h3>
+                        <p class="text-stone-600 mt-1">许多软件（如文本编辑器、绘图工具）中的撤销功能，就是将操作记录在栈中，撤销即为出栈。</p>
+                    </div>
+                </div>
+             </div>
+        </section>
+    </main>
+
+    <footer class="text-center py-6 mt-12 border-t border-stone-200">
+        <p class="text-stone-500">为教学目的而创建的交互式演示。</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const stack = [];
+            
+            const stackVisual = document.getElementById('stack-visual');
+            const stackInput = document.getElementById('stack-input');
+            const pushBtn = document.getElementById('push-btn');
+            const popBtn = document.getElementById('pop-btn');
+            
+            const topValue = document.getElementById('top-value');
+            const sizeValue = document.getElementById('size-value');
+            const emptyValue = document.getElementById('empty-value');
+            const emptyText = document.getElementById('empty-text');
+            const messageLog = document.getElementById('message-log');
+            const stackContainer = document.querySelector('.stack-container');
+
+            function showMessage(msg, isError = false) {
+                messageLog.textContent = msg;
+                messageLog.style.color = isError ? '#ef4444' : '#57534e';
+                messageLog.style.opacity = 1;
+                setTimeout(() => {
+                    messageLog.style.opacity = 0;
+                }, 2000);
+            }
+
+            function updateUI() {
+                // 更新可视化栈
+                stackVisual.innerHTML = ''; 
+                if (stack.length === 0) {
+                    stackVisual.appendChild(emptyText);
+                    stackContainer.classList.add('stack-empty');
+                } else {
+                    stackContainer.classList.remove('stack-empty');
+                    stack.forEach((value, index) => {
+                        const item = document.createElement('div');
+                        item.textContent = value;
+                        item.className = 'stack-item w-3/4 bg-teal-500 text-white font-bold text-center p-3 rounded-lg shadow-md fade-in';
+                        if (index === stack.length - 1) {
+                           item.classList.add('bg-amber-500');
+                           item.classList.remove('bg-teal-500');
+                        }
+                        stackVisual.appendChild(item);
+                    });
+                }
+
+                // 更新状态显示
+                sizeValue.textContent = stack.length;
+                
+                if (stack.length > 0) {
+                    topValue.textContent = stack[stack.length - 1];
+                    emptyValue.textContent = '否';
+                } else {
+                    topValue.textContent = '-';
+                    emptyValue.textContent = '是';
+                }
+            }
+
+            pushBtn.addEventListener('click', () => {
+                const value = stackInput.value;
+                if (value === '') {
+                    showMessage('请输入一个值再压入栈！', true);
+                    return;
+                }
+                const numValue = parseInt(value, 10);
+                if (isNaN(numValue)) {
+                    showMessage('请输入一个有效的整数！', true);
+                    return;
+                }
+                
+                stack.push(numValue);
+                stackInput.value = '';
+                updateUI();
+                showMessage(`已将 ${numValue} 压入栈顶。`);
+            });
+
+            popBtn.addEventListener('click', () => {
+                if (stack.length === 0) {
+                    showMessage('栈已为空，无法弹出！', true);
+                    return;
+                }
+                
+                const poppedValue = stack[stack.length - 1];
+                
+                // 视觉上的弹出效果
+                const items = stackVisual.querySelectorAll('.stack-item');
+                if (items.length > 0) {
+                    const topItem = items[items.length - 1];
+                    topItem.classList.remove('fade-in');
+                    topItem.classList.add('fade-out');
+                    topItem.addEventListener('animationend', () => {
+                        stack.pop();
+                        updateUI();
+                    }, { once: true });
+                } else {
+                    // Fallback for no items found
+                    stack.pop();
+                    updateUI();
+                }
+                
+                showMessage(`已从栈顶弹出 ${poppedValue}。`);
+            });
+            
+            stackInput.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') {
+                    pushBtn.click();
+                }
+            });
+
+            // 初始状态
+            updateUI();
+        });
+    </script>
+</body>
+</html>

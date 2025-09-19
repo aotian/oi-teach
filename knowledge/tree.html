@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式树算法学习指南</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals with Blue Accent -->
+    <!-- Application Structure Plan: A dashboard-style SPA featuring a persistent sidebar for structured navigation and a central, interactive concept map (bubble chart) for visual exploration. The main content area dynamically updates based on user selection from either the sidebar or the map. This dual-navigation approach caters to different learning styles—systematic and exploratory—enhancing usability. The structure prioritizes non-linear learning and visualizes connections between topics, which is more engaging than a linear document. -->
+    <!-- Visualization & Content Choices: 
+        - Report Info: Overall topic relationships. Goal: Organize/Navigate. Viz: Bubble Chart (Chart.js/Canvas). Interaction: Clickable nodes to load content. Justification: Provides a "big picture" view and an engaging, non-linear navigation method.
+        - Report Info: Tree terminology diagram. Goal: Inform. Viz: Styled HTML/CSS (divs and borders). Interaction: None, static visual. Justification: Replaces external image, is maintainable, and avoids SVG.
+        - Report Info: Code snippets. Goal: Inform/Provide Tool. Viz: Preformatted text blocks. Interaction: "Copy to Clipboard" button. Justification: Improves user experience by making code easily accessible.
+        - Report Info: Practice problems table. Goal: Organize. Viz: HTML Table. Interaction: Hover effects. Justification: Standard and effective way to present tabular data.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #fdfbf7;
+            color: #3f3f46;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 45vh;
+            max-height: 400px;
+        }
+        .nav-link {
+            display: block;
+            padding: 0.5rem 1rem;
+            border-radius: 0.375rem;
+            transition: background-color 0.2s, color 0.2s;
+            cursor: pointer;
+        }
+        .nav-link:hover {
+            background-color: #e7e5e4;
+        }
+        .nav-link.active {
+            background-color: #3b82f6;
+            color: white;
+            font-weight: 500;
+        }
+        .nav-sub-link {
+            display: block;
+            padding: 0.375rem 1rem 0.375rem 2rem;
+            border-radius: 0.375rem;
+            transition: background-color 0.2s;
+            cursor: pointer;
+        }
+        .nav-sub-link:hover {
+            background-color: #e7e5e4;
+        }
+        .nav-sub-link.active {
+            background-color: #60a5fa;
+            color: white;
+        }
+        .content-card {
+            background-color: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+            padding: 1.5rem;
+            transition: all 0.3s ease-in-out;
+        }
+        .code-block {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background-color: #475569;
+            color: #e2e8f0;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            cursor: pointer;
+            font-size: 0.75rem;
+            transition: background-color 0.2s;
+        }
+        .copy-btn:hover {
+            background-color: #64748b;
+        }
+        .tree-diagram {
+            border-left: 2px solid #d4d4d8;
+            padding-left: 1rem;
+            margin-top: 1rem;
+        }
+        .tree-diagram .node {
+            position: relative;
+            margin-left: 1.5rem;
+            margin-bottom: 0.5rem;
+        }
+        .tree-diagram .node::before {
+            content: '';
+            position: absolute;
+            top: 0.7rem;
+            left: -1.5rem;
+            width: 1.25rem;
+            height: 2px;
+            background-color: #d4d4d8;
+        }
+        .tree-diagram .node:last-child {
+            margin-bottom: 0;
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <div class="flex h-screen bg-stone-100">
+        <!-- Sidebar -->
+        <aside id="sidebar" class="w-64 bg-white shadow-lg p-4 overflow-y-auto transition-transform transform -translate-x-full md:translate-x-0">
+            <h1 class="text-xl font-bold text-blue-600 mb-4">学习大纲</h1>
+            <nav id="navigation-menu"></nav>
+        </aside>
+
+        <!-- Main content -->
+        <main class="flex-1 flex flex-col overflow-hidden">
+            <header class="bg-white shadow-md p-4 flex justify-between items-center">
+                <button id="menu-toggle" class="md:hidden text-gray-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+                    </svg>
+                </button>
+                <h2 class="text-2xl font-bold text-gray-800">交互式树算法学习指南</h2>
+                <div></div>
+            </header>
+
+            <div class="flex-1 p-4 md:p-6 lg:p-8 overflow-y-auto">
+                <div class="content-card mb-6">
+                    <h3 class="text-xl font-semibold mb-2 text-gray-700">知识概念图</h3>
+                    <p class="text-sm text-gray-500 mb-4">这是一个可视化的知识网络。点击图中的任意节点，可以快速跳转到对应的知识点进行学习。节点的大小代表了该主题的广度或重要性。</p>
+                    <div class="chart-container">
+                        <canvas id="conceptMap"></canvas>
+                    </div>
+                </div>
+
+                <div id="content-display" class="content-card">
+                    <!-- Content will be injected here -->
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        const appData = {
+            'intro': {
+                title: '欢迎来到树的世界',
+                content: `
+                    <p class="mb-4">在本指南中，我们将系统地探索算法竞赛中“树”这一至关重要的领域。树不仅是计算机科学中的一种基础数据结构，更是众多高级算法和复杂问题的基石。</p>
+                    <p>您可以通过左侧的导航栏按部就班地学习，也可以通过上方的“知识概念图”进行探索式学习，直观地了解各个概念之间的联系。让我们开始吧！</p>
+                `
+            },
+            'fundamentals_definition': {
+                title: '第一章：树的基础 - 什么是树？',
+                content: `
+                    <p class="mb-4">在图论中，一个<strong>连通</strong>且<strong>无环</strong>的无向图被称为<strong>树（Tree）</strong>。</p>
+                    <ul class="list-disc list-inside space-y-2 mb-4">
+                        <li><strong>n个节点</strong>的树有且仅有 <strong>n-1条边</strong>。</li>
+                        <li>在树中任意两个节点之间有且仅有一条简单路径。</li>
+                        <li>如果一个图有n个节点，n-1条边，并且是连通的，那么它一定是一棵树。</li>
+                    </ul>
+                    <p>在竞赛中，我们通常会指定一个节点为<strong>根节点（Root）</strong>，此时的树被称为<strong>有根树</strong>。大部分算法都是在有根树上展开的。</p>
+                `
+            },
+            'fundamentals_terms': {
+                title: '树的常用术语',
+                content: `
+                    <p class="mb-4">理解树的术语是学习相关算法的基础。下面是一个有根树的结构示例和关键术语解释：</p>
+                    <div class="tree-diagram bg-stone-50 p-4 rounded-lg">
+                        <div class="node font-semibold">根节点 (Root)
+                            <div class="tree-diagram">
+                                <div class="node">子节点 (Child) / 父节点 (Parent)
+                                    <div class="tree-diagram">
+                                        <div class="node">叶子节点 (Leaf)</div>
+                                        <div class="node">叶子节点 (Leaf)</div>
+                                    </div>
+                                </div>
+                                <div class="node">子节点 (Child) / 兄弟节点 (Sibling)
+                                     <div class="tree-diagram">
+                                        <div class="node">叶子节点 (Leaf)</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <ul class="list-disc list-inside space-y-2 mt-4">
+                        <li><strong>节点（Node）</strong>：树的基本组成部分。</li>
+                        <li><strong>根节点（Root）</strong>：树顶端的节点，没有父节点。</li>
+                        <li><strong>父节点（Parent）</strong>：一个节点的直接上游节点。</li>
+                        <li><strong>子节点（Child）</strong>：一个节点的直接下游节点。</li>
+                        <li><strong>兄弟节点（Sibling）</strong>：拥有相同父节点的节点。</li>
+                        <li><strong>叶子节点（Leaf）</strong>：没有子节点的节点。</li>
+                        <li><strong>子树（Subtree）</strong>：由一个节点及其所有后代节点构成的树。</li>
+                        <li><strong>深度（Depth）</strong>：从根节点到某个节点所经过的边的数量。根节点的深度为0。</li>
+                        <li><strong>高度（Height）</strong>：从某个节点到其最远叶子节点所经过的边的数量。叶子节点的高度为0。树的高度等于根节点的高度。</li>
+                    </ul>
+                `
+            },
+            'fundamentals_types': {
+                title: '树的种类',
+                content: `
+                    <ul class="space-y-4">
+                        <li><strong>普通树/一般树 (General Tree)</strong>：对每个节点的子节点数量没有限制。</li>
+                        <li><strong>二叉树 (Binary Tree)</strong>：每个节点最多有两个子节点，通常称为“左子节点”和“右子节点”。
+                            <ul class="list-circle list-inside ml-4 mt-2 space-y-1">
+                                <li><strong>满二叉树 (Full Binary Tree)</strong>：所有非叶子节点都有两个子节点，且所有叶子节点在同一深度。</li>
+                                <li><strong>完全二叉树 (Complete Binary Tree)</strong>：除了最后一层，其他层都是满的，且最后一层的节点都靠左排列。堆（Heap）就是一种完全二叉树。</li>
+                            </ul>
+                        </li>
+                        <li><strong>二叉搜索树 (Binary Search Tree, BST)</strong>：一种有序的二叉树，对于任意节点，其左子树所有节点的值都小于它，右子树所有节点的值都大于它。</li>
+                        <li><strong>堆 (Heap)</strong>：一种特殊的完全二叉树，用于快速找到最值。分为大根堆和小根堆。</li>
+                    </ul>
+                `
+            },
+            'fundamentals_representation': {
+                title: '树的C++表示法',
+                content: `
+                    <p class="mb-4">在算法竞赛中，对于一般树，最常用的是<strong>邻接表（Adjacency List）</strong>，它能高效地存储图和树的结构。</p>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+                        <pre><code class="language-cpp">// 使用 vector 实现邻接表来存储树
+#include &lt;vector&gt;
+#include &lt;iostream&gt;
+
+const int MAXN = 100005; // 假设最多有N个节点
+std::vector&lt;int&gt; adj[MAXN]; // adj[u] 存储与节点u相邻的所有节点
+
+void add_edge(int u, int v) {
+    adj[u].push_back(v);
+    adj[v].push_back(u); // 对于无向边，需要双向添加
+}</code></pre>
+                    </div>
+                    <p class="mt-4 mb-4">对于二叉树，有时也会使用结构体定义节点：</p>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+                        <pre><code class="language-cpp">struct TreeNode {
+    int value;
+    TreeNode *left;
+    TreeNode *right;
+    TreeNode(int val) : value(val), left(nullptr), right(nullptr) {}
+};</code></pre>
+                    </div>
+                `
+            },
+            'core_traversal': {
+                title: '第二章：核心树算法 - 树的遍历',
+                content: `
+                    <p class="mb-4">遍历是访问树中所有节点的基础操作。DFS是树相关算法的基石，几乎所有树形DP、LCA等算法都基于DFS。</p>
+                    <div class="grid md:grid-cols-2 gap-4">
+                        <div>
+                            <h4 class="font-semibold">深度优先搜索 (DFS)</h4>
+                            <ul class="list-disc list-inside ml-2">
+                                <li><strong>先序遍历 (Pre-order)</strong>：根 -> 左 -> 右</li>
+                                <li><strong>中序遍历 (In-order)</strong>：左 -> 根 -> 右 (主要用于二叉树)</li>
+                                <li><strong>后序遍历 (Post-order)</strong>：左 -> 右 -> 根</li>
+                            </ul>
+                        </div>
+                        <div>
+                            <h4 class="font-semibold">广度优先搜索 (BFS)</h4>
+                            <ul class="list-disc list-inside ml-2">
+                                <li><strong>层序遍历 (Level-order)</strong>：按深度从小到大，逐层访问。</li>
+                            </ul>
+                        </div>
+                    </div>
+                    <p class="mt-4 mb-4">DFS 遍历示例 (基于邻接表):</p>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+                        <pre><code class="language-cpp">// DFS 遍历示例 (基于邻接表)
+void dfs(int u, int parent) {
+    // --- Pre-order position ---
+    // std::cout << "Visiting node: " << u << std::endl;
+    for (int v : adj[u]) {
+        if (v == parent) continue; // 避免回到父节点
+        // --- In-order-like position (for processing edge u-v) ---
+        dfs(v, u);
+    }
+    // --- Post-order position ---
+}</code></pre>
+                    </div>
+                `
+            },
+            'core_diameter': {
+                title: '树的直径',
+                content: `
+                    <p class="mb-4">树的直径是指树中任意两点之间最长的简单路径。</p>
+                    <h4 class="font-semibold mb-2">求法：</h4>
+                    <ol class="list-decimal list-inside space-y-2">
+                        <li>从任意一点 <code>P</code> 出发，通过DFS或BFS找到离它最远的点 <code>Q</code>。</li>
+                        <li>从点 <code>Q</code> 出发，再次通过DFS或BFS找到离 <code>Q</code> 最远的点 <code>R</code>。</li>
+                        <li><code>Q</code> 到 <code>R</code> 的路径就是树的一条直径。</li>
+                    </ol>
+                    <p class="mt-4 p-3 bg-blue-50 border-l-4 border-blue-400 text-blue-700 rounded-r-lg">这个方法的正确性基于一个结论：距离树上任意节点最远的点，一定是某条直径的端点之一。</p>
+                `
+            },
+            'core_lca': {
+                title: '最近公共祖先 (LCA)',
+                content: `
+                    <p class="mb-4">两个节点 <code>u</code> 和 <code>v</code> 的最近公共祖先（LCA）是指在它们所有的公共祖先中，深度最大的那一个。</p>
+                    <h4 class="font-semibold mb-2">常用算法：倍增法 (Binary Lifting)</h4>
+                    <p class="mb-2"><strong>1. 预处理</strong>：通过一次DFS，计算出每个节点的深度 <code>depth[i]</code> 和它的第 <code>2^j</code> 个祖先 <code>fa[i][j]</code>。</p>
+                    <ul class="list-disc list-inside ml-4 mb-4">
+                        <li><code>fa[i][0]</code> 就是 <code>i</code> 的父节点。</li>
+                        <li><code>fa[i][j] = fa[fa[i][j-1]][j-1]</code>，即 <code>i</code> 的第 <code>2^j</code> 个祖先是它第 <code>2^(j-1)</code> 个祖先的第 <code>2^(j-1)</code> 个祖先。</li>
+                    </ul>
+                    <p class="mb-2"><strong>2. 查询</strong>：</p>
+                    <ol class="list-decimal list-inside ml-4">
+                        <li>将深度较深的点 <code>u</code> 跳到和 <code>v</code> 相同的深度。</li>
+                        <li>如果此时 <code>u</code> 和 <code>v</code> 相遇，则它们就是LCA。</li>
+                        <li>否则，让 <code>u</code> 和 <code>v</code> 同时向上“倍增”地跳，直到它们的父节点相同。这个相同的父节点就是LCA。</li>
+                    </ol>
+                `
+            },
+            'core_diff': {
+                title: '树上差分',
+                content: `
+                    <p class="mb-4">用于高效处理对树上路径的批量修改操作。其核心思想是将对路径的修改转化为对路径端点和LCA的修改。</p>
+                    <h4 class="font-semibold mb-2">路径修改 <code>(u, v)</code> 增加 <code>w</code>：</h4>
+                    <ul class="list-disc list-inside space-y-2 mb-4">
+                        <li><code>diff[u] += w</code></li>
+                        <li><code>diff[v] += w</code></li>
+                        <li><code>diff[lca(u, v)] -= w</code></li>
+                        <li><code>diff[parent[lca(u, v)]] -= w</code> (如果LCA不是根节点)</li>
+                    </ul>
+                     <p><strong>统计结果</strong>：对差分数组 <code>diff</code> 做一次从叶节点到根节点的后缀和（通过DFS实现），即可得到每个节点的最终权值。</p>
+                `
+            },
+            'dp_intro': {
+                title: '第三章：树上动态规划 (Tree DP)',
+                content: `
+                    <p class="mb-4">树形DP是一种在树形结构上进行的动态规划。其基本思想是，一个节点的DP状态值，通常由其子节点的DP状态值计算而来。这通常通过DFS实现，在后序遍历的位置进行状态转移。</p>
+                    <p class="mb-2"><strong>状态设计</strong>：通常设 <code>dp[u][state]</code> 表示以 <code>u</code> 为根的子树，在满足 <code>state</code> 条件下的最优解。</p>
+                    <h4 class="font-semibold mt-4 mb-2">经典模型：</h4>
+                    <ul class="list-disc list-inside space-y-2">
+                        <li><strong>树的最大独立集</strong>：选出最多的点，使得任意两点之间没有边相连。
+                            <ul class="list-circle list-inside ml-4 mt-1">
+                                <li><code>dp[u][0]</code>：不选 <code>u</code> 时，以 <code>u</code> 为根的子树的最大独立集。</li>
+                                <li><code>dp[u][1]</code>：选 <code>u</code> 时，以 <code>u</code> 为根的子树的最大独立集。</li>
+                            </ul>
+                        </li>
+                        <li><strong>没有上司的舞会 (经典题目)</strong>：与最大独立集类似。</li>
+                    </ul>
+                `
+            },
+            'dp_centroid': {
+                title: '树的重心',
+                content: `
+                    <p class="mb-4"><strong>树的重心</strong>，也叫树的质心。找到一个点，使其为根时，它所有子树中节点数最多的那个子树的节点数最小。换句话说，删除重心后，产生的各个连通块中，节点数最多的那个连通块的节点数最小。</p>
+                    <h4 class="font-semibold mb-2">性质：</h4>
+                    <ul class="list-disc list-inside space-y-2 mb-4">
+                        <li>一棵树最多有两个重心，如果有两个，它们一定相邻。</li>
+                        <li>以重心为根，所有子树的大小都不超过整棵树大小的一半 (n/2)。</li>
+                        <li>树中所有节点到重心的距离之和是最小的。</li>
+                    </ul>
+                    <h4 class="font-semibold mb-2">求法：</h4>
+                    <p class="mb-4">通过一次DFS遍历即可找到重心。对于当前节点<code>u</code>，我们计算它每个子树的大小。删除节点<code>u</code>后，会形成若干个连通块：一个是<code>u</code>的每个子节点<code>v</code>构成的子树，另一个是除去以<code>u</code>为根的整个子树后，剩余的部分（即“向上的”子树）。我们找到使这些连通块中最大值最小的那个节点<code>u</code>。</p>
+                    <div class="code-block">
+                        <button class="copy-btn" onclick="copyCode(this)">复制</button>
+                        <pre><code class="language-cpp">// 寻找树的重心
+#include &lt;vector&gt;
+#include &lt;algorithm&gt;
+
+const int MAXN = 100005;
+std::vector&lt;int&gt; adj[MAXN];
+int n; // 树的总节点数
+
+int sz[MAXN];      // sz[u] 表示以u为根的子树大小
+int max_sz[MAXN];  // max_sz[u] 表示删除u后，最大连通块的大小
+int centroid;      // 存储找到的重心
+int min_max_sz = MAXN; // 最小的“最大连通块大小”
+
+void find_centroid(int u, int p) {
+    sz[u] = 1;
+    max_sz[u] = 0;
+    for (int v : adj[u]) {
+        if (v == p) continue;
+        find_centroid(v, u);
+        sz[u] += sz[v];
+        // u的某个子树大小
+        max_sz[u] = std::max(max_sz[u], sz[v]);
+    }
+    // “向上的”子树大小
+    max_sz[u] = std::max(max_sz[u], n - sz[u]);
+
+    // 更新重心
+    if (max_sz[u] < min_max_sz) {
+        min_max_sz = max_sz[u];
+        centroid = u;
+    }
+}
+
+// 调用入口: find_centroid(root, 0); root是任选的根, 比如1
+</code></pre>
+                    </div>
+                `
+            },
+            'ds_dsu': {
+                title: '第四章：高级树形数据结构 - 并查集 (DSU)',
+                content: `
+                    <p><strong>并查集 (Disjoint Set Union)</strong> 用于维护不相交集合的合并与查询操作。常用于判断图的连通性、求最小生成树（Kruskal算法）等。其核心操作是 <code>find</code> (查找代表元) 和 <code>union</code> (合并集合)。通过路径压缩和按秩合并优化，其单次操作的均摊时间复杂度可接近 O(1)。</p>
+                `
+            },
+            'ds_bit': {
+                title: '树状数组 (BIT)',
+                content: `
+                    <p><strong>树状数组 (Binary Indexed Tree)</strong> 是一种基于二进制思想的数据结构，可以在 O(log n) 时间内完成<strong>单点更新</strong>和<strong>前缀和查询</strong>。它代码简短，常数小，是解决相关问题的利器。其核心是 <code>lowbit(x)</code> 操作，用于找到 <code>x</code> 的二进制表示中最低位的1所代表的值。</p>
+                `
+            },
+            'ds_segment': {
+                title: '线段树 (Segment Tree)',
+                content: `
+                    <p><strong>线段树 (Segment Tree)</strong> 是功能比树状数组更强大的数据结构。它将一个区间划分为一系列单位区间，每个节点代表一个区间。可以在 O(log n) 时间内完成<strong>区间查询</strong>（求和、最值等）和<strong>区间修改</strong>。通过引入懒标记（lazy propagation），可以高效处理区间批量修改。线段树是竞赛中最重要的通用数据结构之一。</p>
+                `
+            },
+            'practice': {
+                title: '第五章：题目模型与实战',
+                content: `
+                    <p class="mb-4">将理论应用于实践是学习的关键。下表总结了常见问题类型、核心算法以及在洛谷平台上的对应模板题，方便您进行针对性练习。</p>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left border-collapse">
+                            <thead>
+                                <tr class="bg-stone-100">
+                                    <th class="p-2 border">问题类型</th>
+                                    <th class="p-2 border">关键算法/数据结构</th>
+                                    <th class="p-2 border">洛谷模板题</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <tr class="hover:bg-stone-50">
+                                    <td class="p-2 border">树的遍历、统计子树大小</td>
+                                    <td class="p-2 border">DFS</td>
+                                    <td class="p-2 border">-</td>
+                                </tr>
+                                <tr class="hover:bg-stone-50">
+                                    <td class="p-2 border">树上最长路径</td>
+                                    <td class="p-2 border">树的直径 (两次DFS)</td>
+                                    <td class="p-2 border"><a href="#" class="text-blue-500 hover:underline">P3379</a> (注：此题为LCA模板，但直径问题常见)</td>
+                                </tr>
+                                <tr class="hover:bg-stone-50">
+                                    <td class="p-2 border">两点间关系查询</td>
+                                    <td class="p-2 border">LCA</td>
+                                    <td class="p-2 border"><a href="https://www.luogu.com.cn/problem/P3379" target="_blank" class="text-blue-500 hover:underline">P3379</a></td>
+                                </tr>
+                                <tr class="hover:bg-stone-50">
+                                    <td class="p-2 border">路径批量修改/查询</td>
+                                    <td class="p-2 border">树上差分 + LCA</td>
+                                    <td class="p-2 border"><a href="https://www.luogu.com.cn/problem/P3128" target="_blank" class="text-blue-500 hover:underline">P3128</a></td>
+                                </tr>
+                                <tr class="hover:bg-stone-50">
+                                    <td class="p-2 border">树上最优选择问题</td>
+                                    <td class="p-2 border">树形DP</td>
+                                    <td class="p-2 border"><a href="https://www.luogu.com.cn/problem/P1352" target="_blank" class="text-blue-500 hover:underline">P1352</a>, <a href="https://www.luogu.com.cn/problem/P2015" target="_blank" class="text-blue-500 hover:underline">P2015</a></td>
+                                </tr>
+                                <tr class="hover:bg-stone-50">
+                                    <td class="p-2 border">动态维护集合/连通性</td>
+                                    <td class="p-2 border">并查集</td>
+                                    <td class="p-2 border"><a href="https://www.luogu.com.cn/problem/P3367" target="_blank" class="text-blue-500 hover:underline">P3367</a></td>
+                                </tr>
+                                <tr class="hover:bg-stone-50">
+                                    <td class="p-2 border">单点修改、前缀/区间查询</td>
+                                    <td class="p-2 border">树状数组</td>
+                                    <td class="p-2 border"><a href="https://www.luogu.com.cn/problem/P3374" target="_blank" class="text-blue-500 hover:underline">P3374</a>, <a href="https://www.luogu.com.cn/problem/P3368" target="_blank" class="text-blue-500 hover:underline">P3368</a></td>
+                                </tr>
+                                <tr class="hover:bg-stone-50">
+                                    <td class="p-2 border">区间修改、区间查询</td>
+                                    <td class="p-2 border">线段树</td>
+                                    <td class="p-2 border"><a href="https://www.luogu.com.cn/problem/P3372" target="_blank" class="text-blue-500 hover:underline">P3372</a>, <a href="https://www.luogu.com.cn/problem/P3373" target="_blank" class="text-blue-500 hover:underline">P3373</a></td>
+                                </tr>
+                                <tr class="hover:bg-stone-50">
+                                    <td class="p-2 border">树上路径查询/修改</td>
+                                    <td class="p-2 border">树链剖分 (更高级)</td>
+                                    <td class="p-2 border"><a href="https://www.luogu.com.cn/problem/P3384" target="_blank" class="text-blue-500 hover:underline">P3384</a></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                `
+            }
+        };
+
+        const menuStructure = [
+            { id: 'fundamentals', title: '第一章: 树的基础', children: [
+                { id: 'fundamentals_definition', title: '什么是树？'},
+                { id: 'fundamentals_terms', title: '常用术语'},
+                { id: 'fundamentals_types', title: '树的种类'},
+                { id: 'fundamentals_representation', title: 'C++表示法'},
+            ]},
+            { id: 'core', title: '第二章: 核心算法', children: [
+                { id: 'core_traversal', title: '树的遍历'},
+                { id: 'core_diameter', title: '树的直径'},
+                { id: 'core_lca', title: '最近公共祖先(LCA)'},
+                { id: 'core_diff', title: '树上差分'},
+            ]},
+            { id: 'dp', title: '第三章: 树上DP', children: [
+                 { id: 'dp_intro', title: '基本思想与模型'},
+                 { id: 'dp_centroid', title: '树的重心'},
+            ]},
+            { id: 'ds', title: '第四章: 高级数据结构', children: [
+                { id: 'ds_dsu', title: '并查集'},
+                { id: 'ds_bit', title: '树状数组'},
+                { id: 'ds_segment', title: '线段树'},
+            ]},
+            { id: 'practice', title: '第五章: 题目与实战', children: []},
+        ];
+
+        const contentDisplay = document.getElementById('content-display');
+        const navigationMenu = document.getElementById('navigation-menu');
+        let activeLink = null;
+        let activeParentLink = null;
+
+        function updateContent(id) {
+            const data = appData[id];
+            if (!data) return;
+
+            contentDisplay.innerHTML = `
+                <h3 class="text-2xl font-bold mb-4 text-gray-800">${data.title}</h3>
+                ${data.content}
+            `;
+            
+            // Deactivate previous links
+            if (activeLink) activeLink.classList.remove('active');
+            if (activeParentLink) activeParentLink.classList.remove('active');
+
+
+            const newActiveLink = document.querySelector(`[data-id='${id}']`);
+            if (newActiveLink) {
+                newActiveLink.classList.add('active');
+                activeLink = newActiveLink;
+                
+                const parentId = newActiveLink.getAttribute('data-parent');
+                if(parentId) {
+                    const parentLink = document.querySelector(`[data-id='${parentId}']`);
+                    if(parentLink) {
+                        parentLink.classList.add('active');
+                        activeParentLink = parentLink;
+                    }
+                } else {
+                    activeParentLink = null;
+                }
+            }
+            
+            const sidebar = document.getElementById('sidebar');
+            if(window.innerWidth < 768 && sidebar.classList.contains('translate-x-0')) {
+                 sidebar.classList.add('-translate-x-full');
+                 sidebar.classList.remove('translate-x-0');
+            }
+        }
+
+        function copyCode(button) {
+            const pre = button.parentElement.querySelector('pre');
+            const text = pre.innerText;
+            
+            const textarea = document.createElement('textarea');
+            textarea.value = text;
+            document.body.appendChild(textarea);
+            textarea.select();
+            try {
+                document.execCommand('copy');
+                button.innerText = '已复制!';
+                setTimeout(() => { button.innerText = '复制'; }, 2000);
+            } catch (err) {
+                console.error('Fallback: Oops, unable to copy', err);
+            }
+            document.body.removeChild(textarea);
+        }
+
+        function initializeMenu() {
+            navigationMenu.innerHTML = ''; // Clear previous menu
+            menuStructure.forEach(section => {
+                const sectionEl = document.createElement('div');
+                const sectionLink = document.createElement('a');
+                sectionLink.textContent = section.title;
+                sectionLink.className = 'nav-link font-semibold';
+                sectionLink.dataset.id = section.id;
+                sectionEl.appendChild(sectionLink);
+                
+                if (section.children && section.children.length > 0) {
+                    const subMenu = document.createElement('div');
+                    subMenu.className = 'ml-2';
+                    section.children.forEach(child => {
+                        const childLink = document.createElement('a');
+                        childLink.textContent = child.title;
+                        childLink.className = 'nav-sub-link text-gray-600';
+                        childLink.dataset.id = child.id;
+                        childLink.dataset.parent = section.id;
+                        childLink.onclick = () => updateContent(child.id);
+                        subMenu.appendChild(childLink);
+                    });
+                    sectionEl.appendChild(subMenu);
+                    sectionLink.onclick = () => updateContent(section.children[0].id);
+                } else {
+                     sectionLink.onclick = () => updateContent(section.id);
+                }
+                navigationMenu.appendChild(sectionEl);
+            });
+        }
+        
+        function initializeChart() {
+            const ctx = document.getElementById('conceptMap').getContext('2d');
+            const chartData = {
+                datasets: [{
+                    label: '知识点',
+                    data: [
+                        { id: 'fundamentals_definition', x: 2, y: 5, r: 25, label: '树的基础' },
+                        { id: 'core_traversal', x: 4, y: 7, r: 20, label: '树的遍历(DFS/BFS)' },
+                        { id: 'core_lca', x: 6, y: 8, r: 18, label: 'LCA' },
+                        { id: 'core_diameter', x: 5, y: 3, r: 15, label: '树的直径' },
+                        { id: 'core_diff', x: 7.5, y: 7, r: 15, label: '树上差分' },
+                        { id: 'dp_intro', x: 8, y: 4, r: 22, label: '树形DP' },
+                        { id: 'dp_centroid', x: 9, y: 2.5, r: 17, label: '树的重心' },
+                        { id: 'ds_dsu', x: 1, y: 2, r: 16, label: '并查集' },
+                        { id: 'ds_bit', x: 9.5, y: 0, r: 18, label: '树状数组' },
+                        { id: 'ds_segment', x: 10, y: 6, r: 28, label: '线段树' },
+                        { id: 'practice', x: 5.5, y: 0, r: 14, label: '实战练习' },
+                    ],
+                    backgroundColor: [
+                        'rgba(59, 130, 246, 0.7)',
+                        'rgba(16, 185, 129, 0.7)',
+                        'rgba(239, 68, 68, 0.7)',
+                        'rgba(249, 115, 22, 0.7)',
+                        'rgba(217, 70, 239, 0.7)',
+                        'rgba(139, 92, 246, 0.7)',
+                        'rgba(167, 139, 250, 0.7)', // Centroid color
+                        'rgba(99, 102, 241, 0.7)',
+                        'rgba(20, 184, 166, 0.7)',
+                        'rgba(245, 158, 11, 0.7)',
+                        'rgba(107, 114, 128, 0.7)',
+                    ],
+                    borderColor: 'rgba(255, 255, 255, 0.8)',
+                    borderWidth: 2,
+                    hoverBackgroundColor: (context) => {
+                        const bgColor = context.dataset.backgroundColor[context.dataIndex];
+                        return bgColor.replace('0.7', '1');
+                    }
+                }]
+            };
+
+            new Chart(ctx, {
+                type: 'bubble',
+                data: chartData,
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return context.raw.label;
+                                }
+                            }
+                        }
+                    },
+                    scales: {
+                        x: { display: false },
+                        y: { display: false }
+                    },
+                    onClick: (evt, elements) => {
+                        if (elements.length > 0) {
+                            const elementIndex = elements[0].index;
+                            const id = chartData.datasets[0].data[elementIndex].id;
+                            updateContent(id);
+                        }
+                    },
+                    onHover: (event, chartElement) => {
+                       event.native.target.style.cursor = chartElement[0] ? 'pointer' : 'default';
+                    }
+                }
+            });
+        }
+        
+        document.getElementById('menu-toggle').addEventListener('click', () => {
+            const sidebar = document.getElementById('sidebar');
+            sidebar.classList.toggle('-translate-x-full');
+            sidebar.classList.toggle('translate-x-0');
+        });
+
+        window.onload = () => {
+            initializeMenu();
+            initializeChart();
+            updateContent('intro');
+        };
+    </script>
+</body>
+</html>

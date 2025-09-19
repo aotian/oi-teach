@@ -1,0 +1,622 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式二分查找学习教案 (进阶版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Arial', 'sans-serif';
+            scroll-behavior: smooth;
+        }
+        .step-log-item {
+            transition: all 0.3s ease-in-out;
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        .step-log-item.visible {
+            opacity: 1;
+            transform: translateY(0);
+        }
+        .array-cell {
+            transition: all 0.5s ease;
+            position: relative;
+        }
+        .pointer {
+            position: absolute;
+            bottom: -2.5rem;
+            left: 50%;
+            transform: translateX(-50%);
+            transition: all 0.5s ease-in-out;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: white;
+        }
+        .left-pointer { background-color: #3b82f6; } /* blue-500 */
+        .right-pointer { background-color: #ef4444; } /* red-500 */
+        .mid-pointer { 
+            background-color: #22c55e; /* green-500 */
+            bottom: -4.5rem;
+            transform: translateX(-50%) scale(1.1);
+        }
+        .log-container-view {
+            background-color: #1f2937; /* gray-800 */
+            color: white;
+            font-family: 'Courier New', Courier, monospace;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            min-height: 150px;
+            font-size: 0.875rem;
+        }
+        .log-comment { color: #9ca3af; /* gray-400 */ }
+
+        /* For Answer Search Visualizer */
+        .wood-log {
+            background-color: #ca8a04; /* yellow-600 */
+            border: 2px solid #854d0e; /* yellow-800 */
+            display: flex;
+            margin-bottom: 0.5rem;
+            height: 2.5rem;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+        .wood-piece {
+            background-color: #facc15; /* yellow-400 */
+            border-right: 2px dashed #854d0e;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            color: #854d0e;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <!-- Header and Navigation -->
+    <header class="bg-white shadow-md sticky top-0 z-50">
+        <nav class="container mx-auto px-6 py-3 flex justify-between items-center">
+            <h1 class="text-xl font-bold text-gray-800">信息学竞赛算法课：二分查找</h1>
+            <div class="hidden md:flex space-x-4">
+                <a href="#intro" class="text-gray-600 hover:text-blue-500">引入</a>
+                <a href="#visualizer" class="text-gray-600 hover:text-blue-500">基础查找</a>
+                <a href="#boundary-visualizer" class="text-gray-600 hover:text-blue-500">边界查找</a>
+                <a href="#answer-search" class="text-gray-600 hover:text-blue-500">二分答案</a>
+                <a href="#code" class="text-gray-600 hover:text-blue-500">核心代码</a>
+                <a href="#practice" class="text-gray-600 hover:text-blue-500">在线练习</a>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <main class="container mx-auto p-6 md:p-8">
+
+        <!-- Section 1: Introduction Game -->
+        <section id="intro" class="bg-white p-8 rounded-xl shadow-lg mb-8">
+            <h2 class="text-2xl font-bold mb-4">1. 互动引入：猜数字游戏</h2>
+            <p class="mb-4 text-gray-600">我心里想了一个 1 到 100 之间的整数。你需要用最少的次数猜中它。每次猜测后，我会告诉你“猜高了”、“猜低了”还是“猜对了”。</p>
+            <div class="bg-blue-50 p-6 rounded-lg">
+                <div class="flex flex-col sm:flex-row gap-4 items-center">
+                    <input type="number" id="guessInput" placeholder="输入你的猜测" class="w-full sm:w-auto px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    <button id="guessButton" class="w-full sm:w-auto bg-blue-500 text-white font-semibold px-6 py-2 rounded-lg hover:bg-blue-600 transition">猜！</button>
+                    <button id="resetGameButton" class="w-full sm:w-auto bg-gray-300 text-gray-700 font-semibold px-6 py-2 rounded-lg hover:bg-gray-400 transition">重置游戏</button>
+                </div>
+                <p id="guessFeedback" class="mt-4 text-lg font-medium text-center h-8"></p>
+                <p class="mt-2 text-sm text-gray-500 text-center">你的最佳策略是什么？这背后就是二分查找的核心思想！</p>
+            </div>
+        </section>
+
+        <!-- Section 2: Algorithm Visualizer (Basic) -->
+        <section id="visualizer" class="bg-white p-8 rounded-xl shadow-lg mb-8">
+            <h2 class="text-2xl font-bold mb-4">2. 梯度一：基础查找 (模板一)</h2>
+            <p class="mb-6 text-gray-600">在一个不重复的有序数组中查找一个特定值。</p>
+            <div id="arrayContainer" class="flex flex-wrap justify-center gap-1 bg-gray-100 p-4 rounded-lg mb-6 min-h-[8rem] items-center relative"></div>
+            <div class="flex flex-col sm:flex-row gap-4 items-center mb-6">
+                <input type="number" id="targetInput" placeholder="输入要查找的数字" class="w-full sm:w-auto px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button id="searchButton" class="w-full sm:w-auto bg-green-500 text-white font-semibold px-6 py-2 rounded-lg hover:bg-green-600 transition">开始查找</button>
+                <button id="resetVizButton" class="w-full sm:w-auto bg-gray-300 text-gray-700 font-semibold px-6 py-2 rounded-lg hover:bg-gray-400 transition">重置动画</button>
+            </div>
+            <div class="log-container-view">
+                <p class="log-comment">// 查找日志...</p>
+                <div id="logContainer"></div>
+            </div>
+        </section>
+
+        <!-- Section 3: Boundary Visualizer -->
+        <section id="boundary-visualizer" class="bg-white p-8 rounded-xl shadow-lg mb-8">
+            <h2 class="text-2xl font-bold mb-4">3. 梯度二：边界查找 (模板二)</h2>
+            <p class="mb-6 text-gray-600">在一个<strong>有重复元素</strong>的有序数组中，查找<strong>第一个大于或等于</strong>目标值的位置。</p>
+            <div id="boundaryArrayContainer" class="flex flex-wrap justify-center gap-1 bg-gray-100 p-4 rounded-lg mb-6 min-h-[8rem] items-center relative"></div>
+            <div class="flex flex-col sm:flex-row gap-4 items-center mb-6">
+                <input type="number" id="boundaryTargetInput" placeholder="输入目标数字" class="w-full sm:w-auto px-4 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500">
+                <button id="boundarySearchButton" class="w-full sm:w-auto bg-green-500 text-white font-semibold px-6 py-2 rounded-lg hover:bg-green-600 transition">开始查找边界</button>
+                <button id="boundaryResetVizButton" class="w-full sm:w-auto bg-gray-300 text-gray-700 font-semibold px-6 py-2 rounded-lg hover:bg-gray-400 transition">重置动画</button>
+            </div>
+            <div class="log-container-view">
+                <p class="log-comment">// 查找日志 (lower_bound)...</p>
+                <div id="boundaryLogContainer"></div>
+            </div>
+        </section>
+
+        <!-- Section 4: Answer Search Visualizer -->
+        <section id="answer-search" class="bg-white p-8 rounded-xl shadow-lg mb-8">
+            <h2 class="text-2xl font-bold mb-4">4. 梯度三：二分答案 (木材切割问题)</h2>
+            <p class="mb-4 text-gray-600"><b>问题:</b> 我们有几根不同长度的木材。要把它们切割成长度<strong>相等</strong>的小段，并且至少要得到 <strong>K</strong> 段。请问能切割出的最长长度是多少？</p>
+            <p class="mb-6 text-gray-600">这里的“答案”（最长长度）具有单调性：如果长度 L 可行，那么任何小于 L 的长度也一定可行。我们可以对“答案”进行二分！</p>
+            
+            <div class="grid md:grid-cols-2 gap-8">
+                <!-- Left Panel: Controls & Visualization -->
+                <div>
+                    <h3 class="font-semibold text-lg mb-4">交互式验证 (Check函数)</h3>
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                        <label for="kValueInput" class="block mb-2 font-medium">需要的最少木段数量 K:</label>
+                        <input type="number" id="kValueInput" value="7" class="w-full px-3 py-2 border rounded-lg mb-4">
+                        
+                        <div id="woodLogsContainer" class="mb-4"></div>
+                        <p class="text-center font-bold text-lg">当前切割长度 L = <span id="currentLCut">0</span>, 得到 <span id="totalPieces">0</span> 段</p>
+                        <p class="text-center font-bold text-2xl h-8" id="checkResult"></p>
+                    </div>
+                </div>
+                <!-- Right Panel: Auto Search -->
+                <div>
+                    <h3 class="font-semibold text-lg mb-4">自动化二分答案</h3>
+                    <button id="startAnswerSearchButton" class="w-full bg-blue-500 text-white font-semibold px-6 py-2 rounded-lg hover:bg-blue-600 transition mb-4">开始自动查找最优答案</button>
+                    <div class="log-container-view">
+                        <p class="log-comment">// 二分答案日志...</p>
+                        <div id="answerLogContainer"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Section 5: Code Templates -->
+        <section id="code" class="bg-white p-8 rounded-xl shadow-lg mb-8">
+            <h2 class="text-2xl font-bold mb-4">5. 核心代码模板 (C++)</h2>
+            <!-- ... Code template section ... -->
+        </section>
+
+        <!-- Section 6: Complexity -->
+        <section id="complexity" class="bg-white p-8 rounded-xl shadow-lg mb-8">
+            <h2 class="text-2xl font-bold mb-4">6. 效率分析</h2>
+            <!-- ... Complexity section ... -->
+        </section>
+        
+        <!-- Section 7: Practice -->
+        <section id="practice" class="bg-white p-8 rounded-xl shadow-lg">
+            <h2 class="text-2xl font-bold mb-4">7. 上手练习，巩固知识</h2>
+             <!-- ... Practice section ... -->
+        </section>
+
+    </main>
+    <footer class="text-center py-6 text-sm text-gray-500">
+        <p>祝同学们在信息学竞赛中取得优异成绩！</p>
+    </footer>
+
+<script>
+    // --- Utility function for adding logs ---
+    function addLog(container, message, delay) {
+        return new Promise(resolve => {
+            setTimeout(() => {
+                const logItem = document.createElement('p');
+                logItem.textContent = `> ${message}`;
+                logItem.className = 'step-log-item';
+                container.appendChild(logItem);
+                setTimeout(() => logItem.classList.add('visible'), 50);
+                container.scrollTop = container.scrollHeight;
+                resolve();
+            }, delay);
+        });
+    }
+
+    // --- Part 1: Guess the Number Game ---
+    (function() {
+        // ... (The code from the previous version is unchanged, so it's omitted for brevity) ...
+        const guessInput = document.getElementById('guessInput');
+        const guessButton = document.getElementById('guessButton');
+        const resetGameButton = document.getElementById('resetGameButton');
+        const guessFeedback = document.getElementById('guessFeedback');
+        let secretNumber, guessCount;
+        function newGame() {
+            secretNumber = Math.floor(Math.random() * 100) + 1;
+            guessCount = 0;
+            guessFeedback.textContent = '新游戏开始！';
+            guessFeedback.className = 'mt-4 text-lg font-medium text-center h-8';
+            guessInput.value = '';
+            guessInput.disabled = false;
+            guessButton.disabled = false;
+        }
+        guessButton.addEventListener('click', () => {
+            const userGuess = parseInt(guessInput.value);
+            if (isNaN(userGuess) || userGuess < 1 || userGuess > 100) {
+                guessFeedback.textContent = '请输入 1-100 之间的有效数字！';
+                guessFeedback.className = 'mt-4 text-lg font-medium text-center h-8 text-yellow-600';
+                return;
+            }
+            guessCount++;
+            if (userGuess < secretNumber) {
+                guessFeedback.textContent = `猜低了！(第 ${guessCount} 次)`;
+                guessFeedback.className = 'mt-4 text-lg font-medium text-center h-8 text-blue-600';
+            } else if (userGuess > secretNumber) {
+                guessFeedback.textContent = `猜高了！(第 ${guessCount} 次)`;
+                guessFeedback.className = 'mt-4 text-lg font-medium text-center h-8 text-red-600';
+            } else {
+                guessFeedback.textContent = `猜对了！你用了 ${guessCount} 次。太棒了！`;
+                guessFeedback.className = 'mt-4 text-lg font-medium text-center h-8 text-green-600';
+                guessInput.disabled = true;
+                guessButton.disabled = true;
+            }
+        });
+        resetGameButton.addEventListener('click', newGame);
+        newGame();
+    })();
+
+    // --- Part 2: Basic Algorithm Visualizer ---
+    (function() {
+        const arrayContainer = document.getElementById('arrayContainer');
+        const targetInput = document.getElementById('targetInput');
+        const searchButton = document.getElementById('searchButton');
+        const resetVizButton = document.getElementById('resetVizButton');
+        const logContainer = document.getElementById('logContainer');
+        const vizArray = [2, 5, 8, 12, 16, 23, 38, 56, 72, 91];
+        let pointers = {};
+        
+        function render(highlightIndex = -1, grayedOutRange = {start: -1, end: -1}) {
+            arrayContainer.innerHTML = '';
+            vizArray.forEach((num, index) => {
+                const cell = document.createElement('div');
+                cell.id = `cell-basic-${index}`;
+                cell.className = 'array-cell w-12 h-12 md:w-16 md:h-16 flex items-center justify-center font-bold text-lg bg-white rounded-md shadow';
+                cell.textContent = num;
+                if ((grayedOutRange.start !== -1 && index < grayedOutRange.start) || (grayedOutRange.end !== -1 && index > grayedOutRange.end)) {
+                    cell.classList.add('opacity-30', 'bg-gray-200');
+                }
+                if (index === highlightIndex) {
+                     cell.classList.remove('bg-white');
+                     cell.classList.add('bg-green-300', 'scale-110');
+                }
+                arrayContainer.appendChild(cell);
+            });
+            renderPointers();
+        }
+
+        function renderPointers() {
+            document.querySelectorAll('#arrayContainer .pointer').forEach(p => p.remove());
+            if (pointers.left !== undefined) addPointer(pointers.left, 'left', 'L');
+            if (pointers.right !== undefined) addPointer(pointers.right, 'right', 'R');
+            if (pointers.mid !== undefined) addPointer(pointers.mid, 'mid', 'Mid');
+        }
+
+        function addPointer(index, type, text) {
+            const cell = document.getElementById(`cell-basic-${index}`);
+            if(cell) {
+                const pointer = document.createElement('div');
+                pointer.className = `pointer ${type}-pointer`;
+                pointer.textContent = text;
+                cell.appendChild(pointer);
+            }
+        }
+        
+        async function startSearch() {
+            const target = parseInt(targetInput.value);
+            if (isNaN(target)) { await addLog(logContainer, "错误：请输入一个有效的数字。", 0); return; }
+            searchButton.disabled = true;
+            resetVizButton.disabled = true;
+            logContainer.innerHTML = '';
+            pointers = {};
+            render();
+
+            let left = 0, right = vizArray.length - 1, step = 1;
+            while (left <= right) {
+                pointers.left = left; pointers.right = right;
+                let mid = Math.floor(left + (right - left) / 2);
+                pointers.mid = mid;
+                await addLog(logContainer, `第 ${step} 步: 范围 [${left}, ${right}]`, 500);
+                render(-1, {start: left, end: right});
+                await new Promise(r => setTimeout(r, 1000));
+                await addLog(logContainer, `计算中间位置: mid = ${mid} (值为 ${vizArray[mid]})`, 500);
+                render(-1, {start: left, end: right});
+                await new Promise(r => setTimeout(r, 1000));
+                if (vizArray[mid] === target) {
+                    pointers.left = undefined; pointers.right = undefined;
+                    render(mid);
+                    await addLog(logContainer, `成功: nums[${mid}] == ${target}。找到目标！`, 500);
+                    searchButton.disabled = false; resetVizButton.disabled = false; return;
+                } else if (vizArray[mid] < target) {
+                    await addLog(logContainer, `比较: ${vizArray[mid]} < ${target}。目标在右半部分。`, 500);
+                    left = mid + 1;
+                } else {
+                    await addLog(logContainer, `比较: ${vizArray[mid]} > ${target}。目标在左半部分。`, 500);
+                    right = mid - 1;
+                }
+                step++;
+                await new Promise(r => setTimeout(r, 1500));
+            }
+            await addLog(logContainer, `结束: 范围为空 (left > right)。未找到目标 ${target}。`, 500);
+            pointers = {};
+            render();
+            searchButton.disabled = false; resetVizButton.disabled = false;
+        }
+
+        function reset() { pointers = {}; targetInput.value = ''; logContainer.innerHTML = ''; render(); searchButton.disabled = false; resetVizButton.disabled = false; }
+        searchButton.addEventListener('click', startSearch);
+        resetVizButton.addEventListener('click', reset);
+        render();
+    })();
+
+    // --- Part 3: Boundary Search Visualizer ---
+    (function() {
+        const arrayContainer = document.getElementById('boundaryArrayContainer');
+        const targetInput = document.getElementById('boundaryTargetInput');
+        const searchButton = document.getElementById('boundarySearchButton');
+        const resetVizButton = document.getElementById('boundaryResetVizButton');
+        const logContainer = document.getElementById('boundaryLogContainer');
+        const vizArray = [1, 3, 5, 5, 5, 8, 9, 12];
+        let pointers = {};
+
+        function render(highlightIndex = -1, grayedOutRange = {start: -1, end: -1}) {
+            arrayContainer.innerHTML = '';
+            vizArray.forEach((num, index) => {
+                const cell = document.createElement('div');
+                cell.id = `cell-boundary-${index}`;
+                cell.className = 'array-cell w-12 h-12 md:w-16 md:h-16 flex items-center justify-center font-bold text-lg bg-white rounded-md shadow';
+                cell.textContent = num;
+                 if ((grayedOutRange.start !== -1 && index < grayedOutRange.start) || (grayedOutRange.end !== -1 && index >= grayedOutRange.end)) { // note >=
+                    cell.classList.add('opacity-30', 'bg-gray-200');
+                }
+                if (index === highlightIndex) {
+                     cell.classList.add('bg-yellow-300', 'scale-110');
+                     cell.classList.remove('bg-white');
+                }
+                arrayContainer.appendChild(cell);
+            });
+            renderPointers();
+        }
+        
+        function renderPointers() {
+            document.querySelectorAll('#boundaryArrayContainer .pointer').forEach(p => p.remove());
+            if (pointers.left !== undefined) addPointer(pointers.left, 'left', 'L');
+            if (pointers.right !== undefined && pointers.right < vizArray.length) addPointer(pointers.right, 'right', 'R');
+            if (pointers.mid !== undefined) addPointer(pointers.mid, 'mid', 'Mid');
+        }
+
+        function addPointer(index, type, text) {
+            const cell = document.getElementById(`cell-boundary-${index}`);
+            if (cell) {
+                const pointer = document.createElement('div');
+                pointer.className = `pointer ${type}-pointer`;
+                pointer.textContent = text;
+                cell.appendChild(pointer);
+            }
+        }
+        
+        async function startSearch() {
+            const target = parseInt(targetInput.value);
+            if (isNaN(target)) { await addLog(logContainer, "错误：请输入一个有效的数字。", 0); return; }
+            searchButton.disabled = true; resetVizButton.disabled = true;
+            logContainer.innerHTML = '';
+            pointers = {};
+            render();
+
+            let left = 0, right = vizArray.length, step = 1;
+            while (left < right) {
+                pointers.left = left; pointers.right = right;
+                let mid = Math.floor(left + (right - left) / 2);
+                pointers.mid = mid;
+                await addLog(logContainer, `第 ${step} 步: 范围 [${left}, ${right})`, 500);
+                render(-1, {start: left, end: right});
+                await new Promise(r => setTimeout(r, 1000));
+                
+                await addLog(logContainer, `检查 mid = ${mid} (值为 ${vizArray[mid]})`, 500);
+                render(-1, {start: left, end: right});
+                await new Promise(r => setTimeout(r, 1000));
+
+                if (vizArray[mid] >= target) {
+                    await addLog(logContainer, `条件满足: ${vizArray[mid]} >= ${target}。答案可能在左边或就是mid。`, 500);
+                    await addLog(logContainer, `收缩右边界: right = mid。新范围 [${left}, ${mid})`, 500);
+                    right = mid;
+                } else {
+                    await addLog(logContainer, `条件不满足: ${vizArray[mid]} < ${target}。答案一定在右边。`, 500);
+                    await addLog(logContainer, `收缩左边界: left = mid + 1。新范围 [${mid + 1}, ${right})`, 500);
+                    left = mid + 1;
+                }
+                step++;
+                await new Promise(r => setTimeout(r, 1500));
+            }
+            pointers = {};
+            await addLog(logContainer, `结束: left == right == ${left}。`, 500);
+            await addLog(logContainer, `第一个 >= ${target} 的位置是索引 ${left}。`, 500);
+            render(left);
+            if(left < vizArray.length) addPointer(left, 'mid', '答案');
+            searchButton.disabled = false; resetVizButton.disabled = false;
+        }
+
+        function reset() { pointers = {}; targetInput.value = ''; logContainer.innerHTML = ''; render(); searchButton.disabled = false; resetVizButton.disabled = false; }
+        searchButton.addEventListener('click', startSearch);
+        resetVizButton.addEventListener('click', reset);
+        render();
+    })();
+
+    // --- Part 4: Answer Search Visualizer ---
+    (function() {
+        const kValueInput = document.getElementById('kValueInput');
+        const logsContainer = document.getElementById('woodLogsContainer');
+        const startButton = document.getElementById('startAnswerSearchButton');
+        const logContainer = document.getElementById('answerLogContainer');
+        const currentLCut = document.getElementById('currentLCut');
+        const totalPiecesEl = document.getElementById('totalPieces');
+        const checkResultEl = document.getElementById('checkResult');
+
+        const woodLogsData = [45, 29, 62, 18, 55];
+        const maxLogLength = Math.max(...woodLogsData);
+
+        function check(L) {
+            if (L <= 0) return { pieces: Infinity, ok: true };
+            const k = parseInt(kValueInput.value);
+            let pieces = 0;
+            for (const log of woodLogsData) {
+                pieces += Math.floor(log / L);
+            }
+            return { pieces, ok: pieces >= k };
+        }
+
+        function renderLogs(cutLength = 0) {
+            logsContainer.innerHTML = '';
+            woodLogsData.forEach(logLength => {
+                const logEl = document.createElement('div');
+                logEl.className = 'wood-log';
+                logEl.style.width = `${(logLength / maxLogLength) * 100}%`;
+
+                if (cutLength > 0) {
+                    const numPieces = Math.floor(logLength / cutLength);
+                    for (let i = 0; i < numPieces; i++) {
+                        const pieceEl = document.createElement('div');
+                        pieceEl.className = 'wood-piece';
+                        pieceEl.style.width = `${(cutLength / logLength) * 100}%`;
+                        logEl.appendChild(pieceEl);
+                    }
+                }
+                logsContainer.appendChild(logEl);
+            });
+            const { pieces, ok } = check(cutLength);
+            currentLCut.textContent = cutLength;
+            totalPiecesEl.textContent = cutLength > 0 ? pieces : 0;
+
+            if (cutLength > 0) {
+                checkResultEl.textContent = ok ? '✅ 可行 (check == true)' : '❌ 不可行 (check == false)';
+                checkResultEl.className = ok ? 'text-center font-bold text-2xl h-8 text-green-600' : 'text-center font-bold text-2xl h-8 text-red-600';
+            } else {
+                 checkResultEl.textContent = '';
+            }
+        }
+        
+        async function startSearch() {
+            startButton.disabled = true;
+            logContainer.innerHTML = '';
+            const k = parseInt(kValueInput.value);
+            if (isNaN(k) || k <= 0) {
+                await addLog(logContainer, "错误: K值必须是正整数", 0);
+                startButton.disabled = false;
+                return;
+            }
+            
+            await addLog(logContainer, `目标: 得到至少 ${k} 段木材`, 0);
+
+            let left = 1, right = maxLogLength, ans = 0, step = 1;
+            await addLog(logContainer, `答案范围: [${left}, ${right}]`, 500);
+
+            while(left <= right) {
+                 let mid = Math.floor(left + (right - left) / 2);
+                 await addLog(logContainer, `第 ${step} 步: 范围 [${left}, ${right}]`, 1000);
+                 await addLog(logContainer, `猜测答案(长度) L = ${mid}`, 1000);
+                 
+                 renderLogs(mid);
+                 const { pieces, ok } = check(mid);
+                 await new Promise(r => setTimeout(r, 1500));
+
+                 if (ok) {
+                    await addLog(logContainer, `check(${mid}) -> 得到 ${pieces} 段 >= ${k} 段。可行！`, 500);
+                    await addLog(logContainer, `尝试更长的长度: ans = ${mid}, left = ${mid + 1}`, 500);
+                    ans = mid;
+                    left = mid + 1;
+                 } else {
+                    await addLog(logContainer, `check(${mid}) -> 得到 ${pieces} 段 < ${k} 段。不可行！`, 500);
+                    await addLog(logContainer, `必须缩短长度: right = ${mid - 1}`, 500);
+                    right = mid - 1;
+                 }
+                 step++;
+                 await new Promise(r => setTimeout(r, 2000));
+            }
+
+            await addLog(logContainer, `结束: 范围为空 (left > right)`, 500);
+            await addLog(logContainer, `最优解是 ${ans}`, 500);
+            renderLogs(ans);
+            startButton.disabled = false;
+        }
+
+        kValueInput.addEventListener('change', () => renderLogs(0));
+        startButton.addEventListener('click', startSearch);
+        renderLogs(0);
+
+    })();
+
+    // Dummy sections for structure, copy logic later if needed
+    (function() {
+        // Section 5: Code Templates
+        document.body.querySelector('#code').innerHTML = `
+            <h2 class="text-2xl font-bold mb-4">5. 核心代码模板 (C++)</h2>
+            <p class="mb-6 text-gray-600">竞赛中，我们主要使用两种模板：整数二分（找特定值）和二分答案（找边界）。</p>
+            <div class="flex justify-center mb-4 border-b">
+                <button id="btn-template1" class="px-4 py-2 font-semibold border-b-2 border-blue-500 text-blue-500">模板一：查找特定值</button>
+                <button id="btn-template2" class="px-4 py-2 font-semibold text-gray-500">模板二：查找边界/二分答案</button>
+            </div>
+            <div id="template1">
+                <pre><code class="language-cpp bg-gray-800 text-white p-4 rounded-lg block overflow-x-auto">// 在升序数组 nums 中查找 target，区间 [left, right]\nint binarySearch(vector&lt;int&gt;& nums, int target) {\n    int left = 0, right = nums.size() - 1;\n    while (left <= right) { \n        int mid = left + (right - left) / 2;\n        if (nums[mid] == target) {\n            return mid;\n        } else if (nums[mid] < target) {\n            left = mid + 1;\n        } else {\n            right = mid - 1;\n        }\n    }\n    return -1;\n}</code></pre>
+            </div>
+            <div id="template2" class="hidden">
+                 <pre><code class="language-cpp bg-gray-800 text-white p-4 rounded-lg block overflow-x-auto">// 查找第一个满足 check(x) 性质的元素\nint find_boundary(int left_bound, int right_bound) {\n    int left = left_bound, right = right_bound;\n    while (left < right) {\n        int mid = left + (right - left) / 2;\n        if (check(mid)) { // check(mid) 是满足条件的\n            right = mid;\n        } else {\n            left = mid + 1;\n        }\n    }\n    return left;\n}</code></pre>
+            </div>`;
+        const btnTemplate1 = document.getElementById('btn-template1');
+        const btnTemplate2 = document.getElementById('btn-template2');
+        btnTemplate1.addEventListener('click', () => {
+            document.getElementById('template1').classList.remove('hidden');
+            document.getElementById('template2').classList.add('hidden');
+            btnTemplate1.classList.add('border-blue-500', 'text-blue-500');
+            btnTemplate2.classList.remove('border-blue-500', 'text-blue-500');
+        });
+         btnTemplate2.addEventListener('click', () => {
+            document.getElementById('template2').classList.remove('hidden');
+            document.getElementById('template1').classList.add('hidden');
+            btnTemplate2.classList.add('border-blue-500', 'text-blue-500');
+            btnTemplate1.classList.remove('border-blue-500', 'text-blue-500');
+        });
+
+        // Section 6: Complexity
+        document.body.querySelector('#complexity').innerHTML = `
+            <h2 class="text-2xl font-bold mb-4">6. 为什么这么快？效率分析</h2>
+            <p class="mb-4 text-gray-600">二分查找的威力在于它每次都能排除掉一半的元素。这使得它的时间复杂度仅为 <span class="font-mono bg-gray-200 px-1 rounded">O(log n)</span>。</p>
+            <div class="grid md:grid-cols-2 gap-8">
+                <div class="bg-red-50 p-6 rounded-lg">
+                    <h3 class="font-bold text-lg mb-2 text-red-700">线性查找 (O(n))</h3>
+                    <p>在一个有 1,000,000,000 (十亿) 个元素的数组中查找，最坏情况需要查找... </p>
+                    <p class="text-3xl font-bold text-red-600 mt-4">1,000,000,000 次</p>
+                </div>
+                <div class="bg-green-50 p-6 rounded-lg">
+                    <h3 class="font-bold text-lg mb-2 text-green-700">二分查找 (O(log n))</h3>
+                    <p>在同样大小的数组中，最坏情况只需要查找... (log₂(10⁹) ≈ 29.89)</p>
+                    <p class="text-3xl font-bold text-green-600 mt-4">大约 30 次！</p>
+                </div>
+            </div>`;
+
+        // Section 7: Practice
+        document.body.querySelector('#practice').innerHTML = `
+            <h2 class="text-2xl font-bold mb-4">7. 上手练习，巩固知识</h2>
+            <p class="mb-6 text-gray-600">理论结合实践是最好的学习方式。推荐使用 <a href="https://www.luogu.com.cn/" target="_blank" class="text-blue-500 font-bold hover:underline">洛谷 (Luogu)</a> 平台进行练习，它非常适合信息学竞赛。</p>
+            <div class="space-y-4">
+                <a href="https://www.luogu.com.cn/problem/P2249" target="_blank" class="block bg-blue-50 p-4 rounded-lg hover:bg-blue-100 transition">
+                    <p class="font-semibold text-blue-800">第一梯度：洛谷 P2249 【深基13.例1】查找</p>
+                    <p class="text-sm text-blue-600">这是模板二的直接应用，也是竞赛中最常见的二分查找形式，建议作为入门题。</p>
+                </a>
+                <a href="https://www.luogu.com.cn/problem/P1024" target="_blank" class="block bg-yellow-50 p-4 rounded-lg hover:bg-yellow-100 transition">
+                    <p class="font-semibold text-yellow-800">第二梯度：洛谷 P1024 [NOIP2001 提高组] 一元三次方程求解</p>
+                    <p class="text-sm text-yellow-600">将二分思想应用在实数域上，需要注意精度控制，是“二分答案”思想的拓展。</p>
+                </a>
+                 <a href="https://www.luogu.com.cn/problem/P2440" target="_blank" class="block bg-green-50 p-4 rounded-lg hover:bg-green-100 transition">
+                    <p class="font-semibold text-green-800">第三梯度：洛谷 P2440 木材加工</p>
+                    <p class="text-sm text-green-600">经典的“二分答案”问题，与我们上方的可视化示例完全对应。</p>
+                </a>
+                <a href="https://www.luogu.com.cn/problem/P1182" target="_blank" class="block bg-green-50 p-4 rounded-lg hover:bg-green-100 transition">
+                    <p class="font-semibold text-green-800">第三梯度：洛谷 P1182 数列分段 Section II</p>
+                    <p class="text-sm text-green-600">另一个经典的“二分答案”，其 check 函数需要使用贪心思想来实现。</p>
+                </a>
+            </div>`;
+    })();
+
+</script>
+</body>
+</html>
+
