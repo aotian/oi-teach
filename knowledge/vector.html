@@ -1,0 +1,463 @@
+<!DOCTYPE html>
+<html lang="zh-CN" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式 C++ STL 核心容器教程：vector, map, set</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A single-page vertical scroll layout with a sticky top navigation for quick access to each container's section (vector, map, set) and a final summary. This structure is intuitive for a linear tutorial, allowing users to either read top-to-bottom or jump to specific topics. Interactivity is focused on "simulating" code execution via button clicks to display pre-defined outputs, and revealing solutions to exercises, making the learning process more engaging than a static document. -->
+    <!-- Visualization & Content Choices: Report Info: C++ code examples -> Goal: Demonstrate functionality -> Presentation: Styled HTML code blocks -> Interaction: "Run" button populates a simulated console with expected output using JS. Justification: Provides a safe, browser-based interactive experience without needing a real C++ compiler. Report Info: Exercises -> Goal: Test understanding -> Presentation: Hidden solution panels -> Interaction: "Reveal" button toggles visibility. Justification: Encourages active problem-solving before seeing the answer. Report Info: Container comparison -> Goal: Compare -> Presentation: 3-column responsive grid. Justification: Allows for quick, side-by-side visual comparison of key features. Library/Method: Vanilla JS for all interactions. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        .nav-link.active {
+            color: #2563eb;
+            font-weight: 600;
+        }
+        .code-block {
+            background-color: #282c34;
+            color: #abb2bf;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.9em;
+            overflow-x: auto;
+            white-space: pre;
+        }
+        .console-output {
+            background-color: #1f2937;
+            color: #e5e7eb;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-family: 'Fira Code', 'Courier New', monospace;
+            font-size: 0.9em;
+            margin-top: 0.75rem;
+            min-height: 50px;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+        .token.keyword { color: #c678dd; }
+        .token.comment { color: #6a9955; }
+        .token.string { color: #98c379; }
+        .token.number { color: #d19a66; }
+        .token.operator { color: #56b6c2; }
+        .token.punctuation { color: #abb2bf; }
+        .token.preprocessor { color: #56b6c2; font-style: italic; }
+        .token.function { color: #61afef; }
+        .token.type { color: #e5c07b; }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <span class="text-xl font-bold text-blue-600">C++ STL 教程</span>
+                <div class="hidden sm:flex sm:space-x-8">
+                    <a href="#vector" class="nav-link text-slate-600 hover:text-blue-600 transition-colors duration-200">Vector</a>
+                    <a href="#map" class="nav-link text-slate-600 hover:text-blue-600 transition-colors duration-200">Map</a>
+                    <a href="#set" class="nav-link text-slate-600 hover:text-blue-600 transition-colors duration-200">Set</a>
+                    <a href="#summary" class="nav-link text-slate-600 hover:text-blue-600 transition-colors duration-200">总结对比</a>
+                </div>
+            </div>
+        </nav>
+    </header>
+
+    <main class="max-w-5xl mx-auto p-4 sm:p-6 lg:p-8">
+        <section id="intro" class="mb-16 text-center">
+            <h1 class="text-4xl md:text-5xl font-extrabold text-slate-900 mb-4">C++ STL 核心容器交互式教程</h1>
+            <p class="text-lg text-slate-600">欢迎来到 C++ 标准模板库 (STL) 的学习之旅！本教程将通过交互式示例，带你一步步掌握 `vector`、`map` 和 `set` 这三个最常用、最强大的容器。</p>
+        </section>
+
+        <!-- Vector Section -->
+        <section id="vector" class="mb-12 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-900 border-b-4 border-blue-500 pb-2 mb-6">1. `vector` - 动态数组</h2>
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-2xl font-semibold mb-3">1.1 定义</h3>
+                <p class="mb-4">可以把 `vector` 想象成一个“智能”的数组。它会自动管理内存，你可以在运行时轻松地添加或删除元素。当你不知道需要存储多少元素时，它非常有用。</p>
+                <ul class="list-disc list-inside space-y-2">
+                    <li><strong class="font-semibold text-slate-700">头文件:</strong> `#include <vector>`</li>
+                    <li><strong class="font-semibold text-slate-700">核心特性:</strong>
+                        <ul class="list-disc list-inside ml-6 mt-1 space-y-1 text-slate-600">
+                            <li>元素在内存中是连续存储的。</li>
+                            <li>可以通过索引快速访问任意元素。</li>
+                            <li>可以在末尾快速地添加或删除元素。</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                 <h3 class="text-2xl font-semibold mb-3">1.2 如何声明和初始化</h3>
+                 <pre class="code-block"><code class="language-cpp"><span class="token preprocessor">#include &lt;iostream&gt;</span>
+<span class="token preprocessor">#include &lt;vector&gt;</span>
+<span class="token preprocessor">#include &lt;string&gt;</span>
+
+<span class="token type">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token comment">// 声明一个空的 vector，用于存储整数</span>
+    <span class="token type">std</span><span class="token operator">::</span><span class="token type">vector</span><span class="token operator">&lt;</span><span class="token type">int</span><span class="token operator">&gt;</span> scores<span class="token punctuation">;</span>
+
+    <span class="token comment">// 声明并初始化一个 vector</span>
+    <span class="token type">std</span><span class="token operator">::</span><span class="token type">vector</span><span class="token operator">&lt;</span><span class="token type">std</span><span class="token operator">::</span><span class="token type">string</span><span class="token operator">&gt;</span> names <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">"Alice"</span><span class="token punctuation">,</span> <span class="token string">"Bob"</span><span class="token punctuation">,</span> <span class="token string">"Charlie"</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// 声明一个包含 5 个整数的 vector，所有元素默认初始化为 0</span>
+    <span class="token type">std</span><span class="token operator">::</span><span class="token type">vector</span><span class="token operator">&lt;</span><span class="token type">int</span><span class="token operator">&gt;</span> data<span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token comment">// 声明一个包含 3 个整数的 vector，并将所有元素初始化为 100</span>
+    <span class="token type">std</span><span class="token operator">::</span><span class="token type">vector</span><span class="token operator">&lt;</span><span class="token type">int</span><span class="token operator">&gt;</span> values<span class="token punctuation">(</span><span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">100</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+            </div>
+             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-2xl font-semibold mb-3">1.3 常规用法与操作</h3>
+                <p class="mb-4">让我们来看一些 `vector` 的常用操作。点击“运行模拟”查看代码输出。</p>
+                 <pre class="code-block"><code class="language-cpp"><span class="token preprocessor">#include &lt;iostream&gt;</span>
+<span class="token preprocessor">#include &lt;vector&gt;</span>
+<span class="token preprocessor">#include &lt;string&gt;</span>
+
+<span class="token type">void</span> <span class="token function">print_vector</span><span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token type">std</span><span class="token operator">::</span><span class="token type">vector</span><span class="token operator">&lt;</span><span class="token type">std</span><span class="token operator">::</span><span class="token type">string</span><span class="token operator">&gt;</span><span class="token operator">&amp;</span> vec<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"当前 Vector 中的名字: "</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token type">std</span><span class="token operator">::</span><span class="token type">string</span><span class="token operator">&amp;</span> name <span class="token operator">:</span> vec<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> name <span class="token operator">&lt;&lt;</span> <span class="token string">" "</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+<span class="token punctuation">}</span>
+
+<span class="token type">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token type">std</span><span class="token operator">::</span><span class="token type">vector</span><span class="token operator">&lt;</span><span class="token type">std</span><span class="token operator">::</span><span class="token type">string</span><span class="token operator">&gt;</span> names<span class="token punctuation">;</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"--- 添加元素 ---"</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    names<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span><span class="token string">"David"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    names<span class="token punctuation">.</span><span class="token function">push_back</span><span class="token punctuation">(</span><span class="token string">"Eve"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">print_vector</span><span class="token punctuation">(</span>names<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"\\n--- 获取大小 ---"</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"Vector 中有 "</span> <span class="token operator">&lt;&lt;</span> names<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;&lt;</span> <span class="token string">" 个名字。"</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"\\n--- 访问元素 ---"</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"第一个名字是: "</span> <span class="token operator">&lt;&lt;</span> names<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"第二个名字是: "</span> <span class="token operator">&lt;&lt;</span> names<span class="token punctuation">.</span><span class="token function">at</span><span class="token punctuation">(</span><span class="token number">1</span><span class="token punctuation">)</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"\\n--- 删除末尾元素 ---"</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    names<span class="token punctuation">.</span><span class="token function">pop_back</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token function">print_vector</span><span class="token punctuation">(</span>names<span class="token punctuation">)</span><span class="token punctuation">;</span>
+
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"\\n--- 清空 Vector ---"</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    names<span class="token punctuation">.</span><span class="token function">clear</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"清空后的大小: "</span> <span class="token operator">&lt;&lt;</span> names<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>names<span class="token punctuation">.</span><span class="token function">empty</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"Vector 现在为空。"</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+                <button class="run-btn mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition" data-output-id="vector-output-1">运行模拟</button>
+                <div id="vector-output-1" class="console-output"></div>
+             </div>
+             <div class="bg-blue-100 border-l-4 border-blue-500 text-blue-800 p-6 rounded-lg shadow-md">
+                <h3 class="text-2xl font-semibold mb-3">1.4 动手试试！</h3>
+                <ol class="list-decimal list-inside space-y-2">
+                    <li>创建一个 `vector&lt;double&gt;` 来存储商品价格。</li>
+                    <li>向其中添加几个价格，例如 `9.99`, `15.49`, `3.14`。</li>
+                    <li>遍历这个 `vector` 并计算总价。</li>
+                </ol>
+                <button class="solution-btn mt-4 px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition" data-solution-id="vector-solution-1">显示答案</button>
+                <div id="vector-solution-1" class="hidden mt-4">
+                    <pre class="code-block"><code class="language-cpp"><span class="token preprocessor">#include &lt;iostream&gt;</span>
+<span class="token preprocessor">#include &lt;vector&gt;</span>
+<span class="token preprocessor">#include &lt;numeric&gt;</span> <span class="token comment">// For std::accumulate</span>
+
+<span class="token type">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token type">std</span><span class="token operator">::</span><span class="token type">vector</span><span class="token operator">&lt;</span><span class="token type">double</span><span class="token operator">&gt;</span> prices <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token number">9.99</span><span class="token punctuation">,</span> <span class="token number">15.49</span><span class="token punctuation">,</span> <span class="token number">3.14</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token type">double</span> total <span class="token operator">=</span> <span class="token number">0.0</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token type">double</span> price <span class="token operator">:</span> prices<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        total <span class="token operator">+=</span> price<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"总价是: "</span> <span class="token operator">&lt;&lt;</span> total <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+                </div>
+             </div>
+        </section>
+
+        <!-- Map Section -->
+        <section id="map" class="mb-12 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-900 border-b-4 border-green-500 pb-2 mb-6">2. `map` - 键值对集合</h2>
+             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-2xl font-semibold mb-3">2.1 定义</h3>
+                <p class="mb-4">可以把 `map` 想象成一本字典。你可以通过一个唯一的“单词”（键）快速查找到它的“释义”（值）。</p>
+                <ul class="list-disc list-inside space-y-2">
+                    <li><strong class="font-semibold text-slate-700">头文件:</strong> `#include <map>`</li>
+                    <li><strong class="font-semibold text-slate-700">核心特性:</strong>
+                        <ul class="list-disc list-inside ml-6 mt-1 space-y-1 text-slate-600">
+                            <li>存储键值对 (key-value pair)。</li>
+                            <li>键是唯一的。</li>
+                            <li>内部元素默认根据键自动排序。</li>
+                            <li>查找、插入和删除操作的效率很高。</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-2xl font-semibold mb-3">2.3 常规用法与操作</h3>
+                <p class="mb-4">`map` 的强大之处在于通过键进行快速操作。</p>
+                 <pre class="code-block"><code class="language-cpp"><span class="token preprocessor">#include &lt;iostream&gt;</span>
+<span class="token preprocessor">#include &lt;map&gt;</span>
+<span class="token preprocessor">#include &lt;string&gt;</span>
+
+<span class="token type">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token type">std</span><span class="token operator">::</span><span class="token type">map</span><span class="token operator">&lt;</span><span class="token type">std</span><span class="token operator">::</span><span class="token type">string</span><span class="token punctuation">,</span> <span class="token type">int</span><span class="token operator">&gt;</span> student_scores<span class="token punctuation">;</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"--- 插入/更新元素 ---"</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    student_scores<span class="token punctuation">[</span><span class="token string">"Li Ming"</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">95</span><span class="token punctuation">;</span>
+    student_scores<span class="token punctuation">[</span><span class="token string">"Zhang Wei"</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token number">88</span><span class="token punctuation">;</span>
+    student_scores<span class="token punctuation">.</span><span class="token function">insert</span><span class="token punctuation">(</span><span class="token type">std</span><span class="token operator">::</span><span class="token function">make_pair</span><span class="token punctuation">(</span><span class="token string">"Wang Fang"</span><span class="token punctuation">,</span> <span class="token number">92</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">auto</span><span class="token operator">&amp;</span> pair <span class="token operator">:</span> student_scores<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> pair<span class="token punctuation">.</span>first <span class="token operator">&lt;&lt;</span> <span class="token string">" 的分数是: "</span> <span class="token operator">&lt;&lt;</span> pair<span class="token punctuation">.</span>second <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"\\n--- 查找键 ---"</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    <span class="token keyword">if</span> <span class="token punctuation">(</span>student_scores<span class="token punctuation">.</span><span class="token function">count</span><span class="token punctuation">(</span><span class="token string">"Zhang Wei"</span><span class="token punctuation">)</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"找到了 Zhang Wei 的记录。"</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"\\n--- 删除元素 ---"</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    student_scores<span class="token punctuation">.</span><span class="token function">erase</span><span class="token punctuation">(</span><span class="token string">"Zhang Wei"</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"删除 Zhang Wei 后："</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token keyword">auto</span><span class="token operator">&amp;</span> pair <span class="token operator">:</span> student_scores<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> pair<span class="token punctuation">.</span>first <span class="token operator">&lt;&lt;</span> <span class="token string">": "</span> <span class="token operator">&lt;&lt;</span> pair<span class="token punctuation">.</span>second <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+                <button class="run-btn mt-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition" data-output-id="map-output-1">运行模拟</button>
+                <div id="map-output-1" class="console-output"></div>
+             </div>
+             <div class="bg-green-100 border-l-4 border-green-500 text-green-800 p-6 rounded-lg shadow-md">
+                <h3 class="text-2xl font-semibold mb-3">2.4 动手试试！</h3>
+                 <ol class="list-decimal list-inside space-y-2">
+                    <li>创建一个 `map&lt;string, int&gt;` 来存储你朋友的名字和年龄。</li>
+                    <li>添加三位朋友的信息。</li>
+                    <li>查找其中一位朋友，并打印出他的年龄。</li>
+                </ol>
+                <button class="solution-btn mt-4 px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition" data-solution-id="map-solution-1">显示答案</button>
+                <div id="map-solution-1" class="hidden mt-4">
+                    <pre class="code-block"><code class="language-cpp"><span class="token preprocessor">#include &lt;iostream&gt;</span>
+<span class="token preprocessor">#include &lt;map&gt;</span>
+<span class="token preprocessor">#include &lt;string&gt;</span>
+
+<span class="token type">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token type">std</span><span class="token operator">::</span><span class="token type">map</span><span class="token operator">&lt;</span><span class="token type">std</span><span class="token operator">::</span><span class="token type">string</span><span class="token punctuation">,</span> <span class="token type">int</span><span class="token operator">&gt;</span> friends_age <span class="token operator">=</span> <span class="token punctuation">{</span>
+        <span class="token punctuation">{</span><span class="token string">"张三"</span><span class="token punctuation">,</span> <span class="token number">25</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"李四"</span><span class="token punctuation">,</span> <span class="token number">26</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+        <span class="token punctuation">{</span><span class="token string">"王五"</span><span class="token punctuation">,</span> <span class="token number">24</span><span class="token punctuation">}</span>
+    <span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"李四的年龄是: "</span> <span class="token operator">&lt;&lt;</span> friends_age<span class="token punctuation">[</span><span class="token string">"李四"</span><span class="token punctuation">]</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+                </div>
+             </div>
+        </section>
+
+        <!-- Set Section -->
+        <section id="set" class="mb-12 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-900 border-b-4 border-purple-500 pb-2 mb-6">3. `set` - 唯一元素集合</h2>
+            <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-2xl font-semibold mb-3">3.1 定义</h3>
+                <p class="mb-4">`set` 是一个只存储唯一元素的集合。如果你需要一个容器来保证里面的元素不重复，`set` 是最佳选择。</p>
+                <ul class="list-disc list-inside space-y-2">
+                    <li><strong class="font-semibold text-slate-700">头文件:</strong> `#include <set>`</li>
+                    <li><strong class="font-semibold text-slate-700">核心特性:</strong>
+                        <ul class="list-disc list-inside ml-6 mt-1 space-y-1 text-slate-600">
+                           <li>所有元素都是唯一的，不会出现重复值。</li>
+                           <li>元素在插入时会自动排序。</li>
+                           <li>查找、插入和删除操作的效率很高。</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+             <div class="bg-white rounded-lg shadow-md p-6 mb-6">
+                <h3 class="text-2xl font-semibold mb-3">3.3 常规用法与操作</h3>
+                <p class="mb-4">`set` 的主要用途是去重和快速查找。</p>
+                 <pre class="code-block"><code class="language-cpp"><span class="token preprocessor">#include &lt;iostream&gt;</span>
+<span class="token preprocessor">#include &lt;set&gt;</span>
+<span class="token preprocessor">#include &lt;vector&gt;</span>
+
+<span class="token type">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token type">std</span><span class="token operator">::</span><span class="token type">set</span><span class="token operator">&lt;</span><span class="token type">int</span><span class="token operator">&gt;</span> unique_numbers<span class="token punctuation">;</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"--- 插入元素 (5 会被忽略) ---"</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    unique_numbers<span class="token punctuation">.</span><span class="token function">insert</span><span class="token punctuation">(</span><span class="token number">10</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    unique_numbers<span class="token punctuation">.</span><span class="token function">insert</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    unique_numbers<span class="token punctuation">.</span><span class="token function">insert</span><span class="token punctuation">(</span><span class="token number">20</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    unique_numbers<span class="token punctuation">.</span><span class="token function">insert</span><span class="token punctuation">(</span><span class="token number">5</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token type">int</span> num <span class="token operator">:</span> unique_numbers<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> num <span class="token operator">&lt;&lt;</span> <span class="token string">" "</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"\\n--- 使用 set 对 vector 去重排序 ---"</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    <span class="token type">std</span><span class="token operator">::</span><span class="token type">vector</span><span class="token operator">&lt;</span><span class="token type">int</span><span class="token operator">&gt;</span> numbers <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">3</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">4</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"原始 Vector: "</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token type">int</span> n <span class="token operator">:</span> numbers<span class="token punctuation">)</span> <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> n <span class="token operator">&lt;&lt;</span> <span class="token string">" "</span><span class="token punctuation">;</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    
+    <span class="token type">std</span><span class="token operator">::</span><span class="token type">set</span><span class="token operator">&lt;</span><span class="token type">int</span><span class="token operator">&gt;</span> s<span class="token punctuation">(</span>numbers<span class="token punctuation">.</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> numbers<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"去重排序后: "</span><span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token type">int</span> n <span class="token operator">:</span> s<span class="token punctuation">)</span> <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> n <span class="token operator">&lt;&lt;</span> <span class="token string">" "</span><span class="token punctuation">;</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+                <button class="run-btn mt-4 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition" data-output-id="set-output-1">运行模拟</button>
+                <div id="set-output-1" class="console-output"></div>
+             </div>
+             <div class="bg-purple-100 border-l-4 border-purple-500 text-purple-800 p-6 rounded-lg shadow-md">
+                <h3 class="text-2xl font-semibold mb-3">3.4 动手试试！</h3>
+                 <ol class="list-decimal list-inside space-y-2">
+                    <li>给你一个 `vector&lt;string&gt;`，里面包含重复的单词：`{"apple", "banana", "apple", "orange", "banana"}`。</li>
+                    <li>使用 `set` 来找出其中有多少个不同的单词。</li>
+                    <li>打印出这些唯一的、按字母顺序排列的单词。</li>
+                </ol>
+                <button class="solution-btn mt-4 px-4 py-2 bg-purple-600 text-white rounded-md hover:bg-purple-700 transition" data-solution-id="set-solution-1">显示答案</button>
+                <div id="set-solution-1" class="hidden mt-4">
+                    <pre class="code-block"><code class="language-cpp"><span class="token preprocessor">#include &lt;iostream&gt;</span>
+<span class="token preprocessor">#include &lt;vector&gt;</span>
+<span class="token preprocessor">#include &lt;set&gt;</span>
+<span class="token preprocessor">#include &lt;string&gt;</span>
+
+<span class="token type">int</span> <span class="token function">main</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token punctuation">{</span>
+    <span class="token type">std</span><span class="token operator">::</span><span class="token type">vector</span><span class="token operator">&lt;</span><span class="token type">std</span><span class="token operator">::</span><span class="token type">string</span><span class="token operator">&gt;</span> words <span class="token operator">=</span> <span class="token punctuation">{</span><span class="token string">"apple"</span><span class="token punctuation">,</span> <span class="token string">"banana"</span><span class="token punctuation">,</span> <span class="token string">"apple"</span><span class="token punctuation">,</span> <span class="token string">"orange"</span><span class="token punctuation">,</span> <span class="token string">"banana"</span><span class="token punctuation">}</span><span class="token punctuation">;</span>
+    <span class="token type">std</span><span class="token operator">::</span><span class="token type">set</span><span class="token operator">&lt;</span><span class="token type">std</span><span class="token operator">::</span><span class="token type">string</span><span class="token operator">&gt;</span> unique_words<span class="token punctuation">(</span>words<span class="token punctuation">.</span><span class="token function">begin</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">,</span> words<span class="token punctuation">.</span><span class="token function">end</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">;</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token string">"不同的单词有 "</span> <span class="token operator">&lt;&lt;</span> unique_words<span class="token punctuation">.</span><span class="token function">size</span><span class="token punctuation">(</span><span class="token punctuation">)</span> <span class="token operator">&lt;&lt;</span> <span class="token string">" 个:"</span> <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    <span class="token keyword">for</span> <span class="token punctuation">(</span><span class="token keyword">const</span> <span class="token type">std</span><span class="token operator">::</span><span class="token type">string</span><span class="token operator">&amp;</span> word <span class="token operator">:</span> unique_words<span class="token punctuation">)</span> <span class="token punctuation">{</span>
+        <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> word <span class="token operator">&lt;&lt;</span> <span class="token string">" "</span><span class="token punctuation">;</span>
+    <span class="token punctuation">}</span>
+    <span class="token type">std</span><span class="token operator">::</span>cout <span class="token operator">&lt;&lt;</span> <span class="token type">std</span><span class="token operator">::</span>endl<span class="token punctuation">;</span>
+    <span class="token keyword">return</span> <span class="token number">0</span><span class="token punctuation">;</span>
+<span class="token punctuation">}</span></code></pre>
+                </div>
+             </div>
+        </section>
+        
+        <!-- Summary Section -->
+        <section id="summary" class="mb-12 scroll-mt-20">
+            <h2 class="text-3xl font-bold text-slate-900 border-b-4 border-amber-500 pb-2 mb-6">总结与选择</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-blue-500">
+                    <h3 class="text-2xl font-bold text-blue-600 mb-3">Vector</h3>
+                    <p class="text-slate-600">当你需要一个<strong class="font-semibold text-slate-800">动态数组</strong>，并通过索引快速访问元素时，使用它。它是最常用的序列容器。</p>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-green-500">
+                    <h3 class="text-2xl font-bold text-green-600 mb-3">Map</h3>
+                    <p class="text-slate-600">当你需要存储<strong class="font-semibold text-slate-800">键值对</strong>，并通过唯一的键快速查找、插入和删除值时，使用它。就像一本字典。</p>
+                </div>
+                 <div class="bg-white p-6 rounded-lg shadow-md border-t-4 border-purple-500">
+                    <h3 class="text-2xl font-bold text-purple-600 mb-3">Set</h3>
+                    <p class="text-slate-600">当你需要存储<strong class="font-semibold text-slate-800">唯一的元素</strong>，并希望它们自动排序时，使用它。非常适合用于去重。</p>
+                </div>
+            </div>
+            <p class="mt-8 text-center text-lg text-slate-700">希望这份教程能帮助你！多动手编写代码是掌握它们的最好方式。祝你编程愉快！</p>
+        </section>
+    </main>
+
+    <footer class="bg-slate-800 text-slate-300 py-6">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p>&copy; 2025 童澄未来 保留所有权利。</p>
+        </div>
+    </footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+
+    const codeOutputs = {
+        'vector-output-1': `--- 添加元素 ---
+当前 Vector 中的名字: David Eve 
+
+--- 获取大小 ---
+Vector 中有 2 个名字。
+
+--- 访问元素 ---
+第一个名字是: David
+第二个名字是: Eve
+
+--- 删除末尾元素 ---
+当前 Vector 中的名字: David 
+
+--- 清空 Vector ---
+清空后的大小: 0
+Vector 现在为空。`,
+        'map-output-1': `--- 插入/更新元素 ---
+Li Ming 的分数是: 95
+Wang Fang 的分数是: 92
+Zhang Wei 的分数是: 88
+
+--- 查找键 ---
+找到了 Zhang Wei 的记录。
+
+--- 删除元素 ---
+删除 Zhang Wei 后：
+Li Ming: 95
+Wang Fang: 92`,
+        'set-output-1': `--- 插入元素 (5 会被忽略) ---
+5 10 20 
+
+--- 使用 set 对 vector 去重排序 ---
+原始 Vector: 1 5 2 3 5 1 4 2 
+去重排序后: 1 2 3 4 5 `
+    };
+
+    document.querySelectorAll('.run-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const outputId = button.dataset.outputId;
+            const outputElement = document.getElementById(outputId);
+            const outputText = codeOutputs[outputId];
+            
+            if (outputElement && outputText) {
+                outputElement.textContent = '';
+                let i = 0;
+                function typeWriter() {
+                    if (i < outputText.length) {
+                        outputElement.textContent += outputText.charAt(i);
+                        i++;
+                        setTimeout(typeWriter, 10);
+                    }
+                }
+                typeWriter();
+            }
+        });
+    });
+
+    document.querySelectorAll('.solution-btn').forEach(button => {
+        button.addEventListener('click', () => {
+            const solutionId = button.dataset.solutionId;
+            const solutionElement = document.getElementById(solutionId);
+            if (solutionElement) {
+                const isHidden = solutionElement.classList.contains('hidden');
+                solutionElement.classList.toggle('hidden');
+                button.textContent = isHidden ? '隐藏答案' : '显示答案';
+            }
+        });
+    });
+    
+    const sections = document.querySelectorAll('section[id]');
+    const navLinks = document.querySelectorAll('.nav-link');
+
+    const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+            if (entry.isIntersecting) {
+                navLinks.forEach(link => {
+                    link.classList.remove('active');
+                    if (link.getAttribute('href').substring(1) === entry.target.id) {
+                        link.classList.add('active');
+                    }
+                });
+            }
+        });
+    }, { rootMargin: '-20% 0px -80% 0px' });
+
+    sections.forEach(section => {
+        observer.observe(section);
+    });
+});
+</script>
+</body>
+</html>
