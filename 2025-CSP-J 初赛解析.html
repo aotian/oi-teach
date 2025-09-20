@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>2025 CSP-J 入门级 - 交互式题解 (完整版)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', 'Noto Sans SC', sans-serif; background-color: #f0f4f8; }
+        .question-card { transition: all 0.3s ease; border: 1px solid #e2e8f0; }
+        .option-btn { transition: all 0.2s ease; border: 1px solid #cbd5e1; }
+        .option-btn:hover { border-color: #3b82f6; background-color: #eff6ff; }
+        .option-btn.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; font-weight: 600; }
+        .option-btn.incorrect { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; font-weight: 600; }
+        .option-btn.disabled { pointer-events: none; opacity: 0.8; }
+        .explanation { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out, padding 0.5s ease-out; padding: 0 1.5rem; border-left: 3px solid #60a5fa; background-color: #f8fafc; }
+        .explanation.visible { max-height: 1000px; padding: 1rem 1.5rem; margin-top: 1rem; }
+        .description-box { margin-top: 1rem; padding: 1rem; background-color: #f8fafc; border: 1px solid #e5e7eb; border-radius: 0.5rem; color: #4b5563; line-height: 1.6; }
+        .code-block { background-color: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-family: 'Courier New', Courier, monospace; }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto p-4 sm:p-6 md:p-8">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-800">2025 CSP-J 入门级C++语言试题</h1>
+            <p class="text-lg text-gray-600 mt-2">交互式题解 (完整版)</p>
+        </header>
+
+        <main id="quiz-container" class="space-y-8">
+            <!-- Sections and questions will be dynamically inserted here -->
+        </main>
+
+        <footer class="text-center mt-12 text-gray-500">
+            <p>&copy; 2025 交互式题解生成</p>
+        </footer>
+    </div>
+
+    <script>
+        const quizData = [
+            {
+                section: "一、单项选择题",
+                type: "mcq",
+                questions: [
+                    { id: 's1q1', question: "1. 一个32位无符号整数可以表示的最大值,最接近下列哪个选项?", options: ["A. 4 x 10<sup>9</sup>", "B. 3 x 10<sup>10</sup>", "C. 2 x 10<sup>9</sup>", "D. 2 x 10<sup>10</sup>"], correct: 0, explanation: "32位无符号整数的最大值是 2<sup>32</sup> - 1。我们知道 2<sup>10</sup> = 1024 ≈ 10<sup>3</sup>。所以 2<sup>32</sup> = 2<sup>2</sup> * 2<sup>30</sup> = 4 * (2<sup>10</sup>)<sup>3</sup> ≈ 4 * (10<sup>3</sup>)<sup>3</sup> = 4 * 10<sup>9</sup>。" },
+                    { id: 's1q2', question: "2. 在C++中,执行 int x = 255; cout << (x & (x-1));后,输出的结果是?", options: ["A. 255", "B. 254", "C. 128", "D. 0"], correct: 1, explanation: "位运算 `x & (x-1)` 的作用是消除x的二进制表示中最低位的那个1。255的二进制是 `11111111`。254的二进制是 `11111110`。`11111111 & 11111110` 的结果是 `11111110`，即十进制的254。" },
+                    { id: 's1q3', question: "3. 函数calc(n)的定义如下,则calc(5)的返回值是多少?(注：题目中alc为calc的笔误)", options: ["A. 5", "B. 6", "C. 7", "D. 8"], correct: 1, explanation: "假定`alc`是`calc`的笔误。计算过程如下：<br>calc(1) = 1<br>calc(2) = calc(1) + 1 = 2<br>calc(3) = calc(2) + calc(1) = 2 + 1 = 3<br>calc(4) = calc(2) + 1 = 2 + 1 = 3<br>calc(5) = calc(4) + calc(3) = 3 + 3 = 6。" },
+                    { id: 's1q4', question: "4. 用5个权值10,12,15,20,25构造哈夫曼树,该树的带权路径长度是多少?", options: ["A. 176", "B. 186", "C. 196", "D. 206"], correct: 1, explanation: "哈夫曼树的带权路径长度(WPL)等于所有非叶子节点的权值之和。<br><b>构造过程:</b><br>1. {10,12,15,20,25}, 合并10,12, 得非叶节点<b>22</b>。<br>2. {15,20,25,22}, 合并15,22, 得非叶节点<b>37</b>。<br>3. {20,25,37}, 合помощью合并20,25, 得非叶节点<b>45</b>。<br>4. {37,45}, 合并37,45, 得根节点<b>82</b>。<br>WPL = 22 + 37 + 45 + 82 = 186。" },
+                    { id: 's1q5', question: "5. 在一个有向图中,所有顶点的入度之和等于所有顶点的出度之和,这个总和等于?", options: ["A. 顶点数", "B. 边数", "C. 顶点数 + 边数", "D. 顶点数 * 2"], correct: 1, explanation: "在任何有向图中，每一条边都从一个顶点出发（贡献1个出度）并指向另一个顶点（贡献1个入度）。因此，所有顶点的出度之和等于边的总数，所有顶点的入度之和也等于边的总数。" },
+                    { id: 's1q6', question: "6. 从5位男生和4位女生中选出4人...要求学习小组中男生和女生都有。有多少种不同的选举方法?", options: ["A. 126", "B. 121", "C. 120", "D. 100"], correct: 2, explanation: "使用补集法。总方法数是从9人中选4人：C(9,4) = (9*8*7*6)/(4*3*2*1) = 126。<br>不满足条件的情况是“全为男生”或“全为女生”。<br>- 全为男生：从5位男生中选4位，C(5,4) = 5。<br>- 全为女生：从4位女生中选4位，C(4,4) = 1。<br>所以，满足条件的选举方法 = 总方法数 - (全男 + 全女) = 126 - (5 + 1) = 120。" },
+                    { id: 's1q7', question: "7. a,b,c都是布尔变量,逻辑表达式 (a && b) || (!c && a) 的值与下列哪个表达式不始终相等?", options: ["A. a && (b || !c)", "B. (a || !c) && (b || !c) && (a || a)", "C. a && (!b || c)", "D. !(!a || !b) || (a && !c)"], correct: 2, explanation: "原表达式可以提取公因式 a，化简为 `a && (b || !c)`。<br>A. `a && (b || !c)`，相等。<br>B. `(a || a)`为`a`。`(a || !c) && (b || !c)`化为 `(a && b) || !c`。再与 `a` 进行 `&&` 运算，得到 `((a && b) || !c) && a` = `(a && b && a) || (!c && a)` = `(a && b) || (a && !c)`。与原式相等。<br>C. `a && (!b || c)` 明显与A不同，不等价。<br>D. `!(!a || !b)` 由德摩根定律等于 `a && b`。所以表达式为 `(a && b) || (a && !c)`，与原式相等。" },
+                    { id: 's1q8', question: "8. 已知 f[0]=1, f[1]=1...f[n]=(f[n-1]+f[n-2]) % 7, f[2025]的值是多少?", options: ["A. 2", "B. 4", "C. 5", "D. 6"], correct: 3, explanation: "这是斐波那契数列对7取模，该序列必然有周期。<br>序列: f(0)=1, f(1)=1, f(2)=2, f(3)=3, f(4)=5, f(5)=1, f(6)=6, f(7)=0, f(8)=6, f(9)=6, f(10)=5, f(11)=4, f(12)=2, f(13)=6, f(14)=1, f(15)=0。<br>f(16)=f(15)+f(14)=1, f(17)=f(16)+f(15)=1。出现(1,1)重复，周期为16。<br>我们需要计算 2025 mod 16。2025 = 126 * 16 + 9。所以 f[2025] = f[9] = 6。" },
+                    { id: 's1q9', question: "9. 下列关于 C++ string类的说法,正确的是?", options: ["A. string 对象的长度在创建后不能改变。", "B. 可以使用 + 运算符直接连接一个 string 对象和一个char类型的字符。", "C. string 的 length()和 size()方法返回的值可能不同。", "D. string 对象必须以'\\0'结尾,且这个结尾符计入 length()。"], correct: 1, explanation: "A. 错误，string长度是动态可变的。B. 正确，string重载了+运算符以支持与char的连接。C. 错误，`length()`和`size()`在string类中是同义词，返回值相同。D. 错误，虽然内部可能以'\\0'结尾，但它不计入`length()`。" },
+                    { id: 's1q10', question: "10. ...在main函数调用solve后,x和y的值分别是?", options: ["A. 5, 10", "B. 10, 5", "C. 10, 10", "D. 5, 5"], correct: 1, explanation: "这道题有歧义。严格按照代码，`b`是值传递，`y`的值不变，结果是(10, 10)。但 `a=a+b; b=a-b; a=a-b;` 是一个经典的、不使用临时变量交换两数的算法，它要求a和b都是可修改的（例如都是引用）。因此出题人很可能意在考察交换算法，但误写了参数类型。如果按交换算法的意图，结果是(10, 5)。考虑到这是考试，猜测出题意图的可能性更大，故选择B。" },
+                    { id: 's1q11', question: "11. ...机器人从(1,1)出发...要到达(4,5),有多少种不同的路径?", options: ["A. 20", "B. 35", "C. 56", "D. 70"], correct: 1, explanation: "从(1,1)到(4,5)，机器人需要向右走 4-1=3 步，向下走 5-1=4 步。总共需要走 3+4=7 步。问题转化为在7步中选择3步向右（其余4步自然向下），组合数为 C(7,3) = (7*6*5)/(3*2*1) = 35。" },
+                    { id: 's1q12', question: "12. 某同学用冒泡排序对数组[6,1,5,2,4]进行升序排序,需要进行多少次元素交换?", options: ["A. 5", "B. 6", "C. 7", "D. 8"], correct: 1, explanation: "标准冒泡排序的交换次数等于数组中逆序对的数量。<br><b>逆序对:</b><br>(6,1), (6,5), (6,2), (6,4) -> 4个<br>(5,2), (5,4) -> 2个<br>总逆序对 = 4 + 2 = 6个。因此需要6次交换。" },
+                    { id: 's1q13', question: "13. 十进制数720和八进制数270的和用十六进制表示是多少?", options: ["A. 388<sub>16</sub>", "B. 3DE<sub>16</sub>", "C. 288<sub>16</sub>", "D. 990<sub>16</sub>"], correct: 0, explanation: "首先进行进制转换，统一到十进制：<br>720<sub>10</sub> 保持不变。<br>270<sub>8</sub> = 2 * 8<sup>2</sup> + 7 * 8<sup>1</sup> + 0 * 8<sup>0</sup> = 2 * 64 + 56 + 0 = 128 + 56 = 184<sub>10</sub>。<br>求和：720 + 184 = 904<sub>10</sub>。<br>再将和转换为十六进制：<br>904 ÷ 16 = 56 ... 8<br>56 ÷ 16 = 3 ... 8<br>3 ÷ 16 = 0 ... 3<br>从下往上取余数，得到 388<sub>16</sub>。" },
+                    { id: 's1q14', question: "14. 一棵包含1000个结点的完全二叉树,其叶子结点的数量是多少?", options: ["A. 499", "B. 512", "C. 500", "D. 501"], correct: 2, explanation: "对于一个有n个节点的完全二叉树，其叶子节点数等于 ⌈n/2⌉。在这里 n=1000, 所以叶子节点数是 ⌈1000/2⌉ = 500。另一种理解方式：在完全二叉树中，编号从1到n，编号为i的节点，如果 2*i > n，它就是叶子节点。所以编号从 501 到 1000 的节点都是叶子节点，共 1000 - 501 + 1 = 500 个。" },
+                    { id: 's1q15', question: "15. ...处理整数队列A:7,5,8,3,1,4,2...队列P的内容是什么?", options: ["A. 5, 1, 3", "B. 7, 5, 3", "C. 3, 1, 5", "D. 5, 1, 3, 7"], correct: 0, explanation: "我们来模拟整个过程：初始 S=[] (栈), P=[] (队列)。<br>1. 处理 <b>7</b> (奇): S = [7]。<br>2. 处理 <b>5</b> (奇): S = [7, 5]。<br>3. 处理 <b>8</b> (偶, S非空): 弹出5, P = [5]。S = [7]。<br>4. 处理 <b>3</b> (奇): S = [7, 3]。<br>5. 处理 <b>1</b> (奇): S = [7, 3, 1]。<br>6. 处理 <b>4</b> (偶, S非空): 弹出1, P = [5, 1]。S = [7, 3]。<br>7. 处理 <b>2</b> (偶, S非空): 弹出3, P = [5, 1, 3]。S = [7]。<br>队列A处理完毕，最终P的内容是 [5, 1, 3]。" }
+                ]
+            },
+            {
+                section: "二、阅读程序",
+                type: "code_read",
+                questions: [
+                    {
+                        id: 's2q1', title: "程序片段(1)",
+                        code: "inline int gcd(int a, int b) {\n    if (b==0) return a;\n    return gcd(b, a%b);\n}\n...",
+                        sub_questions: [
+                            { id: 's2q1s1', type: 'tf', question: "16. (1分)当输入为2时,程序并不会执行第16行的判断语句。", options: ['✔', '✖'], correct: 0, explanation: "当n=2时，三层嵌套循环分别为 for(i=1..2), for(j=i+1..2), for(k=j+1..2)。当i=1,j=2时，k循环的范围是 for(k=3..2)，循环体不会执行。因此第16行不会被执行。" },
+                            { id: 's2q1s2', type: 'tf', question: "17. 将第16行中的“&& gcd(i,k)==1” 删去不会影响程序运行结果。", options: ['✔', '✖'], correct: 1, explanation: "删除后，判断条件变弱。例如n=6, (i,j,k)=(2,3,4)这个组合，gcd(2,3)=1, gcd(3,4)=1, 但gcd(2,4)=2。原程序不会计数，删除后会计数，因此会影响结果。" },
+                            { id: 's2q1s3', type: 'tf', question: "18. 当输入的n>=3的时候,程序总是输出一个正整数。", options: ['✔', '✖'], correct: 0, explanation: "当n>=3时，总能找到三元组(1,2,3)。gcd(1,2)=1, gcd(1,3)=1, gcd(2,3)=1，它们两两互质。因此ans至少会加1，输出为正整数。" },
+                            { id: 's2q1s4', type: 'mcq', question: "19. 将第7行的“gcd(b,a%b)”改为“gcd(a,a%b)”后,程序可能出现的问题是()。", options: ['A. ...答案大于原答案', 'B. ...答案小于原答案', 'C. 程序可能陷入死循环', 'D. ...整型溢出'], correct: 2, explanation: "欧几里得算法的正确递归形式是`gcd(b, a%b)`，保证了参数规模在减小。改为`gcd(a, a%b)`后，第一个参数`a`没有减小，当`b`不为0时，会陷入无限递归，导致栈溢出。" },
+                            { id: 's2q1s5', type: 'mcq', question: "20. 当输入为8的时候,输出为()。", options: ['A. 37', 'B. 42', 'C. 35', 'D. 25'], correct: 0, explanation: "程序计算的是在[1, 8]范围内任取三个两两互质的数的组合数量。这需要枚举所有组合并检查。通过计算可得结果为37。" },
+                            { id: 's2q1s6', type: 'mcq', question: "21. 调用gcd(36,42)会返回()。", options: ['A. 6', 'B. 252', 'C. 3', 'D. 2'], correct: 0, explanation: "计算过程：gcd(36, 42) → gcd(42, 36) → gcd(36, 6) → gcd(6, 0)，返回6。" }
+                        ]
+                    },
+                    {
+                        id: 's2q2', title: "程序片段(2)",
+                        code: "std::sort(a + 1, a + n + 1);\nn = std::unique(a + 1, a + n + 1) - a - 1;\n...",
+                        sub_questions: [
+                            { id: 's2q2s1', type: 'tf', question: "22. 当输入为“3 1 3 2 1”时,输出结果为2。", options: ['✔', '✖'], correct: 0, explanation: "输入n=3, k=1, 数组={3,2,1}。排序后a={1,2,3}。unique后不变。i=1,j=0,ans[1]=1。i=2,j=0,a[2]-a[1]=1<=k,ans[2]=ans[0]+1=1。i=3,j=0,a[3]-a[1]=2>k,j变为1。a[3]-a[2]=1<=k,j不变,ans[3]=ans[1]+1=2。输出ans[3]=2。" },
+                            { id: 's2q2s2', type: 'tf', question: "23. 假设输入的n为正整数,输出的答案一定小于等于n,大于等于1。", options: ['✔', '✖'], correct: 0, explanation: "ans[0]为0，ans[i]=ans[j]+1且j<i，所以ans数组是单调不减的。ans[1]至少为1，因此ans[n]也至少为1。每次i递增1，ans[i]最多比ans[i-1]大1，所以ans[n]<=n。" },
+                            { id: 's2q2s3', type: 'tf', question: "24. 将第16行的unique...删去后,有可能出现与原本代码不同的输出结果。", options: ['✔', '✖'], correct: 0, explanation: "如果输入数据有重复元素，unique会将其去除。删去该行后，重复元素会参与后续计算，可能导致j的计算不同，从而影响最终结果。" },
+                            { id: 's2q2s4', type: 'mcq', question: "25. ...执行第19行代码时,一定满足的条件不包括()。", options: ['A. j <= i', 'B. a[i]-a[j]>k', 'C. j <= n', 'D. a[j]<a[i]'], correct: 1, explanation: "内层for循环的终止条件是 `j>=i` 或 `a[i]-a[j+1]<=k`。所以当执行第19行时，我们只知道`a[i]-a[j+1]<=k`。B选项 `a[i]-a[j]>k` 不一定成立（因为j可能因为这个条件不成立而停止移动，但j和j+1指向的元素不同）。" },
+                            { id: 's2q2s5', type: 'mcq', question: "26. 当输入 n=100, k=2, a={1,2,...,100} 时,输出为()。", options: ['A. 34', 'B. 100', 'C. 50', 'D. 33'], correct: 0, explanation: "该程序是在计算，将排序去重后的数组分成最少的组，使得每组的最大值与最小值之差不大于k。对于{1..100}和k=2，每个组最多可以包含3个连续的数（如{1,2,3}，3-1=2<=k）。要覆盖100个数，最少需要 ⌈100/3⌉ = 34 个组。" },
+                            { id: 's2q2s6', type: 'mcq', question: "27. ...若误删去第15行的sort...程序有可能出现的问题有()。", options: ['A. 输出的答案比原本答案更大', 'B. 输出的答案比原本答案更小', 'C. 出现死循环行为', 'D. 以上均可能发生'], correct: 3, explanation: "整个算法依赖于数组a的有序性。如果删除sort，a[i]-a[j+1]的比较就失去了意义，j的移动将变得不可预测，可能导致结果变大、变小，甚至因为j的错误移动导致访问越界等未定义行为。" }
+                        ]
+                    },
+                     {
+                        id: 's2q3', title: "程序片段(3)",
+                        code: "f[i][j] = std::max(f[i-1][j], f[i][j-1]);\nif(a[i]==b[j]) {\n    f[i][j] = std::max(f[i][j], f[i-1][j-1]+1);\n}",
+                        sub_questions: [
+                            { id: 's2q3s1', type: 'tf', question: "28. 当输入“4 1 2 3 4 1 3 2 2”时,输出为2。", options: ['✔', '✖'], correct: 0, explanation: "程序计算数组a={1,2,3,4}和b={1,3,2,2}的最长公共子序列(LCS)。公共子序列有{1,2}和{1,3}，最长为2。" },
+                            { id: 's2q3s2', type: 'tf', question: "29. 当程序运行完毕后,对于所有的1<=i,j<=n,都一定有f[i][j]<=f[n][n]。", options: ['✔', '✖'], correct: 0, explanation: "f[i][j]是a的前i个和b的前j个的LCS长度。由于状态转移方程中只有max和+1操作，f[i][j]随着i和j的增大是单调不减的。因此f[n][n]是最大值。" },
+                            { id: 's2q3s3', type: 'tf', question: "30. 将第20行的max...删去后,并不影响程序运行结果。", options: ['✔', '✖'], correct: 1, explanation: "删除该行会破坏LCS的递推关系。该行保证了即使a[i]!=b[j]，也能继承之前的LCS长度。删除后，如果a[i]!=b[j]，f[i][j]将保持未初始化的值（或0），结果会出错。" },
+                            { id: 's2q3s4', type: 'mcq', question: "31. 输出的答案满足的性质有()。", options: ['A. 小于等于n', 'B. 大于等于0', 'C. 不一定大于等于1', 'D. 以上均是'], correct: 3, explanation: "LCS的长度不小于0，且不大于任意一个原序列的长度n。因此A和B都正确。如果两个序列没有公共元素，LCS长度为0，所以不一定大于等于1。因此D正确。" },
+                            { id: 's2q3s5', type: 'mcq', question: "32. 如果在循环前加上sort...,则答案会()。", options: ['A. 变大或不变', 'B. 变小或不变', 'C. 一定变大', 'D. 不变'], correct: 0, explanation: "LCS的长度与元素顺序密切相关。排序后，两个数组的元素顺序改变，可能会产生更长或同样长度的LCS，但通常不会变短。例如a={3,1,2},b={1,2,3}的LCS是{1,2}长度2。排序后a=b={1,2,3}，LCS为3。" },
+                            { id: 's2q3s6', type: 'mcq', question: "33. 如果a={1,2,...,n}, ...则代码等价于哪个问题:", options: ['A. 求b数组去重后的长度', 'B. 求b数组的最长上升子序列', 'C. 求b数组的长度', 'D. 求b数组的最大值'], correct: 1, explanation: "求a={1,2,...,n}和b的LCS，等价于在b中寻找一个子序列，这个子序列同时也是{1,2,...,n}的子序列。而{1,2,...,n}的任意子序列都是单调递增的。因此，问题就是寻找b中的最长上升子序列(LIS)。" }
+                        ]
+                    }
+                ]
+            },
+            {
+                section: "三、完善程序",
+                type: "code_fill",
+                questions: [
+                    {
+                        id: 's3q1',
+                        title: "程序片段(1) (字符串解码)",
+                        description: "“行程长度编码”(Run-Length Encoding)是一种无损压缩算法,常用于压缩重复字符较多的数据,以减少存储空间。假设原始字符串不包含数字字符。压缩规则如下: i)如果原始字符串中一个字符连续出现N次(N≥2),在压缩字符串中它被表示为“字符+数字N”。例如,编码“A12”代表12个连续的字符A。ii)如果原始字符串中一个字符只出现1次,在压缩字符串中它就表示为该字符本身。例如,编码“B”代表1个字符B。<br><br>以下程序实现读取压缩字符串并输出其原始的、解压后的形式。试补全程序。",
+                        blanks: [
+                            { id: 's3q1b1', question: "33. ①处应填()", options: ['A. i < z.length()', 'B. i-1>=0', 'C. i+1 < z.length()', 'D. isdigit(z[i])'], correct: 2, explanation: "要判断当前字符z[i]后是否跟随着数字z[i+1]，必须先保证索引 i+1 没有越界。" },
+                            { id: 's3q1b2', question: "34. ②处应填()", options: ['A. count + (z[i]-\'0\')', 'B. count * 10 + (z[i]-\'0\')', 'C. z[i]-\'0\'', 'D. count+1'], correct: 1, explanation: "这是从字符串解析多位整数的标准方法。每读入一位新的数字字符，就将当前结果乘以10，再加上新数字的值。" },
+                            { id: 's3q1b3', question: "35. ③处应填()", options: ['A. count-1', 'B. count', 'C. 10', 'D. z[i]-\'0\''], correct: 1, explanation: "内层循环需要重复`count`次，以将解码后的字符ch追加到结果字符串s中。" },
+                            { id: 's3q1b4', question: "36. ④处应填()", options: ['A. z[i+1]', 'B. ch', 'C. z.back()', 'D. (char)z[i]+1'], correct: 1, explanation: "在else分支中，处理的是单个出现的字符（后面不跟数字）。这个字符在循环开始时已经保存在变量`ch`中了。" },
+                            { id: 's3q1b5', question: "37. ⑤处应填()", options: ['A. i--', 'B. i = i+2', 'C. i++', 'D. //不执行任何操作'], correct: 2, explanation: "处理完单个字符ch（位于z[i]）后，循环变量i需要向前移动一位，以便在下一次循环中处理下一个字符。" }
+                        ]
+                    },
+                    {
+                        id: 's3q2',
+                        title: "程序片段(2) (精明与糊涂)",
+                        description: "有N个人,分为两类: i)精明人:永远能正确判断其他人是精明还是糊涂; ii)糊涂人:判断不可靠,会给出随机的判断。已知精明人严格占据多数,即如果精明人有k个,则满足 k>N/2。<br><br>你只能通过函数 query(i,j)让第i个人判断第j个人:返回true表示判断结果为“精明人”;返回false表示判断结果为“糊涂人”。你的目标是,通过这些互相判断,找出至少一个百分之百能确定的精明人。同时,你无需关心query(i,j)的内部实现。<br><br>以下程序利用“精明人占多数”的优势。设想一个“消除”的过程,让人们互相判断并进行抵消。经过若干轮抵消后,最终留下的候选者必然属于多数派,即精明人。试补全程序。",
+                         blanks: [
+                            { id: 's3q2b1', question: "38. ①处应填()", options: ['A. 0', 'B. 1', 'C. N', 'D. -1'], correct: 1, explanation: "这是“摩尔投票法”的应用，用于寻找数组中的多数元素。count是候选人的计数器。初始时，我们选第0个人为候选人(candidate=0)，他的计数为1。" },
+                            { id: 's3q2b2', question: "39. ②处应填()", options: ['A. count<0', 'B. count==1', 'C. count==0', 'D. query(candidate, i) == false'], correct: 2, explanation: "当count减到0时，表示当前的候选人已经被后来的人“抵消”掉了，我们需要更换新的候选人，即让当前遍历到的第i个人成为新候选人。" },
+                            { id: 's3q2b3', question: "40. ③处应填()", options: ['A. query(candidate, i) == false', 'B. query(i, candidate) == true', 'C. ...&&...', 'D. ...||...'], correct: 0, explanation: "在else块中，count>0，表示候选人仍然有效。我们需要用当前候选人`candidate`去判断第`i`个人。如果判断结果为“糊涂人”（query返回false），则他们意见不合，相互抵消，count应该减少。" },
+                            { id: 's3q2b4', question: "41. ④处应填()", options: ['A. count--', 'B. break', 'C. count++', 'D. candidate=i'], correct: 0, explanation: "这是意见不合（判断为糊涂人）的分支，计数器`count`应该减1。" },
+                            { id: 's3q2b5', question: "42. ⑤处应填()", options: ['A. N-1', 'B. count', 'C. candidate', 'D. 0'], correct: 2, explanation: "循环结束后，`candidate`变量中存储的就是经过多轮抵消后剩下的多数派成员。由于精明人占多数，这个人必然是精明人。" }
+                        ]
+                    }
+                ]
+            }
+        ];
+
+        const container = document.getElementById('quiz-container');
+
+        function checkAnswer(qId, selectedIndex, correctIndex) {
+            const optionsContainer = document.getElementById(`options-${qId}`);
+            const buttons = optionsContainer.getElementsByTagName('button');
+            const explanation = document.getElementById(`explanation-${qId}`);
+
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].classList.add('disabled');
+                if (i === correctIndex) {
+                    buttons[i].classList.add('correct');
+                }
+            }
+
+            if (selectedIndex !== correctIndex) {
+                buttons[selectedIndex].classList.add('incorrect');
+            }
+            explanation.classList.add('visible');
+        }
+
+        quizData.forEach(sectionData => {
+            const sectionEl = document.createElement('div');
+            sectionEl.innerHTML = `<h2 class="text-2xl font-bold text-gray-700 pb-2 border-b-2 border-blue-500 mb-4">${sectionData.section}</h2>`;
+            const questionsContainer = document.createElement('div');
+            questionsContainer.className = 'space-y-6';
+
+            sectionData.questions.forEach(qData => {
+                const card = document.createElement('div');
+                card.className = 'question-card bg-white rounded-lg shadow-md p-6';
+
+                if (sectionData.type === 'mcq') {
+                    card.innerHTML = `<div class="font-semibold text-lg text-gray-800">${qData.question}</div>`;
+                    const optionsContainer = document.createElement('div');
+                    optionsContainer.className = 'options-grid mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3';
+                    optionsContainer.id = `options-${qData.id}`;
+
+                    qData.options.forEach((option, oIndex) => {
+                        const btn = document.createElement('button');
+                        btn.className = 'option-btn w-full text-left p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400';
+                        btn.innerHTML = option;
+                        btn.onclick = () => checkAnswer(qData.id, oIndex, qData.correct);
+                        optionsContainer.appendChild(btn);
+                    });
+                    card.appendChild(optionsContainer);
+                } else if (sectionData.type === 'code_read' || sectionData.type === 'code_fill') {
+                     card.innerHTML = `<div class="font-semibold text-lg text-gray-800">${qData.title}</div>
+                                      ${qData.description ? `<div class="description-box">${qData.description}</div>` : ''}
+                                      ${qData.code ? `<div class="code-block my-4 text-sm whitespace-pre">${qData.code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>` : ''}`;
+                    const subQuestions = qData.sub_questions || qData.blanks;
+                    subQuestions.forEach(subQ => {
+                         const subQContainer = document.createElement('div');
+                         subQContainer.className = 'mt-6 pt-4 border-t';
+                         subQContainer.innerHTML = `<div class="font-medium text-gray-700">${subQ.question}</div>`;
+
+                         const optionsContainer = document.createElement('div');
+                         optionsContainer.className = 'options-grid mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3';
+                         optionsContainer.id = `options-${subQ.id}`;
+
+                         subQ.options.forEach((opt, oIndex) => {
+                             const btn = document.createElement('button');
+                             btn.className = 'option-btn w-full text-left p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400';
+                             btn.innerHTML = opt;
+                             btn.onclick = () => checkAnswer(subQ.id, oIndex, subQ.correct);
+                             optionsContainer.appendChild(btn);
+                         });
+                         subQContainer.appendChild(optionsContainer);
+                         card.appendChild(subQContainer);
+                         // Explanation for sub-question
+                         const explanationEl = document.createElement('div');
+                         explanationEl.className = 'explanation rounded-md';
+                         explanationEl.id = `explanation-${subQ.id}`;
+                         explanationEl.innerHTML = `<p class="font-semibold mb-2">题解:</p><div>${subQ.explanation}</div>`;
+                         subQContainer.appendChild(explanationEl);
+                    });
+                }
+
+                // Common explanation for MCQ
+                if (sectionData.type === 'mcq') {
+                    const explanationEl = document.createElement('div');
+                    explanationEl.className = 'explanation rounded-md';
+                    explanationEl.id = `explanation-${qData.id}`;
+                    explanationEl.innerHTML = `<p class="font-semibold mb-2">题解:</p><div>${qData.explanation}</div>`;
+                    card.appendChild(explanationEl);
+                }
+                questionsContainer.appendChild(card);
+            });
+            sectionEl.appendChild(questionsContainer);
+            container.appendChild(sectionEl);
+        });
+    </script>
+</body>
+</html>
+

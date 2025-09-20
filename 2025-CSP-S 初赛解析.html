@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>2025 CSP-S 提高组真题卷 - 交互式题解 (完整版)</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+body { font-family: 'Inter', 'Noto Sans SC', sans-serif; background-color: #f0f4f8; }
+.question-card { transition: all 0.3s ease; border: 1px solid #e2e8f0; }
+.option-btn { transition: all 0.2s ease; border: 1px solid #cbd5e1; }
+.option-btn:hover { border-color: #3b82f6; background-color: #eff6ff; }
+.option-btn.correct { background-color: #dcfce7; border-color: #22c55e; color: #166534; font-weight: 600; }
+.option-btn.incorrect { background-color: #fee2e2; border-color: #ef4444; color: #991b1b; font-weight: 600; }
+.option-btn.disabled { pointer-events: none; opacity: 0.8; }
+.explanation { max-height: 0; overflow: hidden; transition: max-height 0.5s ease-out, padding 0.5s ease-out; padding: 0 1.5rem; border-left: 3px solid #60a5fa; background-color: #f8fafc; }
+.explanation.visible { max-height: 1000px; padding: 1rem 1.5rem; margin-top: 1rem; }
+.code-block { background-color: #1e293b; color: #e2e8f0; padding: 1rem; border-radius: 0.5rem; overflow-x: auto; font-family: 'Courier New', Courier, monospace; }
+</style>
+</head>
+<body class="antialiased">
+<div class="container mx-auto p-4 sm:p-6 md:p-8">
+<header class="text-center mb-8">
+<h1 class="text-3xl sm:text-4xl font-bold text-gray-800">2025 CSP-S 提高组真题卷</h1>
+<p class="text-lg text-gray-600 mt-2">交互式题解 (完整版)</p>
+</header>
+
+<main id="quiz-container" class="space-y-8">
+<!-- Sections and questions will be dynamically inserted here -->
+</main>
+
+<footer class="text-center mt-12 text-gray-500">
+<p>&copy; 2025 交互式题解生成</p>
+</footer>
+</div>
+
+<script>
+const quizData = [
+{
+section: "一、单项选择",
+type: "mcq",
+questions: [
+{ id: 's1q1', question: "1. 有5个红色球和5个蓝色球...要求任意两个蓝色球都不能相邻,有多少种不同的排列方法?", options: ["A. 25", "B. 30", "C. 6", "D. 120"], correct: 2, explanation: "采用“插空法”。先排列5个红球，形成6个空位。将5个蓝球放入这6个空位中，方法数为 C(6, 5) = 6。" },
+{ id: 's1q2', question: "2. 在KMP算法中,对于模式 P=\"abacaba\",其next 数组的值是什么?", options: ["A. (0, 0, 1, 0, 1, 2, 3)", "B. (0, 1, 2, 3, 4, 5, 6)", "C. (0, 0, 1, 1, 2, 2, 3)", "D. (0, 0, 0, 0, 1, 2, 3)"], correct: 0, explanation: "按定义逐一计算最长公共前后缀长度可得。" },
+{ id: 's1q3', question: "3. 对一个大小为16(下标0-15)的数组上构建满线段树,查询区间 [3,11]时,最少需要访问多少个结点?", options: ["A. 7", "B. 8", "C. 9", "D. 10"], correct: 1, explanation: "根据线段树查询逻辑，最终会访问8个节点，包括根节点、路径节点和3个完全命中的区间节点([4,7], [3,3], [8,11])。" },
+{ id: 's1q4', question: "4. 将字符串\"cat\", \"car\", \"cart\", \"case\", \"dog\",\"do\" 插入一个空的Trie 树...共有多少个结点?", options: ["A. 8", "B. 9", "C. 10", "D. 11"], correct: 3, explanation: "根(1) + cat(3) + car(1) + cart(1) + case(2) + dog(3) + do(0) = 11个节点。" },
+{ id: 's1q5', question: "5. 对于一个DAG,其拓扑排序的结果有多少种可能?", options: ["A. 只有1种", "B. 最多n!种", "C. 等于n-m种", "D. 以上都不对"], correct: 3, explanation: "拓扑排序的数量取决于图的具体结构，无法一概而论。" },
+{ id: 's1q6', question: "6. 在一个大小为13的哈希表中...插入74后,它最终被放置在哪个索引位置?", options: ["A. 5", "B. 7", "C. 9", "D. 11"], correct: 3, explanation: "H(74)=9，位置9(被35占),10(被9占)均冲突，线性探查到11为空，放入。" },
+{ id: 's1q7', question: "7. 一个包含8个顶点的完全图...最小生成树总权重是多少?", options: ["A. 7", "B. 8", "C. 9", "D. 10"], correct: 0, explanation: "最小生成树由7条权重为1的边(1,2), (2,3)...(7,8)构成，总权重为7。" },
+{ id: 's1q8', question: "8. 二叉搜索树的后序遍历序列是2,5,4, 8, 12, 10, 6,那么该树的前序遍历是什么?", options: ["A. 6, 4, 2, 5, 10, 8, 12", "B. 6, 4, 5, 2, 10, 12, 8", "C. 2, 4, 5, 6, 8, 10, 12", "D. 12, 8, 10, 5, 2, 4, 6"], correct: 0, explanation: "后序遍历末尾6是根。递归重构树可得前序遍历为 6, 4, 2, 5, 10, 8, 12。" },
+{ id: 's1q9', question: "9. 0-1背包问题,容量为20...最大总价值是多少?", options: ["A. 43", "B. 41", "C. 45", "D. 44"], correct: 3, explanation: "选择物品(7,15), (4,9), (3,7), (6,13)，总重量20，总价值44。" },
+{ id: 's1q10', question: "10. LCA(12, 18)是4,哪个LCA组合是不可能出现的?", options: ["A. LCA(12, 4) = 4", "B. LCA(18, 4) = 4", "C. LCA(12, 18, 4) = 4", "D. LCA(12, 1) = 4"], correct: 3, explanation: "任何节点与根节点(1)的LCA必然是根节点本身，因此LCA(12, 1)必须等于1。" },
+{ id: 's1q11', question: "11. T(n) = 2T(n/2) + O(n^2) 的时间复杂度是多少?", options: ["A. O(n)", "B. O(n log n)", "C. O(n^2)", "D. O(n^2 log n)"], correct: 2, explanation: "根据主定理，f(n)=n^2 支配了 n^(log_2 2)=n，复杂度为O(n^2)。" },
+{ id: 's1q12', question: "12. 最小堆插入20,12,15,8,10,5,然后两次“删除最小值”,堆顶是什么?", options: ["A. 10", "B. 12", "C. 15", "D. 20"], correct: 0, explanation: "第一次删除5，堆顶变8。第二次删除8，堆顶变10。" },
+{ id: 's1q13', question: "13. 1到1000之间,不能被2、3、5中任意一个数整除的整数有多少个?", options: ["A. 266", "B. 267", "C. 333", "D. 734"], correct: 0, explanation: "使用容斥原理，1000 - (能被2或3或5整除的数量) = 1000 - 734 = 266。" },
+{ id: 's1q14', question: "14. 斐波那契递归与DP复杂度差异的根本原因是?", options: ["A. ...调用栈开销", "B. ...递归深度限制", "C. ...大量的重叠子问题", "D. ...更少的数据存储空间"], correct: 2, explanation: "根本原因是朴素递归会重复计算大量相同的子问题。" },
+{ id: 's1q15', question: "15. 5个任务...为了最小化总惩罚,应该优先执行哪个任务?", options: ["A. 处理时间最短的任务 A5", "B. 截止时间最早的任务 A3", "C. 处理时间最长的任务 A4", "D. 任意一个任务都可以"], correct: 1, explanation: "最小化惩罚的调度问题，最优贪心策略是按截止时间（EDD）升序执行。A3的截止时间最早。" }
+]
+},
+{
+section: "二、程序阅读",
+type: "code_read",
+questions: [
+{
+id: 's2q1',
+title: "第一题",
+code: "01 #include <algorithm>\n...\n28 }", // Truncated for brevity
+sub_questions: [
+{ id: 's2q1s1', type: 'tf', question: "(1) 当输入的n=3的时候,程序输出的答案为3。", options: ['正确', '错误'], correct: 0, explanation: "程序计算无相邻连续数字(如1,2)的全排列。n=3时，有(1,3,2), (2,1,3), (3,2,1)共3个。" },
+{ id: 's2q1s2', type: 'tf', question: "(2) 在dfs 函数运行过程中,k的取值会满足1<=k<=n+1。", options: ['正确', '错误'], correct: 0, explanation: "递归从k=1开始，每次k+1，终止条件是k=n+1。" },
+{ id: 's2q1s3', type: 'tf', question: "(3) 删除第19行的“flag[i] = false;”,对答案不会产生影响。", options: ['正确', '错误'], correct: 0, explanation: "这是回溯的关键步骤，删除后数字无法被复用，结果错误。" },
+{ id: 's2q1s4', type: 'mcq', question: "(4) 当输入的n=4的时候,程序输出的答案为()。", options: ['A. 11', 'B. 12', 'C. 24', 'D. 9'], correct: 0, explanation: "这是一个限制位置的排列问题，使用容斥原理可以计算出结果为11。" },
+{ id: 's2q1s5', type: 'mcq', question: "(5) 如果...数组p的初值并不全为0,则对程序的影响是()。", options: ['A. ...答案变小', 'B. 无法确定', 'C. ...死循环', 'D. 没有影响'], correct: 3, explanation: "p数组的值在使用前都会被当前递归层正确赋值，初值无影响。" },
+{ id: 's2q1s6', type: 'mcq', question: "(6) 假如删去第14行的 if(flag[i]) continue”,输入3,得到的输出答案是()。", options: ['A. 27', 'B. 3', 'C. 16', 'D. 12'], correct: 2, explanation: "问题变为可重复选择数字的序列生成，可用动态规划计算，结果为16。" }
+]
+},
+{
+id: 's2q2',
+title: "第二题",
+code: "01 #include <algorithm>\n...\n66 }", // Truncated
+sub_questions: [
+{ id: 's2q2s1', type: 'tf', question: "(1) 当输入为“6 5 1”时...次数为5;当输入“6 5 2”时...次数为3。", options: ['正确', '错误'], correct: 0, explanation: "手动模拟两种策略，符合题述的猜测次数。" },
+{ id: 's2q2s2', type: 'tf', question: "(2) t=2时的猜测数总是小于等于t=1时的猜测数。", options: ['正确', '错误'], correct: 0, explanation: "guess2是O(sqrt(n))的优化算法，优于guess1的O(n)。" },
+{ id: 's2q2s3', type: 'tf', question: "(3) 不管t=1或t=2,程序都一定会找到正确结果。", options: ['正确', '错误'], correct: 0, explanation: "两种都是正确的算法。" },
+{ id: 's2q2s4', type: 'mcq', question: "(4) 函数 guess1 在运行过程中,cnt_broken 的值最多为()。", options: ['A. 0', 'B. 1', 'C. 2', 'D. n'], correct: 1, explanation: "guess1找到第一个摔坏的鸡蛋后就进入线性探测，不会再摔坏第二个。" },
+{ id: 's2q2s5', type: 'mcq', question: "(5) 函数 guess2 ...最多使用的猜测次数的量级为()。", options: ['A. O(n)', 'B. O(n^2)', 'C. O(sqrt(n))', 'D. O(log n)'], correct: 2, explanation: "这是双蛋问题的经典解法，复杂度为O(sqrt(n))。" },
+{ id: 's2q2s6', type: 'mcq', question: "(6) 当输入的n=100的时候...t=1和t=2分别需要的猜测次数最多分别为()。", options: ['A. 100, 14', 'B. 100, 13', 'C. 99, 14', 'D. 99, 13'], correct: 0, explanation: "t=1最差100次。t=2最差次数w满足 w(w+1)/2 >= 100，解得w=14。" }
+]
+},
+{
+id: 's2q3',
+title: "第三题",
+code: "01 #include <algorithm>\n...\n62 }", // Truncated
+sub_questions: [
+{ id: 's2q3s1', type: 'tf', question: "(1) 删除第51行的 sort(ans2),结果不会受到影响。", options: ['正确', '错误'], correct: 1, explanation: "最后的双指针查找算法要求两个数组都有序才能正确工作。" },
+{ id: 's2q3s2', type: 'tf', question: "(2) 函数mpow(x,k)的功能是求出x^k。", options: ['正确', '错误'], correct: 0, explanation: "是标准的二进制快速幂算法。" },
+{ id: 's2q3s3', type: 'tf', question: "(3) 代码中第39行到50行的目的是为了将ans1数组进行“去重”操作。", options: ['正确', '错误'], correct: 0, explanation: "是的，它将ans1变为唯一值，并用cntans1记录每个值的出现次数。" },
+{ id: 's2q3s4', type: 'mcq', question: "(4) 当输入为”3 1 5 1 -1 2 2 1”时,输出结果为()", options: ['A. 4', 'B. 8', 'C. 0', 'D. 10'], correct: 2, explanation: "求解 5*1^1 - 1*1^2 + 2*1^1 = 6 != 0，无解，输出0。" },
+{ id: 's2q3s5', type: 'mcq', question: "(5) 该代码的时间复杂度是()", options: ['A. O(n)', 'B. O(m^n log m^n)', 'C. O(m^(n/2) log m^(n/2))', 'D. ...'], correct: 2, explanation: "Meet-in-the-middle方法，主要复杂度来源是对两个大小为O(m^(n/2))的数组排序。" },
+{ id: 's2q3s6', type: 'mcq', question: "(6) 本题所求出的是()。", options: ['A. ...a^3+b^3=c^3', 'B. ...a^2+b^2=c^2', 'C. ...sum(...) = 0, x_i in [0,m]', 'D. ...sum(...) = 0, x_i in [1,m]'], correct: 3, explanation: "根据DFS中循环 for(int i=1; i<=m; ++i) 可知 x_i 取值从1到m。" }
+]
+}
+]
+},
+{
+section: "三、程序填空",
+type: "code_fill",
+questions: [
+{
+id: 's3q1',
+title: "第一题 (特殊最短路)",
+code: "...", // Not showing full code in this simplified object
+blanks: [
+{ id: 's3q1b1', question: "①处应填()", options: ['A. 0', 'B. 1', 'C. -1', 'D. false'], correct: 0, explanation: "起始状态：距离0, 位置s, 未使用免费 -> {0, s, 0}。此处填used_freebie=0。" },
+{ id: 's3q1b2', question: "②处应填()", options: ['A. d[u][!used]', 'B. d[u][used]', 'C. d[t][used]', 'D. INF'], correct: 1, explanation: "Dijkstra的标准判断：如果当前取出的距离比记录的还大，说明是过时状态。" },
+{ id: 's3q1b3', question: "③处应填()", options: ['A. d[v][1]', 'B. d[v][used]', 'C. d[u][used]', 'D. d[v][0]'], correct: 1, explanation: "常规松弛操作，更新与当前状态(used)相同的目标节点状态。" },
+{ id: 's3q1b4', question: "④处应填()", options: ['A. d[v][0]', 'B. d[v][1]', 'C. d[u][0]', 'D. d[u][1]'], correct: 2, explanation: "使用免费边进行松弛：只能从'未使用'状态(d[u][0])转移，目标是'已使用'状态(d[v][1])，成本为d[u][0]。" },
+{ id: 's3q1b5', question: "⑤处应填()", options: ['A. d[t][1]', 'B. d[t][0]', 'C. min(d[t][0], d[t][1])', 'D. d[t][0] + d[t][1]'], correct: 2, explanation: "最终结果是到达终点t的两种状态（用或不用免费边）中的距离较小者。" }
+]
+},
+{
+id: 's3q2',
+title: "第二题 (工厂测试)",
+code: "...", // Not showing full code
+blanks: [
+{ id: 's3q2b1', question: "①处应填()", options: ['A. (1<<w) < n', 'B. count_patterns(w, k) < n', 'C. count_patterns(k, w) < n', 'D. comb(w, k) < n'], correct: 1, explanation: "寻找最小测试次数w，使得结果组合数(长度w，最多k个1)大于等于生产线数n。" },
+{ id: 's3q2b2', question: "②处应填()", options: ['A. next_permutation(bits.begin(), bits.end())', 'B. prev_permutation(...)', 'C. ...', 'D. ...'], correct: 0, explanation: "使用std::next_permutation生成所有k个1的二进制组合。" },
+{ id: 's3q2b3', question: "③处应填()", options: ['A. (j>>i)&1', 'B. (i>>j)&1', 'C. code[i][j]==1', 'D. code[j][i]==1'], correct: 3, explanation: "构建测试计划：如果生产线j的编码(code[j])的第i位为1，则将其加入第i批测试(plan[i])。" },
+{ id: 's3q2b4', question: "④处应填()", options: ['A. (signature >> i) & 1', 'B. (signature >> i) ^ 1', 'C. signature | (1<<i)', 'D. (signature >> 1)'], correct: 0, explanation: "将测试返回的整数结果(signature)通过位运算解码为每一位的二进制结果。" },
+{ id: 's3q2b5', question: "⑤处应填()", options: ['A. is_permutation(...)', 'B. code[j] == sig_bits', 'C. plan[j] == sig_bits', 'D. ...'], correct: 1, explanation: "将解码后的测试结果(sig_bits)与每条生产线的预设编码(code[j])进行比较，找到匹配项。" }
+]
+}
+]
+}
+];
+
+const container = document.getElementById('quiz-container');
+
+function checkAnswer(qId, selectedIndex, correctIndex) {
+const optionsContainer = document.getElementById(`options-${qId}`);
+const buttons = optionsContainer.getElementsByTagName('button');
+const explanation = document.getElementById(`explanation-${qId}`);
+
+for (let i = 0; i < buttons.length; i++) {
+buttons[i].classList.add('disabled');
+if (i === correctIndex) {
+buttons[i].classList.add('correct');
+}
+}
+
+if (selectedIndex !== correctIndex) {
+buttons[selectedIndex].classList.add('incorrect');
+}
+explanation.classList.add('visible');
+}
+
+quizData.forEach(sectionData => {
+const sectionEl = document.createElement('div');
+sectionEl.innerHTML = `<h2 class="text-2xl font-bold text-gray-700 pb-2 border-b-2 border-blue-500 mb-4">${sectionData.section}</h2>`;
+const questionsContainer = document.createElement('div');
+questionsContainer.className = 'space-y-6';
+
+sectionData.questions.forEach(qData => {
+const card = document.createElement('div');
+card.className = 'question-card bg-white rounded-lg shadow-md p-6';
+
+if (sectionData.type === 'mcq') {
+card.innerHTML = `<div class="font-semibold text-lg text-gray-800">${qData.question}</div>`;
+const optionsContainer = document.createElement('div');
+optionsContainer.className = 'options-grid mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3';
+optionsContainer.id = `options-${qData.id}`;
+
+qData.options.forEach((option, oIndex) => {
+const btn = document.createElement('button');
+btn.className = 'option-btn w-full text-left p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400';
+btn.innerHTML = option;
+btn.onclick = () => checkAnswer(qData.id, oIndex, qData.correct);
+optionsContainer.appendChild(btn);
+});
+card.appendChild(optionsContainer);
+} else if (sectionData.type === 'code_read' || sectionData.type === 'code_fill') {
+card.innerHTML = `<div class="font-semibold text-lg text-gray-800">${qData.title}</div>
+${qData.code ? `<div class="code-block my-4 text-sm whitespace-pre">${qData.code.replace(/</g, "&lt;").replace(/>/g, "&gt;")}</div>` : ''}`;
+const subQuestions = qData.sub_questions || qData.blanks;
+subQuestions.forEach(subQ => {
+const subQContainer = document.createElement('div');
+subQContainer.className = 'mt-6 pt-4 border-t';
+subQContainer.innerHTML = `<div class="font-medium text-gray-700">${subQ.question}</div>`;
+
+const optionsContainer = document.createElement('div');
+optionsContainer.className = 'options-grid mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3';
+optionsContainer.id = `options-${subQ.id}`;
+
+subQ.options.forEach((opt, oIndex) => {
+const btn = document.createElement('button');
+btn.className = 'option-btn w-full text-left p-3 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-400';
+btn.innerHTML = opt;
+btn.onclick = () => checkAnswer(subQ.id, oIndex, subQ.correct);
+optionsContainer.appendChild(btn);
+});
+subQContainer.appendChild(optionsContainer);
+card.appendChild(subQContainer);
+// Explanation for sub-question
+const explanationEl = document.createElement('div');
+explanationEl.className = 'explanation rounded-md';
+explanationEl.id = `explanation-${subQ.id}`;
+explanationEl.innerHTML = `<p class="font-semibold mb-2">题解:</p><div>${subQ.explanation}</div>`;
+subQContainer.appendChild(explanationEl);
+});
+}
+
+// Common explanation for MCQ
+if (sectionData.type === 'mcq') {
+const explanationEl = document.createElement('div');
+explanationEl.className = 'explanation rounded-md';
+explanationEl.id = `explanation-${qData.id}`;
+explanationEl.innerHTML = `<p class="font-semibold mb-2">题解:</p><div>${qData.explanation}</div>`;
+card.appendChild(explanationEl);
+}
+questionsContainer.appendChild(card);
+});
+sectionEl.appendChild(questionsContainer);
+container.appendChild(sectionEl);
+});
+</script>
+</body>
+</html>
+
+
