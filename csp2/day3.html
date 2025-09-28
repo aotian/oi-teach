@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSP 复赛集训 Day 3: 动态规划</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Calm Amber & Slate -->
+    <!-- Application Structure Plan: Maintaining the three-tab SPA structure ('Core Overview', 'Algorithm Deep Dive', 'Practice Arena') for consistency. Day 3's focus is on demystifying Dynamic Programming. The key will be interactive, DOM-based table-filling animations for Linear DP (Number Triangle) and Knapsack DP. This "填表法" (table-filling method) is the most intuitive way to teach DP, as it makes the abstract concept of state and transition concrete. The structure allows users to grasp the core concepts, see the table-filling logic in action, and then apply it. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: DP Core Concepts -> Goal: Explain Optimal Substructure, No Aftereffect -> Viz: Structured text, lists -> Justification: These are foundational theories best explained clearly and concisely.
+        - Report Info: Linear DP (Number Triangle) -> Goal: Introduce DP with a simple, visual problem -> Viz: Interactive DOM grid animation -> Interaction: 'Run' button animates filling the DP table from bottom up, highlighting dependencies -> Justification: Directly maps the state transition to a visual grid, making it easy to understand. Method: DOM manipulation.
+        - Report Info: LIS (Longest Increasing Subsequence) -> Goal: Teach classic linear DP and its optimization -> Viz: Interactive animation for the O(n log n) greedy/binary search method -> Interaction: 'Run' button shows how the 'tails' array is constructed -> Justification: The O(n log n) method is non-trivial and benefits greatly from a visual step-by-step explanation. Method: DOM manipulation.
+        - Report Info: 0/1 Knapsack DP -> Goal: Teach this classic DP model -> Viz: Interactive DP table animation -> Interaction: 'Run' button fills the table, showing the two choices (take/don't take) for each item -> Justification: Visually demonstrates the state transition equation and the logic behind the nested loops. Method: DOM manipulation.
+        - Report Info: State Compression, Slope Optimization, etc. -> Goal: Introduce advanced DP concepts -> Viz: Static text, diagrams built with HTML/CSS, and code snippets -> Justification: Full animations for these are highly complex; clear, well-structured static diagrams with code are more effective for an overview.
+        - Report Info: Code Templates & Practice Problems -> Goal: Provide resources -> Presentation: Code blocks with copy buttons and interactive problem cards -> Justification: Consistent, user-friendly format from previous days.
+     -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --accent-primary: #f59e0b;
+            --accent-secondary: #10b981;
+            --border-color: #e2e8f0;
+        }
+        body { background-color: var(--bg-main); color: var(--text-primary); }
+        .tab-btn { transition: color 0.2s, border-color 0.2s; }
+        .tab-btn.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .code-block {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            position: relative;
+            font-family: 'Courier New', Courier, monospace;
+            max-height: 450px;
+            overflow-y: auto;
+        }
+        .copy-btn {
+            position: absolute; top: 0.75rem; right: 0.75rem; background-color: #475569;
+            color: white; padding: 0.25rem 0.5rem; border-radius: 0.375rem;
+            font-size: 0.875rem; cursor: pointer; transition: background-color 0.2s;
+        }
+        .copy-btn:hover { background-color: #64748b; }
+        
+        /* DP Table Styles */
+        .dp-table { border-collapse: collapse; }
+        .dp-table th, .dp-table td { border: 1px solid var(--border-color); padding: 0.5rem; text-align: center; font-family: 'Courier New', Courier, monospace; min-width: 40px; transition: background-color 0.3s;}
+        .dp-table th { background-color: #f1f5f9; }
+        .dp-cell-current { background-color: #fef3c7 !important; transform: scale(1.1); }
+        .dp-cell-dependency { background-color: #dbeafe !important; }
+        .dp-cell-final { background-color: #dcfce7 !important; }
+
+        .triangle-container { display: flex; flex-direction: column; align-items: center; }
+        .triangle-row { display: flex; justify-content: center; }
+        .triangle-node { width: 40px; height: 40px; display: flex; justify-content: center; align-items: center; border: 1px solid var(--border-color); border-radius: 50%; margin: 4px; transition: all 0.3s; }
+
+        /* LIS Styles */
+        .lis-container { display: flex; flex-direction: column; gap: 0.5rem; font-family: 'Courier New', Courier, monospace; }
+        .lis-row { display: flex; gap: 0.5rem; align-items: center; min-height: 50px; }
+        .lis-label { width: 80px; font-weight: bold; text-align: right; }
+        .lis-item {
+            width: 40px; height: 40px; display: flex; justify-content: center; align-items: center;
+            border: 1px solid var(--border-color); border-radius: 0.25rem;
+            background-color: #f1f5f9; font-weight: bold; transition: all 0.3s ease;
+        }
+        .lis-item.current { border-color: var(--accent-primary); background-color: #fef3c7; transform: scale(1.1); }
+        .lis-item.compare { border-color: #f472b6; background-color: #fce7f3; }
+        .lis-item.placed { border-color: var(--accent-secondary); background-color: #dcfce7; }
+
+        .adv-dp-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+        }
+        @media(min-width: 1024px) {
+            .adv-dp-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+        .diagram-container {
+            background-color: #f9fafb;
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
+</head>
+<body class="font-sans">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">CSP 复赛集训 - Day 3</h1>
+            <p class="text-lg text-gray-600 mt-2">动态规划 (Dynamic Programming)</p>
+        </header>
+
+        <nav class="mb-8 border-b-2 border-gray-200">
+            <ul class="flex justify-center -mb-px space-x-4 md:space-x-8">
+                <li><button class="tab-btn text-lg font-medium p-4 border-b-2 border-transparent active" data-tab="overview">核心概览</button></li>
+                <li><button class="tab-btn text-lg font-medium p-4 border-b-2 border-transparent" data-tab="deep-dive">算法详解</button></li>
+                <li><button class="tab-btn text-lg font-medium p-4 border-b-2 border-transparent" data-tab="practice">实战演练</button></li>
+            </ul>
+        </nav>
+
+        <main>
+            <!-- 核心概览 Section -->
+            <section id="overview" class="content-section active">
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md space-y-8">
+                    <div>
+                        <h2 class="text-3xl font-bold mb-4">DP思想：不是“动态”，而是“规划”</h2>
+                        <p class="text-gray-700 mb-6">动态规划 (DP) 是一种通过将原问题分解为相互重叠的子问题，并存储子问题的解来避免重复计算，从而求解最优化问题的算法思想。它的核心在于“记忆化”和“最优子结构”。</p>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="bg-amber-50 p-6 rounded-lg border border-amber-200">
+                                <h3 class="text-xl font-semibold text-amber-800 mb-2">两大核心特性</h3>
+                                <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                    <li><strong class="text-amber-700">最优子结构:</strong> 原问题的最优解包含其子问题的最优解。这意味着我们可以通过组合子问题的最优解，来得到原问题的最优解。</li>
+                                    <li><strong class="text-amber-700">重叠子问题:</strong> 在求解过程中，许多子问题会被反复计算。DP 通过“记事本”（通常是数组或哈希表）来存储这些子问题的解，避免重复劳动。</li>
+                                </ul>
+                            </div>
+                            <div class="bg-emerald-50 p-6 rounded-lg border border-emerald-200">
+                                <h3 class="text-xl font-semibold text-emerald-800 mb-2">DP解题三部曲</h3>
+                                <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                    <li><strong class="text-emerald-700">定义状态:</strong> 这是最关键的一步！通常用 `dp[i]` 或 `dp[i][j]` 表示“当问题规模为 i (或 i, j) 时的最优解是什么”。</li>
+                                    <li><strong class="text-emerald-700">状态转移方程:</strong> 找出 `dp[i]` 与 `dp[i-1]`, `dp[i-2]`... 之间的关系，即如何从已知的子问题解推导出当前问题的解。</li>
+                                     <li><strong class="text-emerald-700">初始化:</strong> 确定 DP 数组的初始值或边界条件，这是递推的起点。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 算法详解 Section -->
+            <section id="deep-dive" class="content-section space-y-8">
+                <!-- Linear DP -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">线性DP(一)：数字三角形</h3>
+                    <p class="text-gray-700 mb-4">线性DP是最基础的DP模型，状态通常是一维或二维的，且状态转移有明显的线性顺序。数字三角形是入门线性DP的绝佳例子：从顶部出发，每次只能走到底下一层的相邻节点，求路径上数字之和的最大值。</p>
+                    <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <div>
+                           <h4 class="text-lg font-semibold mb-2">可视化演示</h4>
+                           <button id="run-triangle" class="w-full px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition mb-4">运行动画</button>
+                           <div class="flex flex-col items-center">
+                                <div id="triangle-vis" class="triangle-container mb-2"></div>
+                                <p id="triangle-status" class="text-center font-semibold mt-2 h-6"></p>
+                           </div>
+                        </div>
+                        <div>
+                           <h4 class="text-lg font-semibold mb-2">C++ 核心代码</h4>
+                           <p class="text-sm text-gray-600 mb-2">状态定义：`dp[i][j]` 表示从顶部走到 `(i, j)` 位置的最大路径和。状态转移方程：`dp[i][j] = val[i][j] + max(dp[i-1][j], dp[i-1][j-1])`</p>
+                           <div class="code-block">
+                               <button class="copy-btn" onclick="copyCode('triangle-code')">复制</button>
+                               <pre><code id="triangle-code">int n; // 三角形行数
+int triangle[N][N];
+int dp[N][N];
+
+void solve() {
+    for (int i = 1; i <= n; ++i) {
+        for (int j = 1; j <= i; ++j) {
+            dp[i][j] = triangle[i][j];
+        }
+    }
+    for (int i = 2; i <= n; ++i) {
+        for (int j = 1; j <= i; ++j) {
+            if (j == 1) dp[i][j] += dp[i-1][j];
+            else if (j == i) dp[i][j] += dp[i-1][j-1];
+            else dp[i][j] += std::max(dp[i-1][j], dp[i-1][j-1]);
+        }
+    }
+    int max_path = 0;
+    for (int j = 1; j <= n; ++j) {
+        max_path = std::max(max_path, dp[n][j]);
+    }
+}</code></pre>
+                           </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- LIS -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">线性DP(二)：最长上升子序列 (LIS)</h3>
+                    <p class="text-gray-700 mb-4">给定一个序列，找到其最长的一个子序列，使得这个子序列是单调递增的。这是线性DP的另一个经典问题，并且拥有一个非常巧妙的 O(n log n) 优化解法。</p>
+                    <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <div>
+                           <h4 class="text-lg font-semibold mb-2">O(n log n) 解法可视化</h4>
+                           <button id="run-lis" class="w-full px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition mb-4">运行动画</button>
+                           <div id="lis-vis" class="lis-container"></div>
+                           <p id="lis-status" class="text-center font-semibold mt-2 h-6"></p>
+                        </div>
+                        <div>
+                           <h4 class="text-lg font-semibold mb-2">C++ 核心代码</h4>
+                           <div class="code-block">
+                               <button class="copy-btn" onclick="copyCode('lis-code')">复制</button>
+                               <pre><code id="lis-code">// O(n^2) 解法
+int lengthOfLIS_N2(std::vector<int>& nums) {
+    if (nums.empty()) return 0;
+    std::vector<int> dp(nums.size(), 1);
+    int max_len = 1;
+    for (int i = 1; i < nums.size(); i++) {
+        for (int j = 0; j < i; j++) {
+            if (nums[i] > nums[j]) {
+                dp[i] = std::max(dp[i], dp[j] + 1);
+            }
+        }
+        max_len = std::max(max_len, dp[i]);
+    }
+    return max_len;
+}
+
+// O(n log n) 解法 (贪心 + 二分)
+int lengthOfLIS_NLogN(std::vector<int>& nums) {
+    std::vector<int> tails;
+    for (int num : nums) {
+        auto it = std::lower_bound(tails.begin(), tails.end(), num);
+        if (it == tails.end()) {
+            tails.push_back(num);
+        } else {
+            *it = num;
+        }
+    }
+    return tails.size();
+}</code></pre>
+                           </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Knapsack DP -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">背包DP：0-1背包</h3>
+                    <p class="text-gray-700 mb-4">有 N 件物品和一个容量为 V 的背包。第 i 件物品的重量是 w[i]，价值是 v[i]。求解将哪些物品装入背包，可使这些物品总重量不超过背包容量，且总价值最大。</p>
+                    <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2">“填表示范”可视化</h4>
+                            <button id="run-knapsack" class="w-full px-4 py-2 bg-amber-500 text-white rounded-lg hover:bg-amber-600 transition mb-4">运行动画</button>
+                            <div class="overflow-x-auto">
+                                <table id="knapsack-table" class="dp-table"></table>
+                            </div>
+                            <p id="knapsack-status" class="text-center font-semibold mt-2 h-6"></p>
+                        </div>
+                        <div>
+                           <h4 class="text-lg font-semibold mb-2">C++ 核心代码</h4>
+                           <p class="text-sm text-gray-600 mb-2">状态定义：`dp[i][j]` 表示前 i 件物品放入容量为 j 的背包中的最大价值。转移方程：`dp[i][j] = max(dp[i-1][j], dp[i-1][j-w[i]] + v[i])`</p>
+                           <div class="code-block">
+                               <button class="copy-btn" onclick="copyCode('knapsack-code')">复制</button>
+                               <pre><code id="knapsack-code">// 二维数组版本
+int dp[N][V];
+void solve_2d() {
+    for (int i = 1; i <= N; ++i) {
+        for (int j = 0; j <= V; ++j) {
+            dp[i][j] = dp[i-1][j];
+            if (j >= w[i]) {
+                dp[i][j] = std::max(dp[i][j], dp[i-1][j-w[i]] + v[i]);
+            }
+        }
+    }
+}
+
+// 空间优化版 (滚动数组)
+int dp_1d[V];
+void solve_1d() {
+    for (int i = 1; i <= N; ++i) {
+        // 必须倒序循环，保证dp[j-w[i]]是上一轮的状态
+        for (int j = V; j >= w[i]; --j) {
+            dp_1d[j] = std::max(dp_1d[j], dp_1d[j-w[i]] + v[i]);
+        }
+    }
+}</code></pre>
+                           </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Interval DP -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">区间DP：石子合并 (S组重点)</h3>
+                    <p class="text-gray-700 mb-4">区间DP通过合并小区间的最优解来得到大区间的最优解。石子合并问题是其典型代表：将 N 堆石子排成一行，每次只能合并相邻的两堆，代价为两堆石子数量之和。求将所有石子合并成一堆的最小代价。</p>
+                    <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2">核心思想</h4>
+                            <p class="text-sm text-gray-600 mb-2">状态定义：`dp[i][j]` 表示合并从第 i 堆到第 j 堆石子的最小代价。
+                            <br>要计算 `dp[i][j]`，我们需要枚举一个分割点 k (i ≤ k < j)，将区间 `[i, j]` 分为 `[i, k]` 和 `[k+1, j]`。
+                            <br>状态转移方程：`dp[i][j] = min(dp[i][k] + dp[k+1][j]) + cost(i, j)`
+                            <br>其中 `cost(i, j)` 是合并 `[i, j]` 区间内所有石子的总和，可以用前缀和快速计算。</p>
+                        </div>
+                         <div>
+                           <h4 class="text-lg font-semibold mb-2">C++ 核心代码</h4>
+                           <div class="code-block">
+                               <button class="copy-btn" onclick="copyCode('interval-code')">复制</button>
+                               <pre><code id="interval-code">int sum[N]; // 前缀和数组
+int dp[N][N];
+
+void solve() {
+    // len 是区间长度
+    for (int len = 2; len <= n; ++len) {
+        // i 是区间左端点
+        for (int i = 1; i <= n - len + 1; ++i) {
+            int j = i + len - 1; // 区间右端点
+            dp[i][j] = 1e9; // 初始化为极大值
+            int cost = sum[j] - sum[i-1];
+            
+            // k 是分割点
+            for (int k = i; k < j; ++k) {
+                dp[i][j] = std::min(dp[i][j], dp[i][k] + dp[k+1][j] + cost);
+            }
+        }
+    }
+    // 答案是 dp[1][n]
+}</code></pre>
+                           </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced DP -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">高级DP优化 (S组选学)</h3>
+                    <div class="space-y-6">
+                        <!-- State Compression DP -->
+                        <div class="adv-dp-grid items-start">
+                            <div>
+                                <h4 class="text-xl font-semibold text-gray-800 mb-2">状态压缩DP</h4>
+                                <p class="text-sm text-gray-600 mb-2">当DP的某一维度状态是集合时（例如“已访问过的城市集合”），可用一个整数的二进制位来表示这个集合，从而将状态压缩进DP数组的下标中。常用于解决旅行商(TSP)等问题。</p>
+                                <div class="code-block text-sm">
+                                   <button class="copy-btn" onclick="copyCode('sc-dp-code')">复制</button>
+                                   <pre><code id="sc-dp-code">// dp[S][i]: 访问过的城市集合为S，当前在城市i的最小花费
+int dp[1 << N][N]; 
+// ...
+// 从状态S，当前在j，转移到状态S | (1<<i)，当前在i
+dp[S | (1 << i)][i] = min(dp[S | (1 << i)][i], dp[S][j] + dist[j][i]);</code></pre>
+                                </div>
+                            </div>
+                            <div class="diagram-container">
+                                <h5 class="font-bold text-center mb-2">图示：位表示集合</h5>
+                                <p>城市集合 {A, B, C, D}, N=4</p>
+                                <p>访问了 {A, C}:</p>
+                                <p>D C B A  &lt;- 位</p>
+                                <p>0 1 0 1  = 二进制 0101 = 十进制 5</p>
+                                <p class="mt-2">访问了 {A, B, D}:</p>
+                                <p>D C B A  &lt;- 位</p>
+                                <p>1 0 1 1  = 二进制 1011 = 十进制 11</p>
+                            </div>
+                        </div>
+                        <hr>
+                        <!-- Slope Optimization -->
+                        <div class="adv-dp-grid items-start">
+                            <div>
+                                <h4 class="text-xl font-semibold text-gray-800 mb-2">斜率优化</h4>
+                                <p class="text-sm text-gray-600 mb-2">用于优化形如 `dp[i] = min(dp[j] + f(i, j))` 的转移方程，其中 `f(i, j)` 包含 `i` 和 `j` 的乘积项。通过将其变形为 `y = kx + b` 的直线形式，并用单调队列维护一个下凸壳，可以使寻找最优决策点 `j` 的时间从 O(n) 降为 O(1)。</p>
+                                <div class="code-block text-sm">
+                                   <button class="copy-btn" onclick="copyCode('slope-dp-code')">复制</button>
+                                   <pre><code id="slope-dp-code">// 维护一个决策点j的单调队列 q[]
+// head, tail 为队首队尾指针
+while(head < tail && slope(q[head], q[head+1]) < k[i]) {
+    head++; // 移除不优的队首
+}
+int j = q[head]; // 队首即为最优决策点
+dp[i] = dp[j] + ...;
+while(head < tail && slope(q[tail-1], q[tail]) > slope(q[tail], i)) {
+    tail--; // 维护凸壳性质
+}
+q[++tail] = i; // 当前点入队</code></pre>
+                                </div>
+                            </div>
+                            <div class="diagram-container">
+                                <h5 class="font-bold text-center mb-2">图示：单调队列维护凸包</h5>
+                                <p class="text-center">求截距最小 → 找斜率为k的切线</p>
+                                <div class="w-full h-32 bg-gray-200 mt-2 relative">
+                                    <div class="absolute w-2 h-2 bg-blue-600 rounded-full" style="left: 10%; bottom: 20%;"></div>
+                                    <div class="absolute w-2 h-2 bg-blue-600 rounded-full" style="left: 30%; bottom: 10%;"></div>
+                                    <div class="absolute w-2 h-2 bg-blue-600 rounded-full" style="left: 60%; bottom: 30%;"></div>
+                                    <div class="absolute w-2 h-2 bg-blue-600 rounded-full" style="left: 80%; bottom: 60%;"></div>
+                                    <p class="text-blue-600 font-bold text-sm" style="left: 25%; bottom: 0;">下凸壳</p>
+                                    <div class="absolute bg-red-500 w-px h-20" style="left: 50%; bottom: 5%; transform: rotate(-20deg);"></div>
+                                    <p class="text-red-500 text-sm" style="left: 55%; bottom: 50%;">斜率k的切线</p>
+                                </div>
+                            </div>
+                        </div>
+                        <hr>
+                         <!-- Quadrangle Inequality -->
+                        <div class="adv-dp-grid items-start">
+                             <div>
+                                <h4 class="text-xl font-semibold text-gray-800 mb-2">四边形不等式优化</h4>
+                                <p class="text-sm text-gray-600 mb-2">用于优化形如 `dp[i][j] = min(dp[i][k] + dp[k+1][j]) + w(i, j)` 的区间DP。当代价函数 `w(i, j)` 满足四边形不等式时，决策点 `s[i][j]` 具有单调性 `s[i][j-1] <= s[i][j] <= s[i+1][j]`，从而可以将 k 的枚举范围从 `[i, j-1]` 缩小，降低总复杂度。</p>
+                                <div class="code-block text-sm">
+                                   <button class="copy-btn" onclick="copyCode('quad-dp-code')">复制</button>
+                                   <pre><code id="quad-dp-code">int s[N][N]; // s[i][j] 记录 dp[i][j] 的最优决策点
+// 初始化 s[i][i] = i
+for (int len = 2; len <= n; ++len) {
+    // 从大到小枚举i，保证 s[i][j-1] 和 s[i+1][j] 已计算
+    for (int i = n - len + 1; i >= 1; --i) { 
+        int j = i + len - 1;
+        // 缩小k的枚举范围
+        for (int k = s[i][j-1]; k <= s[i+1][j]; ++k) {
+            if (dp[i][j] > dp[i][k] + dp[k+1][j] + w(i, j)) {
+                dp[i][j] = dp[i][k] + dp[k+1][j] + w(i, j);
+                s[i][j] = k; // 记录最优决策点
+            }
+        }
+    }
+}</code></pre>
+                                </div>
+                            </div>
+                             <div class="diagram-container">
+                                <h5 class="font-bold text-center mb-2">图示：决策单调性</h5>
+                                <p class="text-center text-xs">`s[i][j]` 在 `s[i][j-1]` 和 `s[i+1][j]` 之间</p>
+                                <div class="relative w-full text-center text-xs mt-2">
+                                    <p>dp[i][j-1] -> k from [ s[i][j-2] .. <span class="text-blue-600 font-bold">s[i][j-1]</span> ]</p>
+                                    <p class="mt-4">dp[i][j] -> k from [ <span class="text-blue-600 font-bold">s[i][j-1]</span> .. <span class="text-red-600 font-bold">s[i+1][j]</span> ]</p>
+                                    <p class="mt-4">dp[i+1][j] -> k from [ <span class="text-red-600 font-bold">s[i+1][j]</span> .. s[i+2][j] ]</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 实战演练 Section -->
+            <section id="practice" class="content-section">
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md space-y-8">
+                     <div>
+                        <h2 class="text-3xl font-bold mb-4">下午实战练习</h2>
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1048 采药</h4>
+                                <p class="text-sm text-gray-600 my-2">最经典的 0-1 背包问题，必做。</p>
+                                <span class="text-xs font-semibold bg-blue-200 text-blue-800 px-2 py-1 rounded-full">背包DP</span>
+                                <a href="https://www.luogu.com.cn/problem/P1048" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                             <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1216 数字三角形</h4>
+                                <p class="text-sm text-gray-600 my-2">线性DP的最佳入门题。</p>
+                                <span class="text-xs font-semibold bg-green-200 text-green-800 px-2 py-1 rounded-full">线性DP</span>
+                                <a href="https://www.luogu.com.cn/problem/P1216" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                            <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1020 导弹拦截</h4>
+                                <p class="text-sm text-gray-600 my-2">第一问是最长不升子序列，第二问是贪心。练习 LIS 的 O(n log n) 写法。</p>
+                                <span class="text-xs font-semibold bg-green-200 text-green-800 px-2 py-1 rounded-full">LIS</span>
+                                <a href="https://www.luogu.com.cn/problem/P1020" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                            <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P2758 编辑距离</h4>
+                                <p class="text-sm text-gray-600 my-2">二维线性DP经典题。`dp[i][j]` 表示第一个字符串前 i 位和第二个字符串前 j 位的编辑距离。</p>
+                                <span class="text-xs font-semibold bg-green-200 text-green-800 px-2 py-1 rounded-full">线性DP</span>
+                                <a href="https://www.luogu.com.cn/problem/P2758" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                            <div class="border rounded-lg p-4 bg-orange-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1880 石子合并</h4>
+                                <p class="text-sm text-gray-600 my-2">区间DP的模板题。</p>
+                                <span class="text-xs font-semibold bg-purple-200 text-purple-800 px-2 py-1 rounded-full">区间DP</span>
+                                <a href="https://www.luogu.com.cn/problem/P1880" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">前往挑战</a>
+                            </div>
+                            <div class="border rounded-lg p-4 bg-orange-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1171 售货员</h4>
+                                <p class="text-sm text-gray-600 my-2">TSP问题的简化版，用状压DP解决。</p>
+                                <span class="text-xs font-semibold bg-red-200 text-red-800 px-2 py-1 rounded-full">状压DP</span>
+                                <a href="https://www.luogu.com.cn/problem/P1171" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">前往挑战</a>
+                            </div>
+                             <div class="border rounded-lg p-4 bg-orange-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P3195 [HNOI2008]玩具装箱</h4>
+                                <p class="text-sm text-gray-600 my-2">斜率优化的模板题。</p>
+                                <span class="text-xs font-semibold bg-red-200 text-red-800 px-2 py-1 rounded-full">斜率优化</span>
+                                <a href="https://www.luogu.com.cn/problem/P3195" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">前往挑战</a>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="mt-8 p-6 bg-teal-50 rounded-lg border border-teal-200">
+                        <h3 class="text-2xl font-semibold text-teal-800 mb-4">训练建议</h3>
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <span class="text-teal-600 font-bold mr-3">☞</span>
+                                <div><strong class="text-teal-700">画表分析法：</strong>DP 的精髓就在于“填表”。遇到任何 DP 题，先别急着写代码，在纸上画出 DP 表格，手动模拟前几项的计算过程。看清表格是如何被填充的，状态转移方程自然就浮出水面。</div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-teal-600 font-bold mr-3">☞</span>
+                                <div><strong class="text-teal-700">从递推到DP：</strong>如果你想不出 DP 状态，不妨先尝试写一个暴力递归/递推的解法。你会发现其中存在大量的重复计算，这就是“重叠子问题”。把这些子问题的解“记忆化”存储起来，就从暴力走向了 DP。</div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-teal-600 font-bold mr-3">☞</span>
+                                <div><strong class="text-teal-700">多刷经典模型：</strong>DP 的题目千变万化，但万变不离其宗。背包、LIS、区间DP等都是必须滚瓜烂熟的经典模型。通过大量练习，培养对模型的敏感度，才能在考场上快速识别题目类型，套用正确的框架。</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+    </div>
+
+<script>
+    const sleep = ms => new Promise(res => setTimeout(res, ms));
+    let isAnimating = false;
+
+    // --- Tab Navigation ---
+    const tabs = document.querySelectorAll('.tab-btn');
+    const sections = document.querySelectorAll('.content-section');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            if (isAnimating) return;
+            tabs.forEach(t => t.classList.remove('active'));
+            sections.forEach(s => s.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    // --- Code Copy ---
+    function copyCode(elementId) {
+        const codeElement = document.getElementById(elementId);
+        navigator.clipboard.writeText(codeElement.innerText).then(() => {
+            const btn = codeElement.previousElementSibling;
+            const originalText = btn.innerText;
+            btn.innerText = '已复制!';
+            setTimeout(() => { btn.innerText = originalText; }, 2000);
+        });
+    }
+
+    // --- Triangle DP Logic ---
+    const triangleVis = document.getElementById('triangle-vis');
+    const triangleStatus = document.getElementById('triangle-status');
+    const triangleData = [
+        [7],
+        [3, 8],
+        [8, 1, 0],
+        [2, 7, 4, 4],
+        [4, 5, 2, 6, 5]
+    ];
+
+    function initTriangle() {
+        triangleVis.innerHTML = '';
+        triangleData.forEach((row, r) => {
+            const rowDiv = document.createElement('div');
+            rowDiv.className = 'triangle-row';
+            row.forEach((val, c) => {
+                const nodeDiv = document.createElement('div');
+                nodeDiv.id = `tri-${r}-${c}`;
+                nodeDiv.className = 'triangle-node transition-colors';
+                nodeDiv.innerText = val;
+                rowDiv.appendChild(nodeDiv);
+            });
+            triangleVis.appendChild(rowDiv);
+        });
+    }
+    
+    async function animateTriangle() {
+        if (isAnimating) return;
+        isAnimating = true;
+        triangleStatus.innerText = '动画开始: 从下往上计算...';
+        initTriangle();
+        let dp = JSON.parse(JSON.stringify(triangleData));
+        
+        for (let r = triangleData.length - 2; r >= 0; r--) {
+            for (let c = 0; c <= r; c++) {
+                const currentNode = document.getElementById(`tri-${r}-${c}`);
+                const dep1 = document.getElementById(`tri-${r+1}-${c}`);
+                const dep2 = document.getElementById(`tri-${r+1}-${c+1}`);
+                
+                currentNode.classList.add('dp-cell-current');
+                dep1.classList.add('dp-cell-dependency');
+                dep2.classList.add('dp-cell-dependency');
+                triangleStatus.innerText = `计算 (${r},${c}): ${dp[r][c]} + max(${dp[r+1][c]}, ${dp[r+1][c+1]})`;
+                await sleep(1000);
+
+                dp[r][c] += Math.max(dp[r+1][c], dp[r+1][c+1]);
+                currentNode.innerText = dp[r][c];
+                
+                currentNode.classList.remove('dp-cell-current');
+                currentNode.classList.add('dp-cell-final');
+                dep1.classList.remove('dp-cell-dependency');
+                dep2.classList.remove('dp-cell-dependency');
+                 await sleep(500);
+            }
+        }
+        triangleStatus.innerText = `完成! 最大路径和为: ${dp[0][0]}`;
+        isAnimating = false;
+    }
+
+    // --- Knapsack DP Logic ---
+    const knapsackTable = document.getElementById('knapsack-table');
+    const knapsackStatus = document.getElementById('knapsack-status');
+    const items = [
+        {w: 1, v: 15}, {w: 3, v: 20}, {w: 4, v: 30}
+    ];
+    const capacity = 4;
+
+    function initKnapsackTable() {
+        knapsackTable.innerHTML = '';
+        let thead = '<thead><tr><th>i\\V</th>';
+        for (let j = 0; j <= capacity; j++) thead += `<th>${j}</th>`;
+        thead += '</tr></thead>';
+        knapsackTable.innerHTML += thead;
+
+        let tbody = '<tbody>';
+        for (let i = 0; i <= items.length; i++) {
+            tbody += `<tr><th>${i === 0 ? '0' : `i=${i}(w=${items[i-1].w},v=${items[i-1].v})`}</th>`;
+            for (let j = 0; j <= capacity; j++) {
+                tbody += `<td id="ks-${i}-${j}">0</td>`;
+            }
+            tbody += '</tr>';
+        }
+        tbody += '</tbody>';
+        knapsackTable.innerHTML += tbody;
+    }
+    
+    async function animateKnapsack() {
+        if(isAnimating) return;
+        isAnimating = true;
+        knapsackStatus.innerText = '动画开始: 填表...';
+        initKnapsackTable();
+        
+        let dp = Array(items.length + 1).fill(0).map(() => Array(capacity + 1).fill(0));
+
+        for (let i = 1; i <= items.length; i++) {
+            const { w, v } = items[i-1];
+            for (let j = 1; j <= capacity; j++) {
+                const currentCell = document.getElementById(`ks-${i}-${j}`);
+                currentCell.classList.add('dp-cell-current');
+                
+                const noTakeCell = document.getElementById(`ks-${i-1}-${j}`);
+                noTakeCell.classList.add('dp-cell-dependency');
+                dp[i][j] = dp[i-1][j];
+                knapsackStatus.innerText = `物品${i}, 容量${j}: 不选, 价值=${dp[i-1][j]}`;
+                await sleep(800);
+                
+                if (j >= w) {
+                    const takeCell = document.getElementById(`ks-${i-1}-${j-w}`);
+                    takeCell.classList.add('dp-cell-dependency');
+                    knapsackStatus.innerText = `物品${i}, 容量${j}: 尝试选, 价值=${dp[i-1][j-w]} + ${v}`;
+                    await sleep(800);
+                    if (dp[i-1][j-w] + v > dp[i][j]) {
+                        dp[i][j] = dp[i-1][j-w] + v;
+                        knapsackStatus.innerText = `物品${i}, 容量${j}: 选择! 更优价值=${dp[i][j]}`;
+                    }
+                    takeCell.classList.remove('dp-cell-dependency');
+                }
+                
+                currentCell.innerText = dp[i][j];
+                noTakeCell.classList.remove('dp-cell-dependency');
+                currentCell.classList.remove('dp-cell-current');
+                currentCell.classList.add('dp-cell-final');
+                await sleep(500);
+            }
+        }
+        knapsackStatus.innerText = `完成! 最大价值为: ${dp[items.length][capacity]}`;
+        isAnimating = false;
+    }
+
+    // --- LIS Logic ---
+    const lisVis = document.getElementById('lis-vis');
+    const lisStatus = document.getElementById('lis-status');
+    const lisNums = [3, 5, 2, 8, 4, 10, 6, 1, 9, 7];
+
+    function initLisVis() {
+        lisVis.innerHTML = `
+            <div class="lis-row"><div class="lis-label">Input:</div><div id="lis-input-row" class="flex gap-2 flex-wrap"></div></div>
+            <div class="lis-row"><div class="lis-label">Tails:</div><div id="lis-tails-row" class="flex gap-2 flex-wrap"></div></div>
+        `;
+        const inputRow = document.getElementById('lis-input-row');
+        lisNums.forEach((num, i) => {
+            inputRow.innerHTML += `<div id="lis-in-${i}" class="lis-item">${num}</div>`;
+        });
+    }
+
+    async function animateLIS() {
+        if(isAnimating) return;
+        isAnimating = true;
+        lisStatus.innerText = '动画开始...';
+        initLisVis();
+
+        const tails = [];
+        const tailsRow = document.getElementById('lis-tails-row');
+
+        for (let i = 0; i < lisNums.length; i++) {
+            const num = lisNums[i];
+            const currentItem = document.getElementById(`lis-in-${i}`);
+            currentItem.classList.add('current');
+            lisStatus.innerText = `处理元素: ${num}`;
+            await sleep(1000);
+
+            let low = 0, high = tails.length;
+            while(low < high) {
+                let mid = Math.floor(low + (high - low) / 2);
+                document.getElementById(`lis-tail-${mid}`).classList.add('compare');
+                lisStatus.innerText = `二分查找, 比较 ${num} 和 ${tails[mid]}`;
+                await sleep(800);
+                document.getElementById(`lis-tail-${mid}`).classList.remove('compare');
+                if(tails[mid] < num) {
+                    low = mid + 1;
+                } else {
+                    high = mid;
+                }
+            }
+
+            if (low === tails.length) {
+                lisStatus.innerText = `${num} > 所有Tails, 新增一个堆`;
+                tails.push(num);
+                tailsRow.innerHTML += `<div id="lis-tail-${low}" class="lis-item placed">${num}</div>`;
+            } else {
+                lisStatus.innerText = `找到位置 ${low}, 更新Tails[${low}]为 ${num}`;
+                tails[low] = num;
+                const tailItem = document.getElementById(`lis-tail-${low}`);
+                tailItem.style.transform = 'scale(1.2)';
+                tailItem.classList.add('placed');
+                tailItem.innerText = num;
+                 await sleep(400);
+                tailItem.style.transform = 'scale(1)';
+            }
+            currentItem.classList.remove('current');
+            await sleep(1000);
+        }
+        lisStatus.innerText = `完成! LIS 长度为: ${tails.length}`;
+        isAnimating = false;
+    }
+
+
+    // --- Event Listeners ---
+    document.getElementById('run-triangle').addEventListener('click', animateTriangle);
+    document.getElementById('run-knapsack').addEventListener('click', animateKnapsack);
+    document.getElementById('run-lis').addEventListener('click', animateLIS);
+
+    // --- Initial Load ---
+    window.onload = () => {
+        initTriangle();
+        initKnapsackTable();
+        initLisVis();
+    };
+</script>
+
+</body>
+</html>
+

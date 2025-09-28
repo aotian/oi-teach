@@ -1,0 +1,885 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSP 复赛集训 Day 2: 搜索与线性结构</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Calm Blue & Gray -->
+    <!-- Application Structure Plan: Continuing the tab-based SPA structure from Day 1 ('Core Overview', 'Algorithm Deep Dive', 'Practice Arena') for consistency. The key feature for Day 2 is the DOM-based visualization for maze traversal (DFS vs. BFS) and stack operations. This hands-on, visual approach is superior to static diagrams for explaining dynamic processes like search and backtracking. The structure allows users to first grasp the concepts, then see them in action, and finally apply them in practice. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: DFS Logic -> Goal: Show "go-deep" & "backtrack" -> Viz: Interactive DOM grid (maze) -> Interaction: 'Run' button animates path, highlighting current, visited, and backtracked cells -> Justification: Directly visualizes the recursive, stack-like nature of DFS in a classic application. Method: DOM manipulation.
+        - Report Info: BFS Logic -> Goal: Show "level-by-level" expansion -> Viz: Interactive DOM grid (maze) -> Interaction: 'Run' button animates the expanding frontier -> Justification: Clearly contrasts with DFS by showing the queue-based, shortest-path nature of BFS. Method: DOM manipulation.
+        - Report Info: State Compression -> Goal: Explain state recording vs. compression -> Viz: Text explanation + code snippet -> Justification: This is a conceptual topic best explained with clear text and a concise code example for the bitmask technique.
+        - Report Info: Stack Application -> Goal: Explain LIFO with a concrete example -> Viz: DOM-based visual stack -> Interaction: 'Check' button animates push/pop operations for parenthesis matching -> Justification: Makes the abstract LIFO concept tangible and connects it to a common problem. Method: DOM manipulation.
+        - Report Info: Monotonic Stack -> Goal: Explain advanced stack usage -> Viz: Interactive animation with array, stack, and result displays -> Interaction: 'Run' button animates the entire process of finding the next greater element -> Justification: A dynamic animation is far more effective than static text for explaining this algorithm's flow. Method: DOM manipulation.
+        - Report Info: Largest Rectangle in Histogram -> Goal: Demonstrate a powerful monotonic stack application -> Viz: Interactive bar chart animation -> Interaction: 'Run' button animates stack operations and highlights calculated rectangles -> Justification: Visualizing the area calculation is key to understanding this non-intuitive application. Method: DOM manipulation.
+        - Report Info: Code Templates & Practice Problems -> Goal: Provide resources -> Presentation: Code blocks with copy buttons and interactive problem cards -> Justification: Consistent, user-friendly format from Day 1.
+     -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #16a34a;
+            --border-color: #e2e8f0;
+        }
+        body { background-color: var(--bg-main); color: var(--text-primary); }
+        .tab-btn { transition: color 0.2s, border-color 0.2s; }
+        .tab-btn.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .code-block {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            position: relative;
+            font-family: 'Courier New', Courier, monospace;
+            max-height: 450px;
+            overflow-y: auto;
+        }
+        .copy-btn {
+            position: absolute; top: 0.75rem; right: 0.75rem; background-color: #475569;
+            color: white; padding: 0.25rem 0.5rem; border-radius: 0.375rem;
+            font-size: 0.875rem; cursor: pointer; transition: background-color 0.2s;
+        }
+        .copy-btn:hover { background-color: #64748b; }
+        
+        /* Maze styles */
+        .maze-container { display: grid; border: 1px solid var(--border-color); }
+        .maze-cell { width: 100%; height: 100%; aspect-ratio: 1 / 1; transition: background-color 0.2s ease-in-out; }
+        .cell-wall { background-color: #334155; }
+        .cell-path { background-color: #f1f5f9; }
+        .cell-start { background-color: #22c55e; }
+        .cell-end { background-color: #ef4444; }
+        .cell-visited { background-color: #a5b4fc; }
+        .cell-current { background-color: #6366f1; }
+        .cell-final-path { background-color: #facc15; }
+
+        /* Stack styles */
+        .stack-container { min-height: 200px; }
+        .stack-item { transition: all 0.3s ease; }
+
+        /* Monotonic Stack Animation Styles */
+        .mono-container { display: flex; flex-direction: column; gap: 0.5rem; font-family: 'Courier New', Courier, monospace; }
+        .mono-row { display: flex; gap: 0.5rem; align-items: center; }
+        .mono-label { width: 80px; font-weight: bold; text-align: right; }
+        .mono-item {
+            width: 40px; height: 40px; display: flex; justify-content: center; align-items: center;
+            border: 1px solid var(--border-color); border-radius: 0.25rem;
+            background-color: #f1f5f9; font-weight: bold; transition: all 0.3s ease;
+        }
+        .mono-item.current { border-color: var(--accent-primary); background-color: #dbeafe; transform: scale(1.1); }
+        .mono-item.result-filled { background-color: #dcfce7; border-color: #4ade80; }
+        .mono-item.stack-top { border-color: #f9a8d4; background-color: #fce7f3; }
+
+        /* Histogram Styles */
+        .hist-vis-container { position: relative; }
+        .hist-chart { display: flex; align-items: flex-end; justify-content: center; gap: 2px; height: 200px; border-bottom: 2px solid #9ca3af; padding: 0 4px; }
+        .hist-bar { background-color: #93c5fd; transition: background-color 0.3s; width: 30px; }
+        .hist-bar.current { background-color: #3b82f6; }
+        .hist-bar.in-stack { background-color: #fbbf24; }
+        .hist-highlight-rect { position: absolute; background-color: rgba(239, 68, 68, 0.4); border: 1px dashed #ef4444; transition: all 0.3s ease-out; bottom: 2px; }
+    </style>
+</head>
+<body class="font-sans">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">CSP 复赛集训 - Day 2</h1>
+            <p class="text-lg text-gray-600 mt-2">搜索算法与线性结构</p>
+        </header>
+
+        <nav class="mb-8 border-b-2 border-gray-200">
+            <ul class="flex justify-center -mb-px space-x-4 md:space-x-8">
+                <li><button class="tab-btn text-lg font-medium p-4 border-b-2 border-transparent active" data-tab="overview">核心概览</button></li>
+                <li><button class="tab-btn text-lg font-medium p-4 border-b-2 border-transparent" data-tab="deep-dive">算法详解</button></li>
+                <li><button class="tab-btn text-lg font-medium p-4 border-b-2 border-transparent" data-tab="practice">实战演练</button></li>
+            </ul>
+        </nav>
+
+        <main>
+            <!-- 核心概览 Section -->
+            <section id="overview" class="content-section active">
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md space-y-8">
+                    <div>
+                        <h2 class="text-3xl font-bold mb-4">今日学习目标</h2>
+                        <p class="text-gray-700 mb-6">今天我们将征服“搜索”这一大类问题。无论是走迷宫、找通路还是进行组合枚举，都离不开深度优先搜索(DFS)和广度优先搜索(BFS)。我们将彻底搞懂它们的原理、区别，以及它们背后默默付出的“功臣”——栈和队列。</p>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="bg-indigo-50 p-6 rounded-lg border border-indigo-200">
+                                <h3 class="text-xl font-semibold text-indigo-800 mb-2">搜索算法 (Searching)</h3>
+                                <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                    <li><strong class="text-indigo-700">DFS (深度优先搜索):</strong> 通过递归实现，体现“一条路走到黑”和“回溯”思想，是解决组合、排列、所有解等问题的基础。</li>
+                                    <li><strong class="text-indigo-700">BFS (广度优先搜索):</strong> 通过队列实现，体现“层层推进”的特性，是解决无权图最短路径问题的利器。</li>
+                                    <li><strong class="text-indigo-700">搜索剪枝:</strong> 掌握“可行性”与“最优性”两种剪枝技巧，砍掉无效的搜索分支，将暴力搜索的效率提升几个数量级。</li>
+                                </ul>
+                            </div>
+                            <div class="bg-rose-50 p-6 rounded-lg border border-rose-200">
+                                <h3 class="text-xl font-semibold text-rose-800 mb-2">线性结构 (Linear Structures)</h3>
+                                <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                     <li><strong class="text-rose-700">栈 (Stack):</strong> 深入理解其“后进先出”(LIFO)特性，如同堆放盘子，后放的先取。它是括号匹配、表达式求值等问题的天然解法。</li>
+                                    <li><strong class="text-rose-700">队列 (Queue):</strong> 深入理解其“先进先出”(FIFO)特性，如同排队买票，先来的先走。它是实现 BFS 的核心数据结构。</li>
+                                    <li><strong class="text-rose-700">单调栈:</strong> 掌握这一进阶技巧，通过维持栈内元素的单调性，高效解决“寻找下一个更大/更小元素”和“柱状图最大矩形”等经典问题。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h2 class="text-3xl font-bold mb-4">DFS vs. BFS 对比与选择</h2>
+                        <p class="text-gray-700 mb-6">面对一个问题，到底该用 DFS 还是 BFS？这通常是初学者最困惑的地方。下表可以帮助你快速做出判断：</p>
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left border-collapse">
+                                <thead>
+                                    <tr>
+                                        <th class="border-b-2 p-4 bg-gray-50 text-gray-800">特性</th>
+                                        <th class="border-b-2 p-4 bg-indigo-50 text-indigo-800">深度优先搜索 (DFS)</th>
+                                        <th class="border-b-2 p-4 bg-rose-50 text-rose-800">广度优先搜索 (BFS)</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="border-b p-4 font-semibold">数据结构</td>
+                                        <td class="border-b p-4">递归 (隐式用栈) 或显式用<strong class="text-indigo-700">栈</strong></td>
+                                        <td class="border-b p-4">显式用<strong class="text-rose-700">队列</strong></td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="border-b p-4 font-semibold">核心优点</td>
+                                        <td class="border-b p-4">代码简洁，空间开销相对较小 (一条路)</td>
+                                        <td class="border-b p-4">能保证找到<strong class="text-rose-700">最短路径</strong> (无权图)</td>
+                                    </tr>
+                                     <tr class="hover:bg-gray-50">
+                                        <td class="border-b p-4 font-semibold">适用场景</td>
+                                        <td class="border-b p-4">求“所有解”、“任意解”、组合排列、图的连通性</td>
+                                        <td class="border-b p-4">求最短路径、层序遍历、拓扑排序</td>
+                                    </tr>
+                                    <tr class="hover:bg-gray-50">
+                                        <td class="border-b p-4 font-semibold">形象比喻</td>
+                                        <td class="border-b p-4">一个人走迷宫，一条路走到黑再回头</td>
+                                        <td class="border-b p-4">多个人同时从起点出发，同步前进探索</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 算法详解 Section -->
+            <section id="deep-dive" class="content-section space-y-8">
+                <!-- Maze Traversal -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">DFS vs BFS: 迷宫寻路可视化</h3>
+                     <div class="grid lg:grid-cols-2 gap-8 items-center">
+                        <div class="w-full max-w-sm mx-auto">
+                            <div id="maze-container" class="maze-container"></div>
+                             <p id="maze-status" class="text-center font-semibold mt-2 h-6"></p>
+                        </div>
+                        <div class="flex flex-col space-y-4">
+                            <button id="run-dfs" class="w-full px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition">运行 DFS 动画</button>
+                            <button id="run-bfs" class="w-full px-4 py-2 bg-rose-500 text-white rounded-lg hover:bg-rose-600 transition">运行 BFS 动画</button>
+                            <button id="reset-maze" class="w-full px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">重置迷宫</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- State Compression -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">核心概念：状态记录与压缩</h3>
+                    <p class="text-gray-700 mb-6">在搜索中，“状态”代表了当前问题的局面。为了避免重复搜索和死循环，我们必须记录哪些状态已经被访问过。</p>
+                    <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">基础状态记录 (J/S组必会)</h4>
+                            <p class="text-gray-600">这是最常见的方式。例如在迷宫问题中，一个状态就是坐标 `(x, y)`。我们用一个 `bool visited[x][y]` 数组来记录这个坐标是否被访问过。这本质上就是将一个“局面”映射到一个布尔值，简单直接。</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">状态压缩 (S组拔高)</h4>
+                            <p class="text-gray-600">当状态包含多个“开关”式的信息时（例如：N个宝箱是否被打开），我们可以用一个整数的二进制位来表示。每一位代表一个开关，0表示关，1表示开。这种用整数表示集合状态的方法，就是“状态压缩”，常用于涉及位运算的动态规划（状压DP）和BFS中。</p>
+                            <div class="mt-4 code-block text-sm">
+                               <button class="copy-btn" onclick="copyCode('bitmask-code')">复制</button>
+                               <pre><code id="bitmask-code">// 假设有 N 个宝箱
+int N = 5;
+// 状态 `state` 是一个整数
+int state = 0; // 初始状态，所有宝箱都关闭
+
+// 检查第 i 个宝箱是否打开 (0-indexed)
+// (state >> i) & 1
+bool isOpen = (state >> 2) & 1; // 检查第2个宝箱
+
+// 打开第 i 个宝箱
+// state = state | (1 << i)
+state = state | (1 << 3); // 打开第3个宝箱
+</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Pruning -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">核心技巧：剪枝 (Pruning)</h3>
+                    <p class="text-gray-700 mb-6">剪枝是在搜索过程中，提前判断当前分支不可能产生最优解或合法解，从而直接砍掉这个分支，避免不必要的计算。</p>
+                    <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">可行性剪枝</h4>
+                            <p class="text-gray-600">检查当前状态是否“合法”。<br><strong>例子：</strong>八皇后问题中，若当前位置的列或对角线已有皇后，则剪枝。</p>
+                        </div>
+                        <div>
+                            <h4 class="text-xl font-semibold mb-2">最优性剪枝</h4>
+                            <p class="text-gray-600">检查当前代价是否已超过已知最优解。<br><strong>例子：</strong>TSP问题中，若当前路径长度已大于已知最短路径，则剪枝。</p>
+                        </div>
+                    </div>
+                    <div class="mt-6">
+                        <h4 class="text-lg font-semibold mb-2">剪枝代码框架 (以DFS为例)</h4>
+                        <div class="code-block">
+                           <button class="copy-btn" onclick="copyCode('pruning-code')">复制</button>
+                           <pre><code id="pruning-code">int best_ans = MAX_VALUE; // 求最小值问题
+
+void dfs(int step, int current_value) {
+    // 最优性剪枝: 如果当前代价已不优于已知最优解，则返回
+    if (current_value >= best_ans) {
+        return;
+    }
+
+    // 找到一个可行解
+    if (is_goal(step)) {
+        best_ans = current_value; // 更新最优解
+        return;
+    }
+
+    // 遍历所有可能的下一步选择
+    for (choice in all_possible_choices) {
+        // 可行性剪枝: 如果当前选择不合法，则跳过
+        if (!is_valid(choice)) {
+            continue;
+        }
+        
+        // 做出选择
+        make_choice(choice);
+        
+        dfs(step + 1, new_value);
+        
+        // 撤销选择 (回溯)
+        undo_choice(choice);
+    }
+}</code></pre>
+                       </div>
+                    </div>
+                </div>
+                 <!-- Search Code -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                     <h3 class="text-2xl font-bold mb-4">DFS/BFS 核心代码</h3>
+                     <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                             <h4 class="text-lg font-semibold mb-2">DFS (递归)</h4>
+                             <div class="code-block">
+                                <button class="copy-btn" onclick="copyCode('dfs-code')">复制</button>
+                                <pre><code id="dfs-code">bool visited[N][N];
+int dx[] = {0, 0, 1, -1};
+int dy[] = {1, -1, 0, 0};
+
+void dfs(int x, int y) {
+    if (is_goal(x, y)) {
+        return;
+    }
+    visited[x][y] = true;
+    for (int i = 0; i < 4; i++) {
+        int newX = x + dx[i];
+        int newY = y + dy[i];
+        if (is_valid(newX, newY) && !visited[newX][newY]) {
+            dfs(newX, newY);
+        }
+    }
+}</code></pre>
+                             </div>
+                        </div>
+                        <div>
+                             <h4 class="text-lg font-semibold mb-2">BFS (队列)</h4>
+                             <div class="code-block">
+                                <button class="copy-btn" onclick="copyCode('bfs-code')">复制</button>
+                                <pre><code id="bfs-code">struct Point { int x, y, step; };
+bool visited[N][N];
+int dx[] = {0, 0, 1, -1};
+int dy[] = {1, -1, 0, 0};
+
+int bfs(int startX, int startY) {
+    std::queue<Point> q;
+    q.push({startX, startY, 0});
+    visited[startX][startY] = true;
+    while (!q.empty()) {
+        Point curr = q.front();
+        q.pop();
+        if (is_goal(curr.x, curr.y)) {
+            return curr.step;
+        }
+        for (int i = 0; i < 4; i++) {
+            int newX = curr.x + dx[i];
+            int newY = curr.y + dy[i];
+            if (is_valid(newX, newY) && !visited[newX][newY]) {
+                visited[newX][newY] = true;
+                q.push({newX, newY, curr.step + 1});
+            }
+        }
+    }
+    return -1;
+}</code></pre>
+                            </div>
+                        </div>
+                     </div>
+                </div>
+                 <!-- Stack Application 1 -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">栈的应用(一)：括号匹配</h3>
+                     <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <div class="flex flex-col">
+                           <div class="mb-4">
+                               <h4 class="text-lg font-semibold mb-2">可视化演示</h4>
+                               <input id="paren-input" type="text" value="{[()()]}" class="w-full p-2 border rounded-lg mb-2" placeholder="输入括号字符串">
+                               <button id="check-paren" class="w-full px-4 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition">检查匹配</button>
+                               <p id="paren-status" class="text-center font-semibold mt-2 h-6"></p>
+                           </div>
+                           <div id="stack-container" class="stack-container border rounded-lg p-2 bg-gray-50 flex flex-col-reverse justify-start"></div>
+                        </div>
+                        <div>
+                           <h4 class="text-lg font-semibold mb-2">C++ 核心代码</h4>
+                           <div class="code-block">
+                               <button class="copy-btn" onclick="copyCode('paren-code')">复制</button>
+                               <pre><code id="paren-code">bool isValid(std::string s) {
+    std::stack<char> st;
+    for (char c : s) {
+        if (c == '(' || c == '{' || c == '[') {
+            st.push(c);
+        } else {
+            if (st.empty()) return false;
+            char top = st.top();
+            st.pop();
+            if ((c == ')' && top != '(') ||
+                (c == '}' && top != '{') ||
+                (c == ']' && top != '[')) {
+                return false;
+            }
+        }
+    }
+    return st.empty();
+}</code></pre>
+                           </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Monotonic Stack -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">栈的应用(二)：单调栈</h3>
+                    <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2">可视化：寻找下一个更大元素</h4>
+                             <button id="run-mono-stack" class="w-full px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 transition mb-4">运行动画</button>
+                             <div id="mono-stack-vis" class="mono-container"></div>
+                             <p id="mono-stack-status" class="text-center font-semibold mt-2 h-6"></p>
+                        </div>
+                        <div>
+                           <h4 class="text-lg font-semibold mb-2">C++ 核心代码</h4>
+                           <div class="code-block">
+                               <button class="copy-btn" onclick="copyCode('mono-stack-code')">复制</button>
+                               <pre><code id="mono-stack-code">std::vector<int> nextGreaterElement(std::vector<int>& nums) {
+    int n = nums.size();
+    std::vector<int> result(n);
+    std::stack<int> s; // 存储的是数组下标
+
+    for (int i = n - 1; i >= 0; i--) {
+        while (!s.empty() && nums[i] >= nums[s.top()]) {
+            s.pop();
+        }
+        result[i] = s.empty() ? -1 : nums[s.top()];
+        s.push(i);
+    }
+    return result;
+}</code></pre>
+                           </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Histogram -->
+                 <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">栈的应用(三)：柱状图中的最大矩形</h3>
+                    <p class="text-gray-700 mb-4">这是单调栈最经典的应用。我们维护一个单调递增的栈（存下标），当遇到一个比栈顶矮的柱子时，我们就找到了计算栈顶柱子面积的右边界。此时出栈，以出栈的柱子为高，计算其能形成的最大矩形面积。</p>
+                    <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2">可视化演示</h4>
+                             <button id="run-histogram" class="w-full px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition mb-4">运行动画</button>
+                             <div class="hist-vis-container">
+                                <div id="hist-chart" class="hist-chart"></div>
+                                <div id="hist-highlight" class="hist-highlight-rect" style="display: none;"></div>
+                             </div>
+                             <div class="text-center mt-2">
+                                <p id="hist-status" class="font-semibold h-6"></p>
+                                <p>最大面积: <span id="hist-max-area" class="font-bold text-lg text-red-600">0</span></p>
+                             </div>
+                        </div>
+                        <div>
+                           <h4 class="text-lg font-semibold mb-2">C++ 核心代码</h4>
+                           <div class="code-block">
+                               <button class="copy-btn" onclick="copyCode('hist-code')">复制</button>
+                               <pre><code id="hist-code">int largestRectangleArea(std::vector<int>& heights) {
+    heights.push_back(0); // 哨兵，确保所有元素都能出栈
+    int n = heights.size();
+    std::stack<int> s;
+    int maxArea = 0;
+
+    for (int i = 0; i < n; i++) {
+        while (!s.empty() && heights[i] < heights[s.top()]) {
+            int h = heights[s.top()];
+            s.pop();
+            int w = s.empty() ? i : i - s.top() - 1;
+            maxArea = std::max(maxArea, h * w);
+        }
+        s.push(i);
+    }
+    heights.pop_back(); // 恢复原数组
+    return maxArea;
+}</code></pre>
+                           </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+            
+            <!-- 实战演练 Section -->
+            <section id="practice" class="content-section">
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md space-y-8">
+                    <div>
+                        <h2 class="text-3xl font-bold mb-6">下午实战练习</h2>
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1443 马的遍历</h4>
+                                <p class="text-sm text-gray-600 my-2">经典的 BFS 入门题。</p>
+                                <span class="text-xs font-semibold bg-blue-200 text-blue-800 px-2 py-1 rounded-full">BFS 模板</span>
+                                <a href="https://www.luogu.com.cn/problem/P1443" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                             <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1036 选数</h4>
+                                <p class="text-sm text-gray-600 my-2">基础的 DFS 组合枚举问题。</p>
+                                <span class="text-xs font-semibold bg-green-200 text-green-800 px-2 py-1 rounded-full">DFS 应用</span>
+                                <a href="https://www.luogu.com.cn/problem/P1036" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                             <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1219 八皇后</h4>
+                                <p class="text-sm text-gray-600 my-2">DFS 与回溯的巅峰之作。关键在于剪枝。</p>
+                                <span class="text-xs font-semibold bg-purple-200 text-purple-800 px-2 py-1 rounded-full">DFS + 剪枝</span>
+                                <a href="https://www.luogu.com.cn/problem/P1219" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div>
+                        <h3 class="text-2xl font-semibold text-orange-800 mb-4">备选挑战题</h3>
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="border rounded-lg p-4 bg-orange-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1739 表达式括号匹配</h4>
+                                <p class="text-sm text-gray-600 my-2">练习栈的基础模板。</p>
+                                <span class="text-xs font-semibold bg-orange-200 text-orange-800 px-2 py-1 rounded-full">栈-模板</span>
+                                <a href="https://www.luogu.com.cn/problem/P1739" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">前往挑战</a>
+                            </div>
+                            <div class="border rounded-lg p-4 bg-orange-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P5788 【模板】单调栈</h4>
+                                <p class="text-sm text-gray-600 my-2">“寻找下一个更大元素”模板题。</p>
+                                <span class="text-xs font-semibold bg-orange-200 text-orange-800 px-2 py-1 rounded-full">栈-进阶</span>
+                                <a href="https://www.luogu.com.cn/problem/P5788" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">前往挑战</a>
+                            </div>
+                             <div class="border rounded-lg p-4 bg-orange-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P4147 玉米田</h4>
+                                <p class="text-sm text-gray-600 my-2">将二维问题转化为多行一维柱状图最大矩形问题。</p>
+                                <span class="text-xs font-semibold bg-orange-200 text-orange-800 px-2 py-1 rounded-full">单调栈-应用</span>
+                                <a href="https://www.luogu.com.cn/problem/P4147" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">前往挑战</a>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-8 p-6 bg-teal-50 rounded-lg border border-teal-200">
+                        <h3 class="text-2xl font-semibold text-teal-800 mb-4">训练建议</h3>
+                         <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <span class="text-teal-600 font-bold mr-3">☞</span>
+                                <div><strong class="text-teal-700">画图模拟法：</strong>在动手写代码前，务必在纸上画图。手动模拟算法的前几步，看清数据结构的变化。</div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-teal-600 font-bold mr-3">☞</span>
+                                <div><strong class="text-teal-700">模板肌肉记忆：</strong>算法框架相对固定。反复练习，直到能不假思索地写出模板，才能在考场上专注于核心逻辑。</div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-teal-600 font-bold mr-3">☞</span>
+                                <div><strong class="text-teal-700">调试打印大法：</strong>出问题时，最好的办法是在关键位置打印信息。观察输出，通常能很快定位到问题所在。</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+    </div>
+
+<script>
+    const sleep = ms => new Promise(res => setTimeout(res, ms));
+    let isAnimating = false;
+
+    // --- Tab Navigation ---
+    const tabs = document.querySelectorAll('.tab-btn');
+    const sections = document.querySelectorAll('.content-section');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            if (isAnimating) return;
+            tabs.forEach(t => t.classList.remove('active'));
+            sections.forEach(s => s.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    // --- Code Copy ---
+    function copyCode(elementId) {
+        const codeElement = document.getElementById(elementId);
+        navigator.clipboard.writeText(codeElement.innerText).then(() => {
+            const btn = codeElement.previousElementSibling;
+            const originalText = btn.innerText;
+            btn.innerText = '已复制!';
+            setTimeout(() => { btn.innerText = originalText; }, 2000);
+        });
+    }
+
+    // --- Maze Logic ---
+    const mazeContainer = document.getElementById('maze-container');
+    const mazeStatus = document.getElementById('maze-status');
+    const mazeLayout = [
+        [2, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1],
+        [0, 0, 1, 0, 0, 0, 1, 0, 0, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 0, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1],
+        [1, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 1],
+        [1, 1, 1, 1, 1, 0, 1, 0, 1, 1, 1, 0, 1],
+        [1, 0, 0, 0, 1, 0, 1, 0, 0, 0, 0, 0, 1],
+        [1, 0, 1, 0, 1, 1, 1, 1, 1, 0, 1, 1, 1],
+        [1, 0, 1, 0, 0, 0, 0, 0, 1, 0, 1, 0, 1],
+        [1, 1, 1, 1, 1, 1, 1, 0, 1, 1, 1, 0, 3],
+    ];
+    const ROWS = mazeLayout.length;
+    const COLS = mazeLayout[0].length;
+    
+    function drawMaze() {
+        mazeContainer.innerHTML = '';
+        mazeContainer.style.gridTemplateColumns = `repeat(${COLS}, 1fr)`;
+        for(let r=0; r<ROWS; r++) {
+            for(let c=0; c<COLS; c++) {
+                const cell = document.createElement('div');
+                cell.id = `cell-${r}-${c}`;
+                cell.classList.add('maze-cell');
+                if(mazeLayout[r][c] === 1) cell.classList.add('cell-wall');
+                else if(mazeLayout[r][c] === 0) cell.classList.add('cell-path');
+                else if(mazeLayout[r][c] === 2) cell.classList.add('cell-start');
+                else if(mazeLayout[r][c] === 3) cell.classList.add('cell-end');
+                mazeContainer.appendChild(cell);
+            }
+        }
+    }
+
+    async function animateDFS() {
+        if (isAnimating) return;
+        isAnimating = true;
+        mazeStatus.innerText = 'DFS 正在运行...';
+        drawMaze();
+        const visited = Array.from({length: ROWS}, () => Array(COLS).fill(false));
+        const path = [];
+        const found = await dfs(1, 0, visited, path);
+        if(found) {
+             mazeStatus.innerText = 'DFS 找到路径!';
+             for(const node of path) {
+                const cell = document.getElementById(`cell-${node.r}-${node.c}`);
+                if(cell) {
+                    cell.classList.remove('cell-visited', 'cell-current');
+                    cell.classList.add('cell-final-path');
+                }
+                await sleep(50);
+             }
+             document.getElementById(`cell-1-0`).classList.add('cell-start');
+        } else {
+            mazeStatus.innerText = 'DFS 未找到路径。';
+        }
+        isAnimating = false;
+    }
+
+    async function dfs(r, c, visited, path) {
+        if (r < 0 || r >= ROWS || c < 0 || c >= COLS || visited[r][c] || mazeLayout[r][c] === 1) return false;
+        
+        visited[r][c] = true;
+        path.push({r, c});
+        document.getElementById(`cell-${r}-${c}`).classList.add('cell-current');
+        await sleep(50);
+
+        if (mazeLayout[r][c] === 3) return true;
+
+        const dirs = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+        for(const [dr, dc] of dirs) {
+            if (await dfs(r + dr, c + dc, visited, path)) return true;
+        }
+        
+        path.pop();
+        document.getElementById(`cell-${r}-${c}`).classList.remove('cell-current');
+        document.getElementById(`cell-${r}-${c}`).classList.add('cell-visited');
+        return false;
+    }
+
+    async function animateBFS() {
+        if (isAnimating) return;
+        isAnimating = true;
+        mazeStatus.innerText = 'BFS 正在运行...';
+        drawMaze();
+        const queue = [{r: 1, c: 0, path: [{r: 1, c: 0}]}];
+        const visited = Array.from({length: ROWS}, () => Array(COLS).fill(false));
+        visited[1][0] = true;
+        let finalPath = null;
+
+        while(queue.length > 0) {
+            const { r, c, path } = queue.shift();
+            const cell = document.getElementById(`cell-${r}-${c}`);
+            cell.classList.add('cell-current');
+            
+            if (mazeLayout[r][c] === 3) {
+                finalPath = path;
+                break;
+            }
+
+            await sleep(50);
+            cell.classList.remove('cell-current');
+            cell.classList.add('cell-visited');
+
+            const dirs = [[0, 1], [1, 0], [0, -1], [-1, 0]];
+            for (const [dr, dc] of dirs) {
+                const nr = r + dr;
+                const nc = c + dc;
+                if (nr >= 0 && nr < ROWS && nc >= 0 && nc < COLS && !visited[nr][nc] && mazeLayout[nr][nc] !== 1) {
+                    visited[nr][nc] = true;
+                    queue.push({r: nr, c: nc, path: [...path, {r: nr, c: nc}]});
+                }
+            }
+        }
+        
+        if (finalPath) {
+            mazeStatus.innerText = 'BFS 找到路径!';
+            for(const node of finalPath) {
+               const cell = document.getElementById(`cell-${node.r}-${node.c}`);
+               if(cell) {
+                   cell.classList.remove('cell-visited', 'cell-current');
+                   cell.classList.add('cell-final-path');
+               }
+               await sleep(50);
+            }
+            document.getElementById(`cell-1-0`).classList.add('cell-start');
+        } else {
+            mazeStatus.innerText = 'BFS 未找到路径。';
+        }
+        isAnimating = false;
+    }
+    
+    // --- Parenthesis Matching Logic ---
+    async function animateParenthesis() {
+        if(isAnimating) return;
+        isAnimating = true;
+        const input = document.getElementById('paren-input').value;
+        const stackContainer = document.getElementById('stack-container');
+        const status = document.getElementById('paren-status');
+        stackContainer.innerHTML = '';
+        status.innerText = '';
+        status.classList.remove('text-red-500', 'text-green-500');
+        const stack = [];
+        const map = { "(": ")", "[": "]", "{": "}" };
+
+        for(let i = 0; i < input.length; i++) {
+            const char = input[i];
+            if (map[char]) {
+                stack.push(char);
+                const item = document.createElement('div');
+                item.className = 'stack-item bg-blue-200 p-2 text-lg rounded border border-blue-400 mb-1 text-center font-mono';
+                item.innerText = char;
+                stackContainer.appendChild(item);
+            } else if (Object.values(map).includes(char)) {
+                if (stack.length === 0 || map[stack[stack.length - 1]] !== char) {
+                    status.innerText = '不匹配!';
+                    status.classList.add('text-red-500'); isAnimating = false; return;
+                }
+                stack.pop();
+                const item = stackContainer.lastChild;
+                if (item) {
+                    item.style.transform = 'scale(0)';
+                    await sleep(300);
+                    item.remove();
+                }
+            }
+            await sleep(400);
+        }
+
+        if (stack.length === 0) {
+            status.innerText = '匹配成功!'; status.classList.add('text-green-500');
+        } else {
+            status.innerText = '不匹配! (有剩余)'; status.classList.add('text-red-500');
+        }
+        isAnimating = false;
+    }
+    
+    // --- Monotonic Stack Logic ---
+    const monoStackVis = document.getElementById('mono-stack-vis');
+    const monoStackStatus = document.getElementById('mono-stack-status');
+    const monoNums = [2, 1, 5, 6, 2, 3];
+
+    function initMonoStackVis() {
+        monoStackVis.innerHTML = `
+            <div class="mono-row"><div class="mono-label">Input:</div><div id="mono-input-row" class="flex gap-2"></div></div>
+            <div class="mono-row"><div class="mono-label">Result:</div><div id="mono-result-row" class="flex gap-2"></div></div>
+            <div class="mono-row items-end" style="min-height: 60px;"><div class="mono-label">Stack:</div><div id="mono-stack-row" class="flex gap-2 border-l-2 border-b-2 border-gray-400 pl-2"></div></div>`;
+        const inputRow = document.getElementById('mono-input-row');
+        const resultRow = document.getElementById('mono-result-row');
+        monoNums.forEach((num, i) => {
+            inputRow.innerHTML += `<div id="mono-in-${i}" class="mono-item">${num}</div>`;
+            resultRow.innerHTML += `<div id="mono-res-${i}" class="mono-item">?</div>`;
+        });
+    }
+    
+    async function animateMonotonicStack() {
+        if(isAnimating) return; isAnimating = true;
+        monoStackStatus.innerText = '动画开始...';
+        initMonoStackVis();
+        const stack = []; // Stores indices
+        const stackRow = document.getElementById('mono-stack-row');
+        for (let i = monoNums.length - 1; i >= 0; i--) {
+            const currentNum = monoNums[i];
+            const currentItem = document.getElementById(`mono-in-${i}`);
+            currentItem.classList.add('current');
+            monoStackStatus.innerText = `处理元素 ${currentNum}`;
+            await sleep(1000);
+
+            while (stack.length > 0 && currentNum >= monoNums[stack[stack.length - 1]]) {
+                const topIndex = stack.pop();
+                monoStackStatus.innerText = `${currentNum} >= 栈顶 ${monoNums[topIndex]}，出栈`;
+                document.getElementById(`mono-stack-item-${topIndex}`).style.transform = 'scale(0)';
+                await sleep(800);
+                document.getElementById(`mono-stack-item-${topIndex}`).remove();
+            }
+            
+            const resultItem = document.getElementById(`mono-res-${i}`);
+            if (stack.length === 0) {
+                monoStackStatus.innerText = `栈为空，结果为 -1`; resultItem.innerText = -1;
+            } else {
+                const topNum = monoNums[stack[stack.length - 1]];
+                monoStackStatus.innerText = `栈顶为 ${topNum}，结果为 ${topNum}`; resultItem.innerText = topNum;
+            }
+            resultItem.classList.add('result-filled'); await sleep(1000);
+            
+            monoStackStatus.innerText = `元素 ${currentNum} 入栈`;
+            stack.push(i);
+            const newItem = document.createElement('div');
+            newItem.id = `mono-stack-item-${i}`; newItem.className = 'mono-item'; newItem.innerText = currentNum;
+            stackRow.appendChild(newItem); await sleep(500);
+            currentItem.classList.remove('current');
+        }
+        monoStackStatus.innerText = '动画完成！'; isAnimating = false;
+    }
+
+    // --- Histogram Logic ---
+    const histChart = document.getElementById('hist-chart');
+    const histStatus = document.getElementById('hist-status');
+    const histMaxArea = document.getElementById('hist-max-area');
+    const histHighlight = document.getElementById('hist-highlight');
+    const histHeights = [2, 1, 5, 6, 2, 3];
+    const BAR_WIDTH = 30;
+    const BAR_GAP = 2;
+
+    function initHistogram() {
+        histChart.innerHTML = '';
+        histMaxArea.innerText = '0';
+        histHighlight.style.display = 'none';
+        const maxH = Math.max(...histHeights);
+        histHeights.forEach((h, i) => {
+            const bar = document.createElement('div');
+            bar.id = `hist-bar-${i}`;
+            bar.className = 'hist-bar';
+            bar.style.height = `${(h / maxH) * 100}%`;
+            histChart.appendChild(bar);
+        });
+    }
+
+    async function animateHistogram() {
+        if(isAnimating) return; isAnimating = true;
+        histStatus.innerText = '动画开始...';
+        initHistogram();
+        let maxArea = 0;
+        const stack = []; // Stores indices
+        const extendedHeights = [...histHeights, 0]; // Sentinel
+
+        for(let i = 0; i < extendedHeights.length; i++) {
+            const currentBar = document.getElementById(`hist-bar-${i}`);
+            if(currentBar) currentBar.classList.add('current');
+            histStatus.innerText = `处理柱 ${i} (高 ${extendedHeights[i]})`;
+            await sleep(1200);
+
+            while(stack.length > 0 && extendedHeights[i] < extendedHeights[stack[stack.length - 1]]) {
+                const topIndex = stack.pop();
+                const topBar = document.getElementById(`hist-bar-${topIndex}`);
+                topBar.classList.remove('in-stack');
+
+                const h = histHeights[topIndex];
+                const w = stack.length === 0 ? i : i - stack[stack.length-1] - 1;
+                const area = h * w;
+                
+                histStatus.innerText = `计算柱 ${topIndex} 的面积: ${h} * ${w} = ${area}`;
+                
+                const leftBoundaryIndex = stack.length === 0 ? -1 : stack[stack.length - 1];
+                const left = (leftBoundaryIndex + 1) * (BAR_WIDTH + BAR_GAP) + 4;
+                const width = (i - (leftBoundaryIndex + 1)) * (BAR_WIDTH + BAR_GAP) - BAR_GAP;
+                const maxH = Math.max(...histHeights);
+                const height = (h / maxH) * 200;
+                
+                histHighlight.style.display = 'block';
+                histHighlight.style.left = `${left}px`;
+                histHighlight.style.width = `${width}px`;
+                histHighlight.style.height = `${height}px`;
+
+                if (area > maxArea) {
+                    maxArea = area;
+                    histMaxArea.innerText = maxArea;
+                }
+                await sleep(2000);
+                 histHighlight.style.display = 'none';
+            }
+            stack.push(i);
+            if(currentBar) {
+                currentBar.classList.add('in-stack');
+                currentBar.classList.remove('current');
+            }
+        }
+        histStatus.innerText = '动画完成！'; isAnimating = false;
+    }
+
+
+    // --- Event Listeners ---
+    document.getElementById('run-dfs').addEventListener('click', animateDFS);
+    document.getElementById('run-bfs').addEventListener('click', animateBFS);
+    document.getElementById('reset-maze').addEventListener('click', () => { if(!isAnimating) { mazeStatus.innerText = ''; drawMaze(); } });
+    document.getElementById('check-paren').addEventListener('click', animateParenthesis);
+    document.getElementById('run-mono-stack').addEventListener('click', animateMonotonicStack);
+    document.getElementById('run-histogram').addEventListener('click', animateHistogram);
+
+
+    window.onload = () => {
+        drawMaze();
+        initMonoStackVis();
+        initHistogram();
+    };
+</script>
+
+</body>
+</html>
+

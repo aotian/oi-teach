@@ -1,0 +1,627 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSP 复赛集训 Day 1: 排序与递归</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Chosen Palette: Calm Blue & Gray -->
+    <!-- Application Structure Plan: A tab-based SPA with three sections: 'Core Overview', 'Algorithm Deep Dive', and 'Practice Arena'. This structure separates theory from practice, allowing users to navigate based on their learning needs. The Deep Dive section will use integrated visualizations (Canvas for sorting, DOM for call stack) alongside code to enhance understanding. The Practice Arena uses interactive cards to present problems, improving on the static list format. This design prioritizes user-driven, non-linear exploration over the original linear document structure. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: Quick Sort logic -> Goal: Show partition process -> Viz: Interactive Chart.js bar chart -> Interaction: 'Run' button, step-by-step color changes -> Justification: Dynamic visualization is more intuitive than static text -> Library: Chart.js/Canvas.
+        - Report Info: Merge Sort logic -> Goal: Show divide & merge -> Viz: Interactive Chart.js bar chart -> Interaction: 'Run' button, color-coded subarrays -> Justification: Clearly illustrates the recursive splitting and merging phases -> Library: Chart.js/Canvas.
+        - Report Info: Recursion & Divide and Conquer concepts -> Goal: Explain call stack & problem reduction -> Viz: HTML div-based animation for Fast Power -> Interaction: 'Run' button animates the calculation steps of 2^10 -> Justification: A concrete example like Fast Power clearly shows the power of divide and conquer in reducing complexity. Method: DOM manipulation.
+        - Report Info: C++ Code Templates -> Goal: Provide usable code for all covered algorithms -> Presentation: Styled `<pre><code>` block -> Interaction: 'Copy' button -> Justification: Improves user experience and reduces errors from manual copying.
+        - Report Info: Practice Problems & Training Advice -> Goal: Organize practice and provide methodology -> Presentation: Grid of interactive cards and a structured list for advice -> Interaction: Clickable links, hover effects -> Justification: More engaging and actionable than plain text.
+     -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --accent-primary: #3b82f6;
+            --accent-secondary: #16a34a;
+            --border-color: #e2e8f0;
+        }
+        body { background-color: var(--bg-main); color: var(--text-primary); }
+        .tab-btn { transition: color 0.2s, border-color 0.2s; }
+        .tab-btn.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .code-block {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            position: relative;
+            font-family: 'Courier New', Courier, monospace;
+            max-height: 450px;
+            overflow-y: auto;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.75rem;
+            right: 0.75rem;
+            background-color: #475569;
+            color: white;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.375rem;
+            font-size: 0.875rem;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .copy-btn:hover { background-color: #64748b; }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 250px;
+            max-height: 300px;
+        }
+        @media (min-width: 768px) {
+            .chart-container { height: 300px; }
+        }
+        .fast-power-step {
+            transition: all 0.5s ease;
+            opacity: 0;
+            transform: translateY(20px);
+        }
+    </style>
+</head>
+<body class="font-sans">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">CSP 复赛集训 - Day 1</h1>
+            <p class="text-lg text-gray-600 mt-2">排序与递归</p>
+        </header>
+
+        <nav class="mb-8 border-b-2 border-gray-200">
+            <ul class="flex justify-center -mb-px space-x-4 md:space-x-8">
+                <li><button class="tab-btn text-lg font-medium p-4 border-b-2 border-transparent active" data-tab="overview">核心概览</button></li>
+                <li><button class="tab-btn text-lg font-medium p-4 border-b-2 border-transparent" data-tab="deep-dive">算法详解</button></li>
+                <li><button class="tab-btn text-lg font-medium p-4 border-b-2 border-transparent" data-tab="practice">实战演练</button></li>
+            </ul>
+        </nav>
+
+        <main>
+            <!-- 核心概览 Section -->
+            <section id="overview" class="content-section active">
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h2 class="text-3xl font-bold mb-4">今日学习目标</h2>
+                    <p class="text-gray-700 mb-6">欢迎来到集训第一天！今天我们将深入学习计算机科学中最基础也最重要的两个概念：排序和递归。这不仅是面试和竞赛的必考点，更是构建复杂算法的基石。我们的目标是不仅“会用”，更要“理解”，把“轮子”焊死在脑子里！</p>
+                    <div class="grid md:grid-cols-2 gap-6">
+                        <div class="bg-blue-50 p-6 rounded-lg border border-blue-200">
+                            <h3 class="text-xl font-semibold text-blue-800 mb-2">排序算法 (Sorting)</h3>
+                            <p class="text-gray-600">排序是将一组数据依照特定顺序进行排列的过程。它无处不在，是数据处理的基础。今天我们将掌握最重要的几种排序算法，理解它们各自的“脾气秉性”：有的快但不稳定，有的稳定但需要额外空间，有的则只在特定场景下才最高效。</p>
+                        </div>
+                        <div class="bg-green-50 p-6 rounded-lg border border-green-200">
+                            <h3 class="text-xl font-semibold text-green-800 mb-2">递归与分治 (Recursion & Divide and Conquer)</h3>
+                            <p class="text-gray-600">递归是一种“自己调用自己”的编程技巧，而分治是一种“化整为零”的算法思想。当一个大问题可以被拆解成结构相同、规模更小的子问题时，递归与分治就成了我们的“神兵利器”。我们将学会如何设计递归函数，并用分治思想解决实际问题。</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 算法详解 Section -->
+            <section id="deep-dive" class="content-section space-y-8">
+                <!-- Quick Sort -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">快速排序 (Quick Sort)</h3>
+                    <p class="text-gray-700 mb-4">选择一个“基准”(pivot)，将数组分区，小于基准的放左边，大于的放右边。然后对左右两部分递归地重复此过程。这是典型的“分治”思想。</p>
+                    <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <div>
+                             <h4 class="text-lg font-semibold mb-2">过程可视化</h4>
+                             <div class="chart-container mb-4">
+                                <canvas id="qSortChart"></canvas>
+                             </div>
+                             <div class="flex items-center justify-center space-x-4">
+                                <button id="q-reset" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">随机数组</button>
+                                <button id="q-sort" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">开始排序</button>
+                             </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2">C++ 核心代码</h4>
+                            <div class="code-block">
+                                <button class="copy-btn" onclick="copyCode('q-code')">复制</button>
+                                <pre><code id="q-code">int partition(std::vector<int>& arr, int low, int high) {
+    int pivot = arr[high];
+    int i = (low - 1);
+    for (int j = low; j <= high - 1; j++) {
+        if (arr[j] <= pivot) {
+            i++;
+            std::swap(arr[i], arr[j]);
+        }
+    }
+    std::swap(arr[i + 1], arr[high]);
+    return (i + 1);
+}
+
+void quickSort(std::vector<int>& arr, int low, int high) {
+    if (low < high) {
+        int pi = partition(arr, low, high);
+        quickSort(arr, low, pi - 1);
+        quickSort(arr, pi + 1, high);
+    }
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Merge Sort -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">归并排序 (Merge Sort)</h3>
+                    <p class="text-gray-700 mb-4">将数组从中间递归地拆分成两半，直到每个子数组只有一个元素。然后，将这些有序的子数组两两“合并”(merge)成一个大的有序数组。</p>
+                     <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <div>
+                             <h4 class="text-lg font-semibold mb-2">过程可视化</h4>
+                             <div class="chart-container mb-4">
+                                <canvas id="mSortChart"></canvas>
+                             </div>
+                             <div class="flex items-center justify-center space-x-4">
+                                <button id="m-reset" class="px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">随机数组</button>
+                                <button id="m-sort" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">开始排序</button>
+                             </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2">C++ 核心代码</h4>
+                            <div class="code-block">
+                                <button class="copy-btn" onclick="copyCode('m-code')">复制</button>
+                                <pre><code id="m-code">void merge(std::vector<int>& arr, int l, int m, int r) {
+    int n1 = m - l + 1, n2 = r - m;
+    std::vector<int> L(n1), R(n2);
+    for (int i=0; i<n1; ++i) L[i] = arr[l+i];
+    for (int j=0; j<n2; ++j) R[j] = arr[m+1+j];
+    int i=0, j=0, k=l;
+    while (i<n1 && j<n2) {
+        if (L[i] <= R[j]) arr[k++] = L[i++];
+        else arr[k++] = R[j++];
+    }
+    while (i < n1) arr[k++] = L[i++];
+    while (j < n2) arr[k++] = R[j++];
+}
+
+void mergeSort(std::vector<int>& arr, int l, int r) {
+    if (l >= r) return;
+    int m = l + (r - l) / 2;
+    mergeSort(arr, l, m);
+    mergeSort(arr, m + 1, r);
+    merge(arr, l, m, r);
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- Other Sorts -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">其他重要排序</h3>
+                    <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2">插入排序 (Insertion Sort)</h4>
+                            <p class="text-gray-600 text-sm mb-2">思想：构建有序序列，对于未排序数据，在已排序序列中从后向前扫描，找到相应位置并插入。在数据基本有序时效率很高。</p>
+                            <div class="code-block">
+                                <button class="copy-btn" onclick="copyCode('i-code')">复制</button>
+                                <pre><code id="i-code">void insertionSort(std::vector<int>& arr) {
+    int n = arr.size();
+    for (int i = 1; i < n; i++) {
+        int key = arr[i];
+        int j = i - 1;
+        while (j >= 0 && arr[j] > key) {
+            arr[j + 1] = arr[j];
+            j = j - 1;
+        }
+        arr[j + 1] = key;
+    }
+}</code></pre>
+                            </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2">计数排序 (Counting Sort)</h4>
+                            <p class="text-gray-600 text-sm mb-2">思想：一种非比较排序，通过统计每个元素出现的次数，直接确定每个元素在排序后数组中的位置。适用于数据范围不大的整数排序。</p>
+                             <div class="code-block">
+                                <button class="copy-btn" onclick="copyCode('c-code')">复制</button>
+                                <pre><code id="c-code">void countingSort(std::vector<int>& arr) {
+    int max_val = *std::max_element(arr.begin(), arr.end());
+    std::vector<int> count(max_val + 1, 0);
+    std::vector<int> output(arr.size());
+
+    for (int x : arr) {
+        count[x]++;
+    }
+    for (int i = 1; i <= max_val; i++) {
+        count[i] += count[i - 1];
+    }
+    for (int i = arr.size() - 1; i >= 0; i--) {
+        output[count[arr[i]] - 1] = arr[i];
+        count[arr[i]]--;
+    }
+    arr = output;
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                 <!-- Recursion & D&C -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">递归与分治 (Recursion & Divide and Conquer)</h3>
+                    <p class="text-gray-700 mb-4">分治是一种强大的算法思想，它将问题分解，而递归是实现分治的常用工具。</p>
+                    <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <div>
+                             <h4 class="text-lg font-semibold mb-2">核心思想</h4>
+                             <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                 <li><strong>递归终止条件：</strong> 这是递归的“刹车”，必须明确定义一个或多个不再需要递归的基本情况(Base Case)，否则将导致无限循环和栈溢出。</li>
+                                 <li><strong>分治三步骤：</strong>
+                                     <ol class="list-decimal list-inside ml-4 mt-1 text-sm">
+                                         <li><strong>分解(Divide):</strong> 将原问题划分为若干个规模更小、结构相同的子问题。</li>
+                                         <li><strong>解决(Conquer):</strong> 递归地求解这些子问题。</li>
+                                         <li><strong>合并(Combine):</strong> 将子问题的解合并，构成原问题的解。</li>
+                                     </ol>
+                                 </li>
+                                 <li><strong>递归转迭代：</strong>任何递归函数都可以用栈(Stack)来模拟，转化为非递归的迭代形式，以避免递归深度过大导致的栈溢出问题。</li>
+                             </ul>
+                             <h4 class="text-lg font-semibold mt-6 mb-2">实例：快速幂 2<sup>10</sup></h4>
+                             <p class="text-sm text-gray-600 mb-2">求 a<sup>b</sup>，若b是偶数，则 a<sup>b</sup> = (a<sup>b/2</sup>)<sup>2</sup>；若b是奇数，则 a<sup>b</sup> = a * (a<sup>(b-1)/2</sup>)<sup>2</sup>。这是一个典型的分治应用。</p>
+                             <div class="h-48 p-2 bg-gray-50 border rounded-lg font-mono text-sm" id="fast-power-container"></div>
+                             <div class="flex items-center justify-center space-x-4 mt-4">
+                                <button id="fp-start" class="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">演示计算过程</button>
+                             </div>
+                        </div>
+                        <div>
+                            <h4 class="text-lg font-semibold mb-2">快速幂 C++ 核心代码</h4>
+                            <div class="code-block">
+                                <button class="copy-btn" onclick="copyCode('fp-code')">复制</button>
+                                <pre><code id="fp-code">long long power(long long base, long long exp) {
+    long long res = 1;
+    base %= 1000; // 假设对1000取模
+    while (exp > 0) {
+        if (exp % 2 == 1) res = (res * base) % 1000;
+        base = (base * base) % 1000;
+        exp /= 2;
+    }
+    return res;
+}
+
+// 递归版本
+long long power_recursive(long long base, long long exp) {
+    if (exp == 0) return 1;
+    long long half = power_recursive(base, exp / 2);
+    long long result = (half * half) % 1000;
+    if (exp % 2 == 1) {
+        result = (result * base) % 1000;
+    }
+    return result;
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 实战演练 Section -->
+            <section id="practice" class="content-section">
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md space-y-8">
+                    <div>
+                        <h2 class="text-3xl font-bold mb-4">下午实战练习</h2>
+                        <h3 class="text-2xl font-semibold text-blue-800 mb-4">必做题单</h3>
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Problem Cards -->
+                            <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1177【模板】快速排序</h4>
+                                <p class="text-sm text-gray-600 my-2">要求：禁止使用 `std::sort`，必须手写快排或归并排序。</p>
+                                <span class="text-xs font-semibold bg-blue-200 text-blue-800 px-2 py-1 rounded-full">模板巩固</span>
+                                <a href="https://www.luogu.com.cn/problem/P1177" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                             <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1223 排队接水</h4>
+                                <p class="text-sm text-gray-600 my-2">提示：这是一道贪心题，但它的核心是排序。思考按什么顺序排序能让总等待时间最短。</p>
+                                <span class="text-xs font-semibold bg-green-200 text-green-800 px-2 py-1 rounded-full">思维应用</span>
+                                <a href="https://www.luogu.com.cn/problem/P1223" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                             <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1025 数的划分</h4>
+                                <p class="text-sm text-gray-600 my-2">提示：设计一个递归函数 `dfs(n, k)`，思考它的含义、终止条件和如何进行下一步的递归划分。</p>
+                                <span class="text-xs font-semibold bg-purple-200 text-purple-800 px-2 py-1 rounded-full">S组进阶</span>
+                                <a href="https://www.luogu.com.cn/problem/P1025" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                        </div>
+                    </div>
+
+                     <div class="mt-8">
+                        <h3 class="text-2xl font-semibold text-orange-800 mb-4">备选挑战题</h3>
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <!-- Problem Cards -->
+                            <div class="border rounded-lg p-4 bg-orange-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1908 逆序对</h4>
+                                <p class="text-sm text-gray-600 my-2">提示：归并排序经典应用。思考在 `merge` 过程中如何快速计算跨越左右子数组的逆序对。</p>
+                                <span class="text-xs font-semibold bg-orange-200 text-orange-800 px-2 py-1 rounded-full">排序应用</span>
+                                <a href="https://www.luogu.com.cn/problem/P1908" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">前往挑战</a>
+                            </div>
+                             <div class="border rounded-lg p-4 bg-orange-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1012 拼数</h4>
+                                <p class="text-sm text-gray-600 my-2">提示：关键是定义新的“大于”关系：若 `a+b > b+a`，则 `a` “大于” `b`。用此规则自定义排序。</p>
+                                <span class="text-xs font-semibold bg-orange-200 text-orange-800 px-2 py-1 rounded-full">自定义排序</span>
+                                <a href="https://www.luogu.com.cn/problem/P1012" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">前往挑战</a>
+                            </div>
+                             <div class="border rounded-lg p-4 bg-orange-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1228 地毯填补问题</h4>
+                                <p class="text-sm text-gray-600 my-2">提示：典型分治法。将大棋盘分四，用一个 L 型地毯使三个子棋盘也变成带“特殊点”的子问题。</p>
+                                <span class="text-xs font-semibold bg-orange-200 text-orange-800 px-2 py-1 rounded-full">分治思想</span>
+                                <a href="https://www.luogu.com.cn/problem/P1228" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">前往挑战</a>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-8 p-6 bg-teal-50 rounded-lg border border-teal-200">
+                        <h3 class="text-2xl font-semibold text-teal-800 mb-4">训练建议</h3>
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <span class="text-teal-600 font-bold mr-3">☞</span>
+                                <div><strong class="text-teal-700">模板肌肉记忆：</strong>复赛不仅考思维，更考代码熟练度。今天讲的快排、归并、快速幂，必须练到能不假思索地写出正确模板。<strong>错一次，重写十遍。</strong></div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-teal-600 font-bold mr-3">☞</span>
+                                <div><strong class="text-teal-700">画图模拟法：</strong>遇到递归和分治问题，不要只靠空想。在纸上画出递归树，手动模拟函数调用和返回的过程，是理清思路、避免边界错误的最有效方法。</div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-teal-600 font-bold mr-3">☞</span>
+                                <div><strong class="text-teal-700">代码规范与调试：</strong>变量名要有意义（`l, r, mid`），关键步骤加注释。当代码出错时，学会使用 `cout` 或 `printf` 打印中间变量的值，是比单步调试更快速有效的 debug 手段。</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+    </div>
+
+<script>
+    // --- Globals & Utils ---
+    const sleep = ms => new Promise(res => setTimeout(res, ms));
+    const CHART_COLORS = {
+        default: 'rgba(59, 130, 246, 0.7)',
+        pivot: 'rgba(239, 68, 68, 0.9)',
+        pointer: 'rgba(249, 115, 22, 0.9)',
+        sorted: 'rgba(22, 163, 74, 0.8)',
+        sub_array_1: 'rgba(168, 85, 247, 0.7)',
+        sub_array_2: 'rgba(236, 72, 153, 0.7)',
+    };
+    let qSortChart, mSortChart;
+    let qArray = [], mArray = [];
+    let isAnimating = false;
+
+    // --- Tab Navigation ---
+    const tabs = document.querySelectorAll('.tab-btn');
+    const sections = document.querySelectorAll('.content-section');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            if (isAnimating) return;
+            tabs.forEach(t => t.classList.remove('active'));
+            sections.forEach(s => s.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    // --- Code Copy ---
+    function copyCode(elementId) {
+        const codeElement = document.getElementById(elementId);
+        navigator.clipboard.writeText(codeElement.innerText).then(() => {
+            const btn = codeElement.previousElementSibling;
+            const originalText = btn.innerText;
+            btn.innerText = '已复制!';
+            setTimeout(() => { btn.innerText = originalText; }, 2000);
+        });
+    }
+    
+    // --- Chart Initialization ---
+    function createChart(canvasId, data, label) {
+        const ctx = document.getElementById(canvasId).getContext('2d');
+        return new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.map(String),
+                datasets: [{
+                    label: label,
+                    data: data,
+                    backgroundColor: CHART_COLORS.default,
+                    borderColor: 'rgba(59, 130, 246, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                animation: { duration: 200 },
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { display: false, beginAtZero: true },
+                    x: { ticks: { color: '#6b7280' } }
+                }
+            }
+        });
+    }
+
+    // --- Quick Sort Logic ---
+    function generateQArray(size = 20) {
+        qArray = Array.from({ length: size }, () => Math.floor(Math.random() * 95) + 5);
+        if (qSortChart) qSortChart.destroy();
+        qSortChart = createChart('qSortChart', qArray, 'Quick Sort');
+    }
+
+    async function qPartition(low, high) {
+        const pivotValue = qArray[high];
+        let i = low - 1;
+        
+        qSortChart.data.datasets[0].backgroundColor = qArray.map((_, idx) => idx === high ? CHART_COLORS.pivot : CHART_COLORS.default);
+        qSortChart.update();
+        await sleep(400);
+
+        for (let j = low; j < high; j++) {
+            const colors = qSortChart.data.datasets[0].backgroundColor;
+            colors[j] = CHART_COLORS.pointer;
+            if (i >= low) colors[i] = CHART_COLORS.sorted;
+            qSortChart.update();
+            await sleep(400);
+
+            if (qArray[j] < pivotValue) {
+                i++;
+                [qArray[i], qArray[j]] = [qArray[j], qArray[i]];
+                [qSortChart.data.labels[i], qSortChart.data.labels[j]] = [qSortChart.data.labels[j], qSortChart.data.labels[i]];
+                [qSortChart.data.datasets[0].data[i], qSortChart.data.datasets[0].data[j]] = [qSortChart.data.datasets[0].data[j], qSortChart.data.datasets[0].data[i]];
+            }
+             qSortChart.data.datasets[0].backgroundColor = qArray.map((_, idx) => {
+                if(idx === high) return CHART_COLORS.pivot;
+                if(idx <= i) return CHART_COLORS.sorted;
+                return CHART_COLORS.default;
+            });
+            qSortChart.update();
+            await sleep(400);
+        }
+        [qArray[i + 1], qArray[high]] = [qArray[high], qArray[i + 1]];
+        [qSortChart.data.labels[i + 1], qSortChart.data.labels[high]] = [qSortChart.data.labels[high], qSortChart.data.labels[i + 1]];
+        [qSortChart.data.datasets[0].data[i + 1], qSortChart.data.datasets[0].data[high]] = [qSortChart.data.datasets[0].data[high], qSortChart.data.datasets[0].data[i + 1]];
+        
+        qSortChart.data.datasets[0].backgroundColor[i + 1] = CHART_COLORS.sorted;
+        qSortChart.update();
+        await sleep(400);
+        
+        return i + 1;
+    }
+
+    async function quickSort(low, high) {
+        if (low < high) {
+            const pi = await qPartition(low, high);
+            await quickSort(low, pi - 1);
+            await quickSort(pi + 1, high);
+        } else if (low >= 0 && low < qArray.length) {
+             qSortChart.data.datasets[0].backgroundColor[low] = CHART_COLORS.sorted;
+             qSortChart.update();
+        }
+    }
+
+    // --- Merge Sort Logic ---
+    function generateMArray(size = 20) {
+        mArray = Array.from({ length: size }, () => Math.floor(Math.random() * 95) + 5);
+        if (mSortChart) mSortChart.destroy();
+        mSortChart = createChart('mSortChart', mArray, 'Merge Sort');
+    }
+    
+    async function mMerge(l, m, r) {
+        const n1 = m - l + 1;
+        const n2 = r - m;
+        let L = mArray.slice(l, l + n1);
+        let R = mArray.slice(m + 1, m + 1 + n2);
+        
+        let i = 0, j = 0, k = l;
+        
+        while (i < n1 && j < n2) {
+            const colors = mArray.map((_, idx) => (idx >= l && idx <= r) ? CHART_COLORS.pointer : CHART_COLORS.default);
+            mSortChart.data.datasets[0].backgroundColor = colors;
+            mSortChart.update();
+            await sleep(300);
+
+            if (L[i] <= R[j]) { mArray[k] = L[i++]; } 
+            else { mArray[k] = R[j++]; }
+            mSortChart.data.datasets[0].data = [...mArray];
+            mSortChart.data.labels = mArray.map(String);
+            mSortChart.update();
+            k++;
+        }
+        
+        while (i < n1) { mArray[k++] = L[i++]; }
+        while (j < n2) { mArray[k++] = R[j++]; }
+        
+        mSortChart.data.datasets[0].data = [...mArray];
+        mSortChart.data.labels = mArray.map(String);
+        mSortChart.update();
+        await sleep(300);
+    }
+    
+    async function mergeSort(l, r) {
+        if (l >= r) return;
+        const m = l + Math.floor((r - l) / 2);
+        
+        mSortChart.data.datasets[0].backgroundColor = mArray.map((_, idx) => (idx >= l && idx <= m) ? CHART_COLORS.sub_array_1 : (idx > m && idx <= r) ? CHART_COLORS.sub_array_2 : CHART_COLORS.default);
+        mSortChart.update();
+        await sleep(500);
+
+        await mergeSort(l, m);
+        await mergeSort(m + 1, r);
+        await mMerge(l, m, r);
+    }
+    
+    // --- Fast Power Logic ---
+    async function animateFastPower() {
+        if (isAnimating) return;
+        isAnimating = true;
+        const container = document.getElementById('fast-power-container');
+        container.innerHTML = '';
+
+        const steps = [
+            'power(2, 10)',
+            '↳ return power(2, 5) * power(2, 5)',
+            '  ↳ power(2, 5) = 2 * power(2, 2) * power(2, 2)',
+            '    ↳ power(2, 2) = power(2, 1) * power(2, 1)',
+            '      ↳ power(2, 1) = 2 * power(2, 0) * power(2, 0)',
+            '        ↳ power(2, 0) returns 1',
+            '      ↳ power(2, 1) returns 2 * 1 * 1 = 2',
+            '    ↳ power(2, 2) returns 2 * 2 = 4',
+            '  ↳ power(2, 5) returns 2 * 4 * 4 = 32',
+            '↳ return 32 * 32 = 1024',
+            '最终结果: 1024'
+        ];
+        
+        for (const stepText of steps) {
+            const p = document.createElement('p');
+            p.className = 'fast-power-step';
+            p.innerText = stepText;
+            container.appendChild(p);
+            await sleep(50); // wait for element to be in DOM
+            p.style.opacity = '1';
+            p.style.transform = 'translateY(0)';
+            await sleep(800);
+        }
+        
+        isAnimating = false;
+    }
+
+
+    // --- Event Listeners ---
+    document.getElementById('q-reset').addEventListener('click', () => { if (!isAnimating) generateQArray(); });
+    document.getElementById('q-sort').addEventListener('click', async () => {
+        if (isAnimating) return;
+        isAnimating = true;
+        await quickSort(0, qArray.length - 1);
+        qSortChart.data.datasets[0].backgroundColor = CHART_COLORS.sorted;
+        qSortChart.update();
+        isAnimating = false;
+    });
+
+    document.getElementById('m-reset').addEventListener('click', () => { if (!isAnimating) generateMArray(); });
+    document.getElementById('m-sort').addEventListener('click', async () => {
+        if (isAnimating) return;
+        isAnimating = true;
+        await mergeSort(0, mArray.length - 1);
+        mSortChart.data.datasets[0].backgroundColor = mArray.map(_ => CHART_COLORS.sorted);
+        mSortChart.update();
+        isAnimating = false;
+    });
+    
+    document.getElementById('fp-start').addEventListener('click', animateFastPower);
+
+    // --- Initial Load ---
+    window.onload = () => {
+        generateQArray();
+        generateMArray();
+    };
+</script>
+
+</body>
+</html>
+
