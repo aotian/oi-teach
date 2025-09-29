@@ -1,0 +1,653 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSP 复赛集训 Day 5: 贪心与字符串</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Calm Green & Gray -->
+    <!-- Application Structure Plan: Restructured into a three-tab SPA ('Core Overview', 'Algorithm Deep Dive', 'Practice Arena') to focus solely on the day's topics while maintaining the consistent learning flow. The 'Algorithm' tab is heavily expanded with more Greedy examples, a new KMP next-array construction animation, and detailed explanations. The 'Practice Arena' tab now includes a curated list of problems and specific training advice for these topics. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: Greedy Algorithm Concepts -> Goal: Explain greedy choice property -> Viz: Interactive animations for Activity Selection and Fractional Knapsack -> Interaction: 'Run' buttons animate the sorting and selection process -> Justification: Dynamic visualizations make the step-by-step greedy choices explicit and intuitive.
+        - Report Info: String Hashing -> Goal: Explain the rolling hash concept -> Viz: Text explanation with a formula diagram (HTML/CSS) and code -> Justification: The core idea is mathematical, best shown with its formula and implementation.
+        - Report Info: KMP Algorithm -> Goal: Explain the `next` array and matching -> Viz: Two separate interactive animations for `next` array construction and the matching process -> Interaction: 'Run' buttons for each animation -> Justification: Separating the two complex parts of KMP (next array construction and matching) into distinct animations is crucial for clear teaching. Method: DOM manipulation.
+        - Report Info: Trie -> Goal: Explain prefix tree -> Viz: Static explanation with code. Justification: A simple data structure best explained by its implementation.
+        - Report Info: Practice Problems & Advice -> Goal: Provide targeted practice -> Viz: Interactive problem cards and a structured list -> Justification: Actionable and organized practice resources.
+     -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --accent-primary: #059669;
+            --accent-secondary: #0ea5e9;
+            --border-color: #e2e8f0;
+        }
+        body { background-color: var(--bg-main); color: var(--text-primary); }
+        .tab-btn { transition: color 0.2s, border-color 0.2s; }
+        .tab-btn.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .code-block {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            position: relative;
+            font-family: 'Courier New', Courier, monospace;
+            max-height: 450px;
+            overflow-y: auto;
+        }
+        .copy-btn {
+            position: absolute; top: 0.75rem; right: 0.75rem; background-color: #475569;
+            color: white; padding: 0.25rem 0.5rem; border-radius: 0.375rem;
+            font-size: 0.875rem; cursor: pointer; transition: background-color 0.2s;
+        }
+        .copy-btn:hover { background-color: #64748b; }
+        
+        /* KMP Animation Styles */
+        .kmp-container { font-family: 'Courier New', Courier, monospace; }
+        .kmp-string-vis { display: flex; position: relative; margin-bottom: 1rem; }
+        .kmp-char {
+            width: 30px; height: 30px; display: flex; justify-content: center; align-items: center;
+            border: 1px solid var(--border-color); background-color: #f1f5f9;
+            position: relative;
+        }
+        .kmp-pointer {
+            position: absolute; top: 35px; width: 30px; text-align: center;
+            transition: left 0.5s ease;
+            font-weight: bold;
+        }
+        .kmp-char.match { background-color: #dcfce7; }
+        .kmp-char.mismatch { background-color: #fee2e2; }
+        .kmp-char .next-val {
+            position: absolute; top: -20px; font-size: 0.8rem; color: var(--accent-primary);
+        }
+
+        /* Greedy Vis Styles */
+        .activity-timeline { position: relative; height: 200px; background-color: #f9fafb; border: 1px solid var(--border-color); border-radius: 0.5rem; overflow: hidden; }
+        .activity-bar { 
+            position: absolute; height: 20px; background-color: rgba(5, 150, 105, 0.6); border: 1px solid var(--accent-primary); border-radius: 4px; transition: all 0.5s ease;
+            display: flex; align-items: center; justify-content: center; color: white; font-size: 0.75rem; font-weight: bold; overflow: hidden;
+        }
+        .activity-bar.selected { background-color: rgba(234, 179, 8, 0.8); border-color: #ca8a04; }
+        .activity-bar.checking { border-color: #ef4444; }
+        
+        .knapsack-container { display: flex; gap: 1rem; }
+        .knapsack-items, .knapsack-bag { width: 50%; padding: 1rem; border: 1px solid var(--border-color); border-radius: 0.5rem; }
+        .knapsack-item { display: flex; align-items: center; padding: 0.5rem; margin-bottom: 0.5rem; border-radius: 0.25rem; background-color: #f1f5f9; transition: all 0.5s ease; }
+        .knapsack-item-bar { height: 20px; background-color: var(--accent-secondary); border-radius: 2px; }
+        .knapsack-item.taken { background-color: #dcfce7; }
+
+    </style>
+</head>
+<body class="font-sans">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">CSP 复赛集训 - Day 5</h1>
+            <p class="text-lg text-gray-600 mt-2">贪心算法与字符串</p>
+        </header>
+
+        <nav class="mb-8 border-b-2 border-gray-200">
+            <ul class="flex justify-center -mb-px space-x-4 md:space-x-8">
+                <li><button class="tab-btn text-lg font-medium p-4 border-b-2 border-transparent active" data-tab="overview">核心概览</button></li>
+                <li><button class="tab-btn text-lg font-medium p-4 border-b-2 border-transparent" data-tab="deep-dive">算法详解</button></li>
+                <li><button class="tab-btn text-lg font-medium p-4 border-b-2 border-transparent" data-tab="practice">实战演练</button></li>
+            </ul>
+        </nav>
+
+        <main>
+            <!-- 核心概览 Section -->
+            <section id="overview" class="content-section active">
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md space-y-8">
+                    <div>
+                        <h2 class="text-3xl font-bold mb-4">今日学习目标</h2>
+                        <p class="text-gray-700 mb-6">今天是集训的最后一个算法专题日，我们将聚焦于两个重要的专题：贪心算法和字符串处理。这两种思想在竞赛中都极为重要，贪心是解题的捷径，而字符串则是S组选手必须攻克的难关。</p>
+                        <div class="grid md:grid-cols-2 gap-6">
+                            <div class="bg-emerald-50 p-6 rounded-lg border border-emerald-200">
+                                <h3 class="text-xl font-semibold text-emerald-800 mb-2">贪心算法 (Greedy)</h3>
+                                <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                    <li><strong class="text-emerald-700">理解贪心本质:</strong> 掌握“局部最优”推导出“全局最优”的核心思想。</li>
+                                    <li><strong class="text-emerald-700">学会简单证明:</strong> 理解贪心算法的正确性需要证明，通常使用反证法或归纳法。</li>
+                                    <li><strong class="text-emerald-700">掌握经典模型:</strong> 如活动安排、部分背包、霍夫曼编码等。</li>
+                                </ul>
+                            </div>
+                            <div class="bg-sky-50 p-6 rounded-lg border border-sky-200">
+                                <h3 class="text-xl font-semibold text-sky-800 mb-2">字符串处理 (S组重点)</h3>
+                                <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                    <li><strong class="text-sky-700">字典树 (Trie):</strong> 高效存储和查找字符串集合的数据结构。</li>
+                                    <li><strong class="text-sky-700">字符串哈希:</strong> 学会用数值来唯一（大概率）表示一个字符串，实现 O(1) 的子串比较。</li>
+                                    <li><strong class="text-sky-700">KMP算法:</strong> 理解 `next` 数组的精髓，实现 O(n+m) 的高效单模式匹配。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 算法详解 Section -->
+            <section id="deep-dive" class="content-section space-y-8">
+                 <!-- Greedy -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">贪心算法</h3>
+                    <p class="text-gray-700 mb-4">贪心算法在每一步选择中都采取在当前状态下最好或最优的选择，从而希望能导致结果是全局最优的。但它并不保证一定能得到全局最优解，使用前必须证明其正确性。</p>
+                    <div class="space-y-8">
+                        <div>
+                           <h4 class="text-lg font-semibold mb-2">经典问题(一)：活动安排</h4>
+                           <p class="text-sm text-gray-600 mb-4">**问题：** n个活动，有各自的起止时间，求最多能参加多少个互不冲突的活动。<br>**贪心策略：** 按**结束时间**从小到大排序，优先选择结束最早的活动。</p>
+                           <button id="run-activity" class="w-full sm:w-auto px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition mb-4">运行动画</button>
+                           <div id="activity-vis" class="activity-timeline"></div>
+                           <p id="activity-status" class="text-center font-semibold mt-2 h-6"></p>
+                        </div>
+                        <hr>
+                        <div>
+                           <h4 class="text-lg font-semibold mb-2">经典问题(二)：部分背包</h4>
+                           <p class="text-sm text-gray-600 mb-4">**问题：** n个物品，有各自的重量和价值，物品可分割。在总重量不超过背包容量的前提下，求能获得的最大总价值。<br>**贪心策略：** 计算每个物品的**单位重量价值（性价比）**，按性价比从高到低排序，优先装性价比最高的物品。</p>
+                            <button id="run-knapsack" class="w-full sm:w-auto px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition mb-4">运行动画</button>
+                            <div id="knapsack-vis" class="knapsack-container"></div>
+                            <p id="knapsack-status" class="text-center font-semibold mt-2 h-6"></p>
+                        </div>
+                        <hr>
+                         <div>
+                           <h4 class="text-lg font-semibold mb-2">贪心 vs. DP</h4>
+                           <p class="text-sm text-gray-600">**共同点：** 都要求最优子结构性质。<br>
+                           **区别：** 贪心算法的每一步选择都是“确定的”，不能反悔（无后效性）；而动态规划会“考虑所有选择”，并从中找出最优的。例如，0-1背包问题（物品不可分割）就不能用贪心，必须用DP。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- String Algorithms -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">字符串算法</h3>
+                    <div class="space-y-8">
+                        <!-- Trie -->
+                        <div>
+                           <h4 class="text-xl font-semibold text-gray-800 mb-2">字典树 (Trie)</h4>
+                           <p class="text-sm text-gray-600 mb-2">也叫前缀树，是一种专门处理字符串集合的多叉树结构。它的边代表字符，节点代表从根到该节点路径所组成的字符串前缀。常用于词频统计、前缀匹配等问题。</p>
+                           <div class="code-block text-sm">
+                               <button class="copy-btn" onclick="copyCode('trie-code')">复制</button>
+                               <pre><code id="trie-code">int trie[N][26], tot = 1;
+bool is_end[N]; // 标记是否为单词结尾
+
+void insert(char* s) {
+    int len = strlen(s), p = 1;
+    for (int i = 0; i < len; i++) {
+        int ch = s[i] - 'a';
+        if (!trie[p][ch]) trie[p][ch] = ++tot;
+        p = trie[p][ch];
+    }
+    is_end[p] = true;
+}
+
+bool find(char* s) {
+    int len = strlen(s), p = 1;
+    for (int i = 0; i < len; i++) {
+        int ch = s[i] - 'a';
+        if (!trie[p][ch]) return false;
+        p = trie[p][ch];
+    }
+    return is_end[p];
+}
+</code></pre>
+                           </div>
+                        </div>
+                        <hr>
+                        <!-- String Hashing -->
+                        <div>
+                           <h4 class="text-xl font-semibold text-gray-800 mb-2">字符串哈希</h4>
+                           <p class="text-sm text-gray-600 mb-2">通过一个哈希函数，将一个任意长度的字符串映射成一个固定长度的整数。通过预处理，可以 O(1) 地计算出任意子串的哈希值。</p>
+                           <div class="code-block text-sm">
+                               <button class="copy-btn" onclick="copyCode('hash-code')">复制</button>
+                               <pre><code id="hash-code">typedef unsigned long long ull;
+const int P = 131; // or 13331
+ull h[N], p[N];
+
+void init_hash(const std::string& s) {
+    p[0] = 1;
+    for (int i = 1; i <= s.length(); i++) {
+        p[i] = p[i-1] * P;
+        h[i] = h[i-1] * P + s[i-1];
+    }
+}
+// 获取子串 S[l..r] 的哈希值 (1-indexed)
+ull get_hash(int l, int r) {
+    return h[r] - h[l-1] * p[r - l + 1];
+}</code></pre>
+                           </div>
+                        </div>
+                        <hr>
+                        <!-- KMP -->
+                        <div>
+                           <h4 class="text-xl font-semibold text-gray-800 mb-2">KMP算法</h4>
+                           <p class="text-sm text-gray-600 mb-2">KMP算法的核心在于预处理出一个 `next` 数组。`next[i]` 存储了模式串 `P` 的前缀 `P[0..i]` 中，最长公共前后缀的长度。它使得匹配失败时，模式串指针能“聪明”地移动，而不是每次都回溯到0。</p>
+                           <div class="grid md:grid-cols-2 gap-8 items-start">
+                                 <div>
+                                   <h4 class="text-lg font-semibold mb-2">Next数组构建动画</h4>
+                                   <div class="kmp-container">
+                                       <div>模式串 P:</div>
+                                       <div id="kmp-next-pattern" class="kmp-string-vis"></div>
+                                       <button id="run-kmp-next" class="w-full px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition mb-4">运行动画</button>
+                                       <p id="kmp-next-status" class="text-center font-semibold mt-2 h-6"></p>
+                                   </div>
+                                </div>
+                                <div>
+                                   <h4 class="text-lg font-semibold mb-2">字符串匹配动画</h4>
+                                   <div class="kmp-container">
+                                       <div>文本串 T:</div>
+                                       <div id="kmp-text" class="kmp-string-vis"></div>
+                                       <div>模式串 P:</div>
+                                       <div id="kmp-pattern" class="kmp-string-vis"></div>
+                                       <button id="run-kmp-match" class="w-full px-4 py-2 bg-sky-500 text-white rounded-lg hover:bg-sky-600 transition mb-4">运行匹配动画</button>
+                                       <p id="kmp-match-status" class="text-center font-semibold mt-2 h-6"></p>
+                                   </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+             <!-- 实战演练 Section -->
+            <section id="practice" class="content-section">
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md space-y-8">
+                     <div>
+                        <h2 class="text-3xl font-bold mb-4">下午实战练习</h2>
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1223 排队接水</h4>
+                                <p class="text-sm text-gray-600 my-2">简单的贪心入门，思考应该按什么顺序排序。</p>
+                                <span class="text-xs font-semibold bg-emerald-200 text-emerald-800 px-2 py-1 rounded-full">贪心</span>
+                                <a href="https://www.luogu.com.cn/problem/P1223" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                             <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1094 纪念品分组</h4>
+                                <p class="text-sm text-gray-600 my-2">经典的双指针贪心问题。</p>
+                                <span class="text-xs font-semibold bg-emerald-200 text-emerald-800 px-2 py-1 rounded-full">贪心</span>
+                                <a href="https://www.luogu.com.cn/problem/P1094" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                             <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P2123 皇后游戏</h4>
+                                <p class="text-sm text-gray-600 my-2">进阶贪心，需要推导和证明排序的邻项交换法则 (Johnson法则)。</p>
+                                <span class="text-xs font-semibold bg-emerald-200 text-emerald-800 px-2 py-1 rounded-full">贪心-进阶</span>
+                                <a href="https://www.luogu.com.cn/problem/P2123" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                            <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P3370 【模板】字符串哈希</h4>
+                                <p class="text-sm text-gray-600 my-2">练习字符串哈希模板，统计不同字符串的数量。</p>
+                                <span class="text-xs font-semibold bg-sky-200 text-sky-800 px-2 py-1 rounded-full">哈希</span>
+                                <a href="https://www.luogu.com.cn/problem/P3370" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                             <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P3375 【模板】KMP</h4>
+                                <p class="text-sm text-gray-600 my-2">练习KMP的 `next` 数组构建和匹配过程。</p>
+                                <span class="text-xs font-semibold bg-sky-200 text-sky-800 px-2 py-1 rounded-full">KMP</span>
+                                <a href="https://www.luogu.com.cn/problem/P3375" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                             <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P2580 于是他错误的点名...</h4>
+                                <p class="text-sm text-gray-600 my-2">Trie树的入门应用，需要处理“重复点名”和“没来”两种情况。</p>
+                                <span class="text-xs font-semibold bg-sky-200 text-sky-800 px-2 py-1 rounded-full">Trie</span>
+                                <a href="https://www.luogu.com.cn/problem/P2580" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+<script>
+    const sleep = ms => new Promise(res => setTimeout(res, ms));
+    let isAnimating = false;
+
+    // --- Tab Navigation ---
+    const tabs = document.querySelectorAll('.tab-btn');
+    const sections = document.querySelectorAll('.content-section');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            if (isAnimating) return;
+            tabs.forEach(t => t.classList.remove('active'));
+            sections.forEach(s => s.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    // --- Code Copy ---
+    function copyCode(elementId) {
+        const codeElement = document.getElementById(elementId);
+        navigator.clipboard.writeText(codeElement.innerText).then(() => {
+            const btn = codeElement.previousElementSibling;
+            const originalText = btn.innerText;
+            btn.innerText = '已复制!';
+            setTimeout(() => { btn.innerText = originalText; }, 2000);
+        });
+    }
+
+    // --- Greedy: Activity Selection ---
+    const activityVis = document.getElementById('activity-vis');
+    const activityStatus = document.getElementById('activity-status');
+    let activities = [];
+
+    function initActivities() {
+        activityVis.innerHTML = '';
+        activities = [];
+        for (let i = 0; i < 8; i++) {
+            let start = Math.random() * 80;
+            let duration = Math.random() * 20 + 5;
+            if (start + duration > 100) {
+                start = 100 - duration;
+            }
+            activities.push({ start: start, finish: start + duration, id: i });
+        }
+        activities.forEach((act, i) => {
+            const bar = document.createElement('div');
+            bar.id = `act-${act.id}`;
+            bar.className = 'activity-bar';
+            bar.style.top = `${i * 22 + 10}px`;
+            bar.style.left = `${act.start}%`;
+            bar.style.width = `${act.finish - act.start}%`;
+            bar.innerText = act.id;
+            activityVis.appendChild(bar);
+        });
+    }
+
+    async function animateActivitySelection() {
+        if(isAnimating) return;
+        isAnimating = true;
+        initActivities();
+        activityStatus.innerText = '按结束时间排序...';
+        await sleep(500);
+
+        activities.sort((a, b) => a.finish - b.finish);
+        activities.forEach((act, i) => {
+            document.getElementById(`act-${act.id}`).style.top = `${i * 22 + 10}px`;
+        });
+        await sleep(1000);
+
+        let count = 0;
+        let last_finish_time = 0;
+        
+        for(let i=0; i<activities.length; i++) {
+            const act = activities[i];
+            const bar = document.getElementById(`act-${act.id}`);
+            bar.classList.add('checking');
+            activityStatus.innerText = `检查活动 ${act.id}, 开始: ${Math.round(act.start)}, 结束: ${Math.round(act.finish)}`;
+            await sleep(1200);
+
+            if (act.start >= last_finish_time) {
+                activityStatus.innerText = `选择活动 ${act.id}, 与已选不冲突`;
+                bar.classList.add('selected');
+                count++;
+                last_finish_time = act.finish;
+            } else {
+                 activityStatus.innerText = `活动 ${act.id} 冲突, 跳过`;
+            }
+            bar.classList.remove('checking');
+            await sleep(1200);
+        }
+        activityStatus.innerText = `完成! 共选择了 ${count} 个活动。`;
+        isAnimating = false;
+    }
+
+    // --- Greedy: Knapsack ---
+    const knapsackVis = document.getElementById('knapsack-vis');
+    const knapsackStatus = document.getElementById('knapsack-status');
+    let knapsackItems = [];
+    const KNAPSACK_CAPACITY = 20;
+
+    function initKnapsack() {
+        knapsackVis.innerHTML = `
+            <div class="knapsack-items">
+                <h4 class="font-bold mb-2">物品 (性价比排序前)</h4>
+                <div id="knapsack-items-pool"></div>
+            </div>
+            <div class="knapsack-bag">
+                <h4 class="font-bold mb-2">背包 (容量: ${KNAPSACK_CAPACITY})</h4>
+                <div id="knapsack-bag-content" class="space-y-2"></div>
+                <p class="mt-2">当前重量: <span id="knapsack-weight">0</span>, 总价值: <span id="knapsack-value">0</span></p>
+            </div>
+        `;
+        knapsackItems = [
+            {id: 0, w: 10, v: 60}, {id: 1, w: 20, v: 100}, {id: 2, w: 30, v: 120}
+        ].map(item => ({...item, ratio: item.v / item.w, initialW: item.w}));
+        
+        const pool = document.getElementById('knapsack-items-pool');
+        knapsackItems.forEach(item => {
+            pool.innerHTML += `
+                <div id="ks-item-${item.id}" class="knapsack-item">
+                    <div class="w-1/3">ID: ${item.id}</div>
+                    <div class="w-2/3">W:${item.w}, V:${item.v}, P:${item.ratio.toFixed(2)}</div>
+                </div>
+            `;
+        });
+    }
+    
+    async function animateKnapsack() {
+        if(isAnimating) return;
+        isAnimating = true;
+        initKnapsack();
+        knapsackStatus.innerText = '按性价比排序...';
+        await sleep(1500);
+
+        knapsackItems.sort((a,b) => b.ratio - a.ratio);
+        const pool = document.getElementById('knapsack-items-pool');
+        pool.innerHTML = '';
+         knapsackItems.forEach(item => {
+            pool.innerHTML += `
+                <div id="ks-item-${item.id}" class="knapsack-item">
+                    <div class="w-1/3">ID: ${item.id}</div>
+                    <div class="w-2/3">W:${item.w}, V:${item.v}, <span class="font-bold text-emerald-600">P:${item.ratio.toFixed(2)}</span></div>
+                </div>
+            `;
+        });
+        await sleep(1000);
+
+        let currentWeight = 0;
+        let totalValue = 0;
+        const bag = document.getElementById('knapsack-bag-content');
+
+        for(const item of knapsackItems) {
+            const itemEl = document.getElementById(`ks-item-${item.id}`);
+            knapsackStatus.innerText = `考虑物品 ${item.id} (性价比最高)`;
+            await sleep(1500);
+
+            const canTake = Math.min(item.w, KNAPSACK_CAPACITY - currentWeight);
+            if (canTake > 0) {
+                if(canTake === item.w) {
+                    knapsackStatus.innerText = `完整装入物品 ${item.id}`;
+                } else {
+                    knapsackStatus.innerText = `部分装入物品 ${item.id} (${canTake}/${item.w})`;
+                }
+                
+                currentWeight += canTake;
+                totalValue += canTake * item.ratio;
+                itemEl.classList.add('taken');
+                itemEl.style.opacity = '0';
+                await sleep(500);
+
+                const takenPart = document.createElement('div');
+                takenPart.className = 'knapsack-item taken';
+                const percentage = (canTake / item.initialW) * 100;
+                takenPart.innerHTML = `
+                    <div class="w-1/3">ID: ${item.id}</div>
+                    <div class="w-2/3 flex items-center">
+                        <div class="knapsack-item-bar" style="width: ${percentage}%"></div>
+                        <span class="ml-2 text-xs">(${canTake}/${item.w})</span>
+                    </div>
+                `;
+                bag.appendChild(takenPart);
+
+                document.getElementById('knapsack-weight').innerText = currentWeight;
+                document.getElementById('knapsack-value').innerText = totalValue.toFixed(2);
+                await sleep(1500);
+            } else {
+                knapsackStatus.innerText = `背包已满，无法再装入物品 ${item.id}`;
+                await sleep(1500);
+            }
+            if (currentWeight >= KNAPSACK_CAPACITY) break;
+        }
+        knapsackStatus.innerText = '完成! 背包已尽可能装满。';
+        isAnimating = false;
+    }
+
+
+    // --- KMP Animation ---
+    const kmpTextDiv = document.getElementById('kmp-text');
+    const kmpPatternDiv = document.getElementById('kmp-pattern');
+    const kmpMatchStatus = document.getElementById('kmp-match-status');
+    const kmpNextPatternDiv = document.getElementById('kmp-next-pattern');
+    const kmpNextStatus = document.getElementById('kmp-next-status');
+
+    const textStr = "ababaabcababc";
+    const patternStr = "ababc";
+
+    function initKMPMatch() {
+        kmpTextDiv.innerHTML = '';
+        kmpPatternDiv.innerHTML = '';
+        kmpMatchStatus.innerText = '';
+        
+        for(let i = 0; i < textStr.length; i++) {
+            kmpTextDiv.innerHTML += `<div id="kmp-t-${i}" class="kmp-char">${textStr[i]}</div>`;
+        }
+        kmpTextDiv.innerHTML += `<div id="kmp-p-i" class="kmp-pointer text-blue-500">i</div>`;
+
+        for(let i = 0; i < patternStr.length; i++) {
+            kmpPatternDiv.innerHTML += `<div id="kmp-p-${i}" class="kmp-char">${patternStr[i]}</div>`;
+        }
+        kmpPatternDiv.innerHTML += `<div id="kmp-p-j" class="kmp-pointer text-red-500">j</div>`;
+    }
+    
+     function initKMPNext() {
+        kmpNextPatternDiv.innerHTML = '';
+        kmpNextStatus.innerText = '';
+        for(let i = 0; i < patternStr.length; i++) {
+            kmpNextPatternDiv.innerHTML += `<div id="kmp-np-${i}" class="kmp-char"><span class="next-val">0</span>${patternStr[i]}</div>`;
+        }
+        kmpNextPatternDiv.innerHTML += `<div id="kmp-np-i" class="kmp-pointer text-blue-500">i</div>`;
+        kmpNextPatternDiv.innerHTML += `<div id="kmp-np-j" class="kmp-pointer text-red-500">j</div>`;
+    }
+
+    async function animateKMPNext() {
+        if (isAnimating) return;
+        isAnimating = true;
+        initKMPNext();
+        
+        const next = [0];
+        const p_i = document.getElementById('kmp-np-i');
+        const p_j = document.getElementById('kmp-np-j');
+        p_j.style.left = '0px';
+
+        for (let i = 1, j = 0; i < patternStr.length; i++) {
+             p_i.style.left = `${i * 30}px`;
+             const charI = document.getElementById(`kmp-np-${i}`);
+             charI.classList.add('match');
+
+             kmpNextStatus.innerText = `计算 next[${i}]`;
+             await sleep(1000);
+
+             while(j > 0 && patternStr[i] !== patternStr[j]) {
+                 kmpNextStatus.innerText = `P[${i}] != P[${j}], j = next[${j-1}]`;
+                 charI.classList.add('mismatch');
+                 document.getElementById(`kmp-np-${j}`).classList.add('mismatch');
+                 await sleep(1500);
+                 charI.classList.remove('mismatch');
+                 document.getElementById(`kmp-np-${j}`).classList.remove('mismatch');
+                 j = next[j-1];
+                 p_j.style.left = `${j * 30}px`;
+                 await sleep(1000);
+             }
+
+             if (patternStr[i] === patternStr[j]) {
+                 kmpNextStatus.innerText = `P[${i}] == P[${j}], j++`;
+                 charI.classList.add('match');
+                 document.getElementById(`kmp-np-${j}`).classList.add('match');
+                 j++;
+                 await sleep(1500);
+             }
+             next[i] = j;
+             p_j.style.left = `${j * 30}px`;
+             charI.querySelector('.next-val').innerText = j;
+             kmpNextStatus.innerText = `next[${i}] = ${j}`;
+             await sleep(1500);
+             document.querySelectorAll('.kmp-char').forEach(el => el.classList.remove('match'));
+        }
+         kmpNextStatus.innerText = `Next 数组计算完成!`;
+         isAnimating = false;
+    }
+
+    async function animateKMPMatch() {
+        if (isAnimating) return;
+        isAnimating = true;
+        initKMPMatch();
+
+        const n = textStr.length, m = patternStr.length;
+        const next = [0, 0, 1, 2, 0]; // Precomputed for "ababc"
+        const p_i = document.getElementById('kmp-p-i');
+        const p_j = document.getElementById('kmp-p-j');
+
+        for (let i = 0, j = 0; i < n; i++) {
+            p_i.style.left = `${i * 30}px`;
+            p_j.style.left = `${j * 30}px`;
+            kmpMatchStatus.innerText = `比较 T[${i}] 和 P[${j}]`;
+            await sleep(1000);
+            
+            const charT = document.getElementById(`kmp-t-${i}`);
+            const charP = document.getElementById(`kmp-p-${j}`);
+
+            while (j > 0 && textStr[i] !== patternStr[j]) {
+                charT.classList.add('mismatch');
+                charP.classList.add('mismatch');
+                kmpMatchStatus.innerText = `失配! j 跳转到 next[${j-1}] = ${next[j-1]}`;
+                await sleep(1500);
+                charT.classList.remove('mismatch');
+                charP.classList.remove('mismatch');
+                j = next[j-1];
+                p_j.style.left = `${j * 30}px`;
+                kmpMatchStatus.innerText = `j 移动到 ${j}, 继续比较`;
+                await sleep(1000);
+            }
+
+            if (textStr[i] === patternStr[j]) {
+                charT.classList.add('match');
+                charP.classList.add('match');
+                kmpMatchStatus.innerText = `匹配! j++`;
+                j++;
+                 await sleep(1000);
+            }
+
+            p_j.style.left = `${j * 30}px`;
+            
+            if (j === m) {
+                kmpMatchStatus.innerText = `完全匹配! 找到模式串在索引 ${i - m + 1}`;
+                isAnimating = false;
+                return;
+            }
+             charT.classList.remove('match');
+             charP.classList.remove('match');
+        }
+        kmpMatchStatus.innerText = "未找到匹配。";
+        isAnimating = false;
+    }
+
+    // --- Event Listeners ---
+     document.getElementById('run-kmp-next').addEventListener('click', animateKMPNext);
+     document.getElementById('run-kmp-match').addEventListener('click', animateKMPMatch);
+     document.getElementById('run-activity').addEventListener('click', animateActivitySelection);
+     document.getElementById('run-knapsack').addEventListener('click', animateKnapsack);
+
+    // --- Initial Load ---
+    window.onload = () => {
+       initKMPMatch();
+       initKMPNext();
+       initActivities();
+       initKnapsack();
+    };
+</script>
+
+</body>
+</html>
+

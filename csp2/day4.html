@@ -1,0 +1,716 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSP 复赛集训 Day 4: 图论与核心树结构</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Calm Indigo & Green -->
+    <!-- Application Structure Plan: Maintaining the three-tab SPA structure ('Core Overview', 'Algorithm Deep Dive', 'Practice Arena') for consistency. Day 4 focuses on Graph Theory. The centerpiece will be interactive DOM-based visualizations for Dijkstra's and Kruskal's algorithms. Visualizing graph algorithms by highlighting nodes and edges is crucial for understanding how they explore and make decisions. This structure allows users to first learn the concepts, then see the algorithms traverse a graph visually, and finally tackle related problems. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: Graph Representations -> Goal: Explain adjacency matrix vs. list -> Viz: Side-by-side text and code snippets -> Justification: A direct comparison is most effective for this conceptual choice.
+        - Report Info: Disjoint Set Union (DSU) -> Goal: Explain find/union operations with optimizations -> Viz: Text explanation + core code -> Justification: DSU's logic is simple, the key is understanding the path compression/union by rank code.
+        - Report Info: Dijkstra's Algorithm -> Goal: Show single-source shortest path -> Viz: Interactive DOM graph animation -> Interaction: 'Run' button animates node selection and distance relaxation -> Justification: Makes the greedy approach and priority queue usage tangible. Method: DOM manipulation.
+        - Report Info: Kruskal's Algorithm (MST) -> Goal: Show how to build a Minimum Spanning Tree -> Viz: Interactive DOM graph animation -> Interaction: 'Run' button animates edge sorting and selection using DSU -> Justification: Visually connects graph theory with the DSU data structure. Method: DOM manipulation.
+        - Report Info: Advanced Tree/Graph Algorithms (LCA, SCC, etc.) -> Goal: Introduce advanced concepts for S-group -> Viz: Static diagrams (HTML/CSS) and code snippets -> Justification: Clear diagrams coupled with code are more effective for these complex topics than full animations.
+        - Report Info: Code Templates & Practice Problems -> Goal: Provide resources -> Presentation: Code blocks and interactive problem cards -> Justification: Consistent, user-friendly format.
+     -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        :root {
+            --bg-main: #f8fafc;
+            --bg-card: #ffffff;
+            --text-primary: #1e293b;
+            --text-secondary: #475569;
+            --accent-primary: #4f46e5;
+            --accent-secondary: #059669;
+            --border-color: #e2e8f0;
+        }
+        body { background-color: var(--bg-main); color: var(--text-primary); }
+        .tab-btn { transition: color 0.2s, border-color 0.2s; }
+        .tab-btn.active { color: var(--accent-primary); border-bottom-color: var(--accent-primary); }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .code-block {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            position: relative;
+            font-family: 'Courier New', Courier, monospace;
+            max-height: 450px;
+            overflow-y: auto;
+        }
+        .copy-btn {
+            position: absolute; top: 0.75rem; right: 0.75rem; background-color: #475569;
+            color: white; padding: 0.25rem 0.5rem; border-radius: 0.375rem;
+            font-size: 0.875rem; cursor: pointer; transition: background-color 0.2s;
+        }
+        .copy-btn:hover { background-color: #64748b; }
+        
+        /* Graph Vis Styles */
+        .graph-container {
+            position: relative;
+            width: 100%;
+            height: 350px;
+            background-color: #f9fafb;
+            border: 1px solid var(--border-color);
+            border-radius: 0.5rem;
+        }
+        .graph-node {
+            position: absolute;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background-color: #d1d5db;
+            border: 2px solid #6b7280;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            font-weight: bold;
+            color: #374151;
+            transition: all 0.3s ease;
+            transform: translate(-50%, -50%);
+        }
+        .graph-node.source { background-color: #34d399; border-color: #059669; }
+        .graph-node.visited { background-color: #a5b4fc; border-color: #6366f1; }
+        .graph-node.current { background-color: #facc15; border-color: #f59e0b; transform: translate(-50%, -50%) scale(1.2); }
+        .graph-edge {
+            position: absolute;
+            background-color: #9ca3af;
+            height: 2px;
+            transform-origin: 0 0;
+            transition: all 0.3s ease;
+        }
+        .edge-label {
+            position: absolute;
+            background-color: var(--bg-main);
+            color: #4b5563;
+            font-size: 0.75rem;
+            padding: 0 2px;
+        }
+        .graph-edge.in-mst { background-color: var(--accent-secondary); height: 4px; }
+        .graph-edge.checking { background-color: var(--accent-primary); height: 4px; }
+        .graph-edge.rejected { background-color: #ef4444; }
+        .diagram-container {
+            background-color: #f9fafb;
+            border: 1px solid var(--border-color);
+            padding: 1rem;
+            border-radius: 0.5rem;
+            font-family: 'Courier New', Courier, monospace;
+        }
+    </style>
+</head>
+<body class="font-sans">
+
+    <div class="container mx-auto p-4 md:p-8">
+        
+        <header class="text-center mb-8">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">CSP 复赛集训 - Day 4</h1>
+            <p class="text-lg text-gray-600 mt-2">图论与核心树结构</p>
+        </header>
+
+        <nav class="mb-8 border-b-2 border-gray-200">
+            <ul class="flex justify-center -mb-px space-x-4 md:space-x-8">
+                <li><button class="tab-btn text-lg font-medium p-4 border-b-2 border-transparent active" data-tab="overview">核心概览</button></li>
+                <li><button class="tab-btn text-lg font-medium p-4 border-b-2 border-transparent" data-tab="deep-dive">算法详解</button></li>
+                <li><button class="tab-btn text-lg font-medium p-4 border-b-2 border-transparent" data-tab="practice">实战演练</button></li>
+            </ul>
+        </nav>
+
+        <main>
+            <!-- 核心概览 Section -->
+            <section id="overview" class="content-section active">
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md space-y-8">
+                    <div>
+                        <h2 class="text-3xl font-bold mb-4">图论：连接万物的语言</h2>
+                        <p class="text-gray-700 mb-6">图 (Graph) 是由节点 (Vertex) 和边 (Edge) 组成的网络结构，用于表示对象之间的关系。从社交网络到城市交通，图无处不在。掌握图论，就是掌握了分析复杂关系的钥匙。今天我们将学习图的核心算法，解决最短路径、网络连通性等关键问题。</p>
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            <div class="bg-indigo-50 p-6 rounded-lg border border-indigo-200">
+                                <h3 class="text-xl font-semibold text-indigo-800 mb-2">图的表示与遍历</h3>
+                                <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                    <li><strong class="text-indigo-700">邻接矩阵:</strong> 用二维数组 `g[i][j]` 存储 i 到 j 的边的信息，简单直观，但空间开销大。</li>
+                                    <li><strong class="text-indigo-700">邻接表:</strong> 用数组+链表(或`vector`)存储每个点的所有出边，是处理稀疏图的首选。</li>
+                                </ul>
+                            </div>
+                            <div class="bg-emerald-50 p-6 rounded-lg border border-emerald-200">
+                                <h3 class="text-xl font-semibold text-emerald-800 mb-2">最短路径 (S组重点)</h3>
+                                <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                    <li><strong class="text-emerald-700">Dijkstra:</strong> 解决单源最短路径问题（无负权边），其堆优化版本是竞赛必备。</li>
+                                    <li><strong class="text-emerald-700">Floyd:</strong> 解决任意两点间最短路径问题，代码简单，但时间复杂度高 O(n³)，适用于小规模数据。</li>
+                                </ul>
+                            </div>
+                            <div class="bg-rose-50 p-6 rounded-lg border border-rose-200">
+                                <h3 class="text-xl font-semibold text-rose-800 mb-2">核心树结构与应用</h3>
+                                <ul class="list-disc list-inside space-y-2 text-gray-600">
+                                    <li><strong class="text-rose-700">并查集:</strong> 高效处理动态连通性问题，判断两点是否在同一集合，或合并两个集合。</li>
+                                    <li><strong class="text-rose-700">最小生成树(MST):</strong> 用总权值最小的边连接图中所有点，Kruskal 算法是常用解法。</li>
+                                    <li><strong class="text-rose-700">拓扑排序:</strong> 解决有向无环图(DAG)中的任务依赖关系排序问题。</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 算法详解 Section -->
+            <section id="deep-dive" class="content-section space-y-8">
+                 <!-- DSU -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">并查集 (Disjoint Set Union)</h3>
+                    <p class="text-gray-700 mb-4">并查集是一种维护集合关系的数据结构，支持两种操作：`find` (查找元素所属集合的代表) 和 `union` (合并两个集合)。通过“路径压缩”和“按秩合并”优化，其单次操作时间可接近 O(1)。</p>
+                    <div class="code-block">
+                       <button class="copy-btn" onclick="copyCode('dsu-code')">复制</button>
+                       <pre><code id="dsu-code">int parent[N];
+int sz[N]; // 按秩合并（按大小）
+
+void make_set(int v) {
+    parent[v] = v;
+    sz[v] = 1;
+}
+
+int find_set(int v) {
+    if (v == parent[v])
+        return v;
+    // 路径压缩
+    return parent[v] = find_set(parent[v]);
+}
+
+void union_sets(int a, int b) {
+    a = find_set(a);
+    b = find_set(b);
+    if (a != b) {
+        // 按秩合并
+        if (sz[a] < sz[b])
+            std::swap(a, b);
+        parent[b] = a;
+        sz[a] += sz[b];
+    }
+}</code></pre>
+                   </div>
+                </div>
+
+                <!-- Dijkstra -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">Dijkstra算法：单源最短路径</h3>
+                    <p class="text-gray-700 mb-4">Dijkstra算法采用贪心策略，每次从未确定最短路径的节点中，选取距离源点最近的一个，并用它来更新（“松弛”）其邻居到源点的距离。重复此过程，直到所有节点的最短路径都确定。</p>
+                    <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <div>
+                           <h4 class="text-lg font-semibold mb-2">可视化演示 (源点: 0)</h4>
+                           <button id="run-dijkstra" class="w-full px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 transition mb-4">运行动画</button>
+                           <div id="dijkstra-graph" class="graph-container"></div>
+                           <p id="dijkstra-status" class="text-center font-semibold mt-2 h-6"></p>
+                        </div>
+                        <div>
+                           <h4 class="text-lg font-semibold mb-2">C++ 核心代码 (堆优化)</h4>
+                           <div class="code-block">
+                               <button class="copy-btn" onclick="copyCode('dijkstra-code')">复制</button>
+                               <pre><code id="dijkstra-code">struct Edge { int to, weight; };
+std::vector<Edge> adj[N];
+int dist[N];
+bool visited[N];
+
+void dijkstra(int start_node) {
+    std::fill(dist, dist + N, 1e9);
+    dist[start_node] = 0;
+    
+    // pair<distance, node>
+    std::priority_queue<std::pair<int, int>, 
+                        std::vector<std::pair<int, int>>, 
+                        std::greater<std::pair<int, int>>> pq;
+    pq.push({0, start_node});
+
+    while (!pq.empty()) {
+        int u = pq.top().second;
+        pq.pop();
+        
+        if (visited[u]) continue;
+        visited[u] = true;
+        
+        for (auto& edge : adj[u]) {
+            int v = edge.to;
+            int weight = edge.weight;
+            if (dist[u] + weight < dist[v]) {
+                dist[v] = dist[u] + weight;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}</code></pre>
+                           </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Kruskal -->
+                 <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">Kruskal算法：最小生成树 (MST)</h3>
+                    <p class="text-gray-700 mb-4">Kruskal算法同样是贪心策略。它将所有边按权重从小到大排序，然后依次遍历这些边。如果一条边的两个端点不在同一个连通分量中（用并查集判断），就选择这条边，并合并这两个连通分量。重复此过程，直到选出 N-1 条边为止。</p>
+                    <div class="grid md:grid-cols-2 gap-8 items-start">
+                        <div>
+                           <h4 class="text-lg font-semibold mb-2">可视化演示</h4>
+                           <button id="run-kruskal" class="w-full px-4 py-2 bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition mb-4">运行动画</button>
+                           <div id="kruskal-graph" class="graph-container"></div>
+                           <p id="kruskal-status" class="text-center font-semibold mt-2 h-6"></p>
+                        </div>
+                        <div>
+                           <h4 class="text-lg font-semibold mb-2">C++ 核心代码</h4>
+                           <div class="code-block">
+                               <button class="copy-btn" onclick="copyCode('kruskal-code')">复制</button>
+                               <pre><code id="kruskal-code">struct Edge {
+    int u, v, weight;
+    bool operator<(const Edge& other) const {
+        return weight < other.weight;
+    }
+};
+
+std::vector<Edge> edges;
+int parent[N]; // 并查集数组
+
+int find_set(int v) { /* ... */ }
+void union_sets(int a, int b) { /* ... */ }
+
+int kruskal() {
+    std::sort(edges.begin(), edges.end());
+    for (int i = 1; i <= N; ++i) make_set(i);
+    
+    int mst_weight = 0;
+    int edges_count = 0;
+    
+    for (auto& edge : edges) {
+        if (find_set(edge.u) != find_set(edge.v)) {
+            mst_weight += edge.weight;
+            union_sets(edge.u, edge.v);
+            edges_count++;
+            if (edges_count == N - 1) break;
+        }
+    }
+    return mst_weight;
+}</code></pre>
+                           </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Advanced Tree/Graph Algos -->
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                    <h3 class="text-2xl font-bold mb-4">高级树图算法 (S组重点)</h3>
+                    <div class="space-y-6">
+                        <!-- Tree Diameter -->
+                        <div class="grid md:grid-cols-2 gap-8 items-start">
+                             <div>
+                                <h4 class="text-xl font-semibold text-gray-800 mb-2">树的直径与重心</h4>
+                                <p class="text-sm text-gray-600 mb-2">**树的直径**是树中最远两点间的距离。有两种常见求法：1. 两次DFS/BFS：任选一点u，找到离它最远的点v，再找到离v最远的点w，vw的距离即为直径。2. 树形DP：对每个点u，求出经过它的最长路径（其子树中最深和次深的两个叶子到u的路径之和），所有u的结果取最大值。</p>
+                                <p class="text-sm text-gray-600">**树的重心**是指删除该点后，剩余各个连通块中节点数最多的那个连通块，其节点数最小。这个点能使树的“平衡性”最好。</p>
+                            </div>
+                            <div class="code-block text-sm">
+                               <button class="copy-btn" onclick="copyCode('diameter-code')">复制</button>
+                               <pre><code id="diameter-code">// 树形DP求直径
+int max_dist = 0;
+// f[u]表示以u为根的子树中，从u出发向下的最长路径
+int f[N]; 
+
+void tree_dp(int u, int fa) {
+    f[u] = 0;
+    for (auto& edge : adj[u]) {
+        int v = edge.to;
+        if (v == fa) continue;
+        tree_dp(v, u);
+        // 经过u的最长链 = u向下最长链 + u向下`次`长链
+        max_dist = std::max(max_dist, f[u] + f[v] + edge.weight);
+        // 更新u向下的最长链
+        f[u] = std::max(f[u], f[v] + edge.weight);
+    }
+}
+</code></pre>
+                            </div>
+                        </div>
+                        <hr>
+                        <!-- LCA -->
+                         <div class="grid md:grid-cols-2 gap-8 items-start">
+                             <div>
+                                <h4 class="text-xl font-semibold text-gray-800 mb-2">最近公共祖先 (LCA)</h4>
+                                <p class="text-sm text-gray-600 mb-2">两点`u, v`的LCA是指在树中离根最远的、同时是`u`和`v`的祖先的节点。**倍增法**是常用解法：预处理`fa[i][j]`表示节点`i`向上走`2^j`步到达的祖先。查询时，先将两点调到同一深度，再一起向上跳，直到它们的父节点相同。</p>
+                                <div class="diagram-container text-xs">
+                                    <p>`fa[i][j] = fa[ fa[i][j-1] ][j-1]`</p>
+                                    <p>i 向上 2<sup>j</sup> 步 = (i 向上 2<sup>j-1</sup> 步) 再向上 2<sup>j-1</sup> 步</p>
+                                </div>
+                            </div>
+                            <div class="code-block text-sm">
+                               <button class="copy-btn" onclick="copyCode('lca-code')">复制</button>
+                               <pre><code id="lca-code">// fa[i][j]: i向上2^j步的祖先
+// dep[i]: i的深度
+int fa[N][20], dep[N];
+
+void dfs_lca(int u, int p) {
+    dep[u] = dep[p] + 1;
+    fa[u][0] = p;
+    for (int i = 1; (1 << i) <= dep[u]; ++i) {
+        fa[u][i] = fa[fa[u][i-1]][i-1];
+    }
+    for (int v : adj[u]) {
+        if (v != p) dfs_lca(v, u);
+    }
+}
+
+int lca(int u, int v) {
+    if (dep[u] < dep[v]) std::swap(u, v);
+    for (int i = 19; i >= 0; --i) {
+        if (dep[u] - (1 << i) >= dep[v]) u = fa[u][i];
+    }
+    if (u == v) return u;
+    for (int i = 19; i >= 0; --i) {
+        if (fa[u][i] != fa[v][i]) {
+            u = fa[u][i];
+            v = fa[v][i];
+        }
+    }
+    return fa[u][0];
+}
+</code></pre>
+                            </div>
+                        </div>
+                        <hr>
+                        <!-- SCC -->
+                         <div class="grid md:grid-cols-2 gap-8 items-start">
+                             <div>
+                                <h4 class="text-xl font-semibold text-gray-800 mb-2">强连通分量 (SCC)</h4>
+                                <p class="text-sm text-gray-600 mb-2">在有向图中，若两点`u, v`能相互到达，则称它们强连通。图中的极大强连通子图即为强连通分量(SCC)。**Tarjan算法**是经典解法，通过DFS，维护`dfn`（时间戳）和`low`（能追溯到的最早时间戳）两个数组，当`dfn[u] == low[u]`时，就找到了一个SCC的根。</p>
+                                <div class="diagram-container text-xs">
+                                    <p>`low[u] = min(low[u], low[v])` // u通过子节点v能追溯</p>
+                                    <p>`low[u] = min(low[u], dfn[v])` // u有边直达已访问的v</p>
+                                </div>
+                            </div>
+                            <div class="code-block text-sm">
+                               <button class="copy-btn" onclick="copyCode('scc-code')">复制</button>
+                               <pre><code id="scc-code">int dfn[N], low[N], scc_cnt, timestamp;
+int sccno[N]; // 每个点所属SCC编号
+std::stack<int> s;
+
+void tarjan(int u) {
+    dfn[u] = low[u] = ++timestamp;
+    s.push(u);
+    for (int v : adj[u]) {
+        if (!dfn[v]) { // 未访问
+            tarjan(v);
+            low[u] = std::min(low[u], low[v]);
+        } else if (!sccno[v]) { // 已访问但在栈中
+            low[u] = std::min(low[u], dfn[v]);
+        }
+    }
+    if (dfn[u] == low[u]) {
+        scc_cnt++;
+        while (true) {
+            int x = s.top(); s.pop();
+            sccno[x] = scc_cnt;
+            if (x == u) break;
+        }
+    }
+}
+</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            
+            <!-- 实战演练 Section -->
+            <section id="practice" class="content-section">
+                <div class="bg-white p-6 md:p-8 rounded-lg shadow-md space-y-8">
+                     <div>
+                        <h2 class="text-3xl font-bold mb-4">下午实战练习</h2>
+                        <div class="grid md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P3371 【模板】单源最短路径</h4>
+                                <p class="text-sm text-gray-600 my-2">练习堆优化的 Dijkstra 算法。</p>
+                                <span class="text-xs font-semibold bg-blue-200 text-blue-800 px-2 py-1 rounded-full">Dijkstra</span>
+                                <a href="https://www.luogu.com.cn/problem/P3371" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                            <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P3366 【模板】最小生成树</h4>
+                                <p class="text-sm text-gray-600 my-2">练习 Kruskal 算法和并查集。</p>
+                                <span class="text-xs font-semibold bg-green-200 text-green-800 px-2 py-1 rounded-full">Kruskal+DSU</span>
+                                <a href="https://www.luogu.com.cn/problem/P3366" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                             <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1339 [USACO09JAN] 热浪</h4>
+                                <p class="text-sm text-gray-600 my-2">Dijkstra 的直接应用题。</p>
+                                <span class="text-xs font-semibold bg-blue-200 text-blue-800 px-2 py-1 rounded-full">Dijkstra</span>
+                                <a href="https://www.luogu.com.cn/problem/P1339" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                             <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1113 杂务</h4>
+                                <p class="text-sm text-gray-600 my-2">拓扑排序的经典应用，求完成所有任务的最短时间。</p>
+                                <span class="text-xs font-semibold bg-green-200 text-green-800 px-2 py-1 rounded-full">拓扑排序</span>
+                                <a href="https://www.luogu.com.cn/problem/P1113" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 transition">前往挑战</a>
+                            </div>
+                             <div class="border rounded-lg p-4 bg-orange-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1967 货车运输</h4>
+                                <p class="text-sm text-gray-600 my-2">最大生成树 + LCA。求两点间路径上最小边权的最大值。</p>
+                                <span class="text-xs font-semibold bg-orange-200 text-orange-800 px-2 py-1 rounded-full">MST+LCA</span>
+                                <a href="https://www.luogu.com.cn/problem/P1967" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">前往挑战</a>
+                            </div>
+                             <div class="border rounded-lg p-4 bg-orange-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P3387 【模板】缩点</h4>
+                                <p class="text-sm text-gray-600 my-2">练习 Tarjan 算法求强连通分量，并在缩点后的DAG上进行DP。</p>
+                                <span class="text-xs font-semibold bg-orange-200 text-orange-800 px-2 py-1 rounded-full">Tarjan+DP</span>
+                                <a href="https://www.luogu.com.cn/problem/P3387" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">前往挑战</a>
+                            </div>
+                            <div class="border rounded-lg p-4 bg-orange-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P3379 【模板】最近公共祖先(LCA)</h4>
+                                <p class="text-sm text-gray-600 my-2">练习倍增法求LCA。</p>
+                                <span class="text-xs font-semibold bg-orange-200 text-orange-800 px-2 py-1 rounded-full">LCA</span>
+                                <a href="https://www.luogu.com.cn/problem/P3379" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">前往挑战</a>
+                            </div>
+                            <div class="border rounded-lg p-4 bg-orange-50 hover:shadow-lg transition">
+                                <h4 class="font-bold text-lg">P1084 [NOIP2012 提高组] 疫情控制</h4>
+                                <p class="text-sm text-gray-600 my-2">二分答案 + 贪心 + LCA。综合性非常强的好题。</p>
+                                <span class="text-xs font-semibold bg-orange-200 text-orange-800 px-2 py-1 rounded-full">综合</span>
+                                <a href="https://www.luogu.com.cn/problem/P1084" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-orange-500 text-white rounded-lg hover:bg-orange-600 transition">前往挑战</a>
+                            </div>
+                        </div>
+                    </div>
+                     <div class="mt-8 p-6 bg-teal-50 rounded-lg border border-teal-200">
+                        <h3 class="text-2xl font-semibold text-teal-800 mb-4">训练建议</h3>
+                        <ul class="space-y-4">
+                            <li class="flex items-start">
+                                <span class="text-teal-600 font-bold mr-3">☞</span>
+                                <div><strong class="text-teal-700">建模抽象能力：</strong>图论题的难点往往不在于算法本身，而在于如何将问题描述转化为图论模型。多思考“什么可以看作点”、“什么关系可以看作边”，是解题的关键。</div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-teal-600 font-bold mr-3">☞</span>
+                                <div><strong class="text-teal-700">模板的组合与变形：</strong>高级的图论题常常是多种算法的结合，例如“最小生成树+LCA”、“Tarjan缩点+DP”。要熟练掌握每个模板，并思考它们之间如何联动解决更复杂的问题。</div>
+                            </li>
+                            <li class="flex items-start">
+                                <span class="text-teal-600 font-bold mr-3">☞</span>
+                                <div><strong class="text-teal-700">一题多解，触类旁通：</strong>很多图论问题有多种解法（如最短路可用Dijkstra/SPFA/Floyd）。尝试用不同方法解决同一问题，比较它们的优劣和适用场景，能极大地加深对算法本质的理解。</div>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+<script>
+    const sleep = ms => new Promise(res => setTimeout(res, ms));
+    let isAnimating = false;
+
+    // --- Tab Navigation ---
+    const tabs = document.querySelectorAll('.tab-btn');
+    const sections = document.querySelectorAll('.content-section');
+    tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+            if (isAnimating) return;
+            tabs.forEach(t => t.classList.remove('active'));
+            sections.forEach(s => s.classList.remove('active'));
+            tab.classList.add('active');
+            document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+    });
+
+    // --- Code Copy ---
+    function copyCode(elementId) {
+        const codeElement = document.getElementById(elementId);
+        navigator.clipboard.writeText(codeElement.innerText).then(() => {
+            const btn = codeElement.previousElementSibling;
+            const originalText = btn.innerText;
+            btn.innerText = '已复制!';
+            setTimeout(() => { btn.innerText = originalText; }, 2000);
+        });
+    }
+    
+    // --- Graph Visualization Logic ---
+    class GraphVisualizer {
+        constructor(containerId, statusId, nodes, edges) {
+            this.container = document.getElementById(containerId);
+            this.status = document.getElementById(statusId);
+            this.nodes = nodes;
+            this.edges = edges;
+            this.nodeElements = {};
+            this.edgeElements = {};
+        }
+
+        draw() {
+            this.container.innerHTML = '';
+            this.nodeElements = {};
+            this.edgeElements = {};
+
+            this.edges.forEach((edge) => {
+                if (edge.from >= edge.to && this.container.id === 'kruskal-graph') return;
+                const n1 = this.nodes[edge.from];
+                const n2 = this.nodes[edge.to];
+                const angle = Math.atan2(n2.y - n1.y, n2.x - n1.x) * 180 / Math.PI;
+                const length = Math.sqrt(Math.pow(n2.x - n1.x, 2) + Math.pow(n2.y - n1.y, 2));
+
+                const edgeEl = document.createElement('div');
+                edgeEl.id = `${this.container.id}-edge-${edge.from}-${edge.to}`;
+                edgeEl.className = 'graph-edge';
+                edgeEl.style.left = `${n1.x}px`;
+                edgeEl.style.top = `${n1.y}px`;
+                edgeEl.style.width = `${length}px`;
+                edgeEl.style.transform = `rotate(${angle}deg)`;
+                this.container.appendChild(edgeEl);
+                this.edgeElements[`${edge.from}-${edge.to}`] = edgeEl;
+
+                const label = document.createElement('div');
+                label.className = 'edge-label';
+                label.innerText = edge.weight;
+                label.style.left = `${(n1.x + n2.x)/2 - 5}px`;
+                label.style.top = `${(n1.y + n2.y)/2 - 10}px`;
+                this.container.appendChild(label);
+            });
+
+            this.nodes.forEach((node, i) => {
+                const nodeEl = document.createElement('div');
+                nodeEl.id = `${this.container.id}-node-${i}`;
+                nodeEl.className = 'graph-node';
+                nodeEl.style.left = `${node.x}px`;
+                nodeEl.style.top = `${node.y}px`;
+                nodeEl.innerHTML = `${i}<br><span class="text-xs">(∞)</span>`;
+                this.container.appendChild(nodeEl);
+                this.nodeElements[i] = nodeEl;
+            });
+        }
+    }
+
+    // --- Dijkstra's Algorithm ---
+    const dijkstraNodes = [
+        {x: 50, y: 175}, {x: 150, y: 50}, {x: 150, y: 300}, 
+        {x: 250, y: 50}, {x: 250, y: 300}, {x: 350, y: 175}
+    ];
+    const dijkstraEdges = [
+        {from: 0, to: 1, weight: 7}, {from: 0, to: 2, weight: 9},
+        {from: 1, to: 0, weight: 7}, {from: 1, to: 3, weight: 10}, {from: 1, to: 2, weight: 15},
+        {from: 2, to: 0, weight: 9}, {from: 2, to: 1, weight: 15}, {from: 2, to: 4, weight: 11},
+        {from: 3, to: 1, weight: 10}, {from: 3, to: 4, weight: 2}, {from: 3, to: 5, weight: 6},
+        {from: 4, to: 2, weight: 11}, {from: 4, to: 3, weight: 2}, {from: 4, to: 5, weight: 9},
+        {from: 5, to: 3, weight: 6}, {from: 5, to: 4, weight: 9}
+    ];
+    const dijkstraVis = new GraphVisualizer('dijkstra-graph', 'dijkstra-status', dijkstraNodes, dijkstraEdges);
+
+    async function animateDijkstra() {
+        if (isAnimating) return;
+        isAnimating = true;
+        dijkstraVis.draw();
+        dijkstraVis.status.innerText = "动画开始...";
+
+        const dist = Array(dijkstraNodes.length).fill(Infinity);
+        const visited = Array(dijkstraNodes.length).fill(false);
+        const adj = Array.from({length: dijkstraNodes.length}, () => []);
+        dijkstraEdges.forEach(e => adj[e.from].push({ to: e.to, weight: e.weight }));
+
+        const startNode = 0;
+        dist[startNode] = 0;
+        dijkstraVis.nodeElements[startNode].innerHTML = `${startNode}<br><span class="text-xs">(0)</span>`;
+        dijkstraVis.nodeElements[startNode].classList.add('source');
+
+        const pq = [{ dist: 0, node: startNode }];
+
+        while (pq.length > 0) {
+            pq.sort((a, b) => a.dist - b.dist);
+            const { node: u } = pq.shift();
+
+            if (visited[u]) continue;
+            
+            dijkstraVis.status.innerText = `选择距离最短的节点: ${u} (距离=${dist[u]})`;
+            dijkstraVis.nodeElements[u].classList.add('current');
+            await sleep(1500);
+
+            visited[u] = true;
+            dijkstraVis.nodeElements[u].classList.remove('current');
+            dijkstraVis.nodeElements[u].classList.add('visited');
+
+            for (const { to: v, weight } of adj[u]) {
+                const edgeKey = `${u}-${v}`;
+                if (!visited[v] && dist[u] + weight < dist[v]) {
+                     dijkstraVis.status.innerText = `松弛节点 ${v}: ${dist[u]} + ${weight} < ${dist[v] === Infinity ? '∞' : dist[v]}`;
+                     if(dijkstraVis.edgeElements[edgeKey]) dijkstraVis.edgeElements[edgeKey].classList.add('checking');
+                     await sleep(1500);
+
+                    dist[v] = dist[u] + weight;
+                    dijkstraVis.nodeElements[v].innerHTML = `${v}<br><span class="text-xs">(${dist[v]})</span>`;
+                    pq.push({ dist: dist[v], node: v });
+                     if(dijkstraVis.edgeElements[edgeKey]) dijkstraVis.edgeElements[edgeKey].classList.remove('checking');
+                }
+            }
+        }
+        dijkstraVis.status.innerText = "完成！所有节点最短路径已找到。";
+        isAnimating = false;
+    }
+
+    // --- Kruskal's Algorithm ---
+    const kruskalVis = new GraphVisualizer('kruskal-graph', 'kruskal-status', dijkstraNodes, dijkstraEdges);
+    let dsuParent = [];
+    
+    function dsu_make_set(v) { dsuParent[v] = v; }
+    function dsu_find_set(v) {
+        if (v === dsuParent[v]) return v;
+        return dsuParent[v] = dsu_find_set(dsuParent[v]);
+    }
+    function dsu_union_sets(a, b) {
+        a = dsu_find_set(a);
+        b = dsu_find_set(b);
+        if (a !== b) dsuParent[b] = a;
+    }
+
+    async function animateKruskal() {
+        if (isAnimating) return;
+        isAnimating = true;
+        kruskalVis.draw();
+        kruskalVis.status.innerText = "动画开始，边按权重排序...";
+        
+        dsuParent = Array.from({length: kruskalVis.nodes.length}, (_, i) => i);
+        const sortedEdges = [...kruskalVis.edges].sort((a, b) => a.weight - b.weight);
+        
+        await sleep(1000);
+
+        let mstWeight = 0;
+        let edgeCount = 0;
+
+        for (const edge of sortedEdges) {
+            if (edge.from >= edge.to) continue;
+
+            const edgeKey = `${edge.from}-${edge.to}`;
+            const edgeEl = kruskalVis.edgeElements[edgeKey];
+            edgeEl.classList.add('checking');
+            kruskalVis.status.innerText = `检查边 (${edge.from}, ${edge.to}) 权重: ${edge.weight}`;
+            await sleep(1500);
+
+            if (dsu_find_set(edge.from) !== dsu_find_set(edge.to)) {
+                kruskalVis.status.innerText = `节点 ${edge.from} 和 ${edge.to} 不在同一集合，选择此边`;
+                dsu_union_sets(edge.from, edge.to);
+                mstWeight += edge.weight;
+                edgeCount++;
+                edgeEl.classList.remove('checking');
+                edgeEl.classList.add('in-mst');
+                kruskalVis.nodeElements[edge.from].classList.add('visited');
+                kruskalVis.nodeElements[edge.to].classList.add('visited');
+                await sleep(1500);
+            } else {
+                kruskalVis.status.innerText = `节点 ${edge.from} 和 ${edge.to} 已连通，跳过此边`;
+                edgeEl.classList.remove('checking');
+                edgeEl.classList.add('rejected');
+                await sleep(1500);
+            }
+
+            if (edgeCount === kruskalVis.nodes.length - 1) break;
+        }
+        kruskalVis.status.innerText = `完成！最小生成树总权重: ${mstWeight}`;
+        isAnimating = false;
+    }
+
+    // --- Event Listeners ---
+    document.getElementById('run-dijkstra').addEventListener('click', animateDijkstra);
+    document.getElementById('run-kruskal').addEventListener('click', animateKruskal);
+
+    // --- Initial Load ---
+    window.onload = () => {
+        dijkstraVis.draw();
+        kruskalVis.draw();
+    };
+</script>
+
+</body>
+</html>
+
