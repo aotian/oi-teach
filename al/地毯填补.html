@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>地毯填补问题 - 交互式求解器</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* 自定义过渡效果，让颜色变化更平滑 */
+        .cell {
+            transition: background-color 0.3s ease-in-out, transform 0.3s ease-in-out;
+        }
+        .highlight {
+            background-color: rgba(253, 224, 71, 0.5) !important; /* 黄色高亮，带透明度 */
+            box-shadow: inset 0 0 10px #facc15;
+            transform: scale(0.98);
+        }
+        /* 当按钮被禁用时，提供更清晰的视觉反馈 */
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 flex flex-col items-center justify-center min-h-screen p-4 font-sans">
+
+    <div class="w-full max-w-6xl bg-white rounded-xl shadow-lg p-6 md:p-8">
+        <div class="text-center mb-6">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-800">地毯填补问题</h1>
+            <p class="text-slate-500 mt-2">一个经典的分治算法 (Divide and Conquer) 可视化</p>
+        </div>
+
+        <!-- 主内容区，采用flex布局，大屏幕上左右排列 -->
+        <div class="flex flex-col md:flex-row gap-8">
+
+            <!-- 左侧控制面板 -->
+            <div class="flex flex-col gap-6 md:w-80 flex-shrink-0">
+                <!-- 控制面板 1: 尺寸与生成 -->
+                <div class="bg-slate-50 p-4 rounded-lg">
+                    <div class="flex flex-col mb-4">
+                        <label for="k-slider" class="text-sm font-medium text-slate-600 mb-2">选择棋盘大小 (k值): <span id="k-value" class="font-bold text-blue-600">3</span> (8x8)</label>
+                        <input id="k-slider" type="range" min="1" max="5" value="3" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer">
+                    </div>
+                    <div class="grid grid-cols-2 gap-3">
+                        <button id="generate-btn" class="w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition">生成棋盘</button>
+                        <button id="reset-btn" class="w-full bg-slate-500 hover:bg-slate-600 text-white font-bold py-2 px-4 rounded-lg transition">重置</button>
+                    </div>
+                </div>
+
+                <!-- 控制面板 2: 求解操作 -->
+                <div class="bg-slate-50 p-4 rounded-lg">
+                     <div class="grid grid-cols-2 gap-3 mb-4">
+                         <button id="solve-step-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition" disabled>下一步</button>
+                        <button id="solve-instant-btn" class="w-full bg-teal-500 hover:bg-teal-600 text-white font-bold py-2 px-4 rounded-lg transition" disabled>立即求解</button>
+                    </div>
+                    <div id="status-message" class="text-center text-sm text-slate-700 bg-blue-100 border-l-4 border-blue-500 p-3 rounded-r-lg">
+                        请先生成棋盘，然后点击一个方格作为特殊块。
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧棋盘容器 -->
+            <div class="flex-1 flex justify-center items-center">
+                <div id="board-container" class="w-full grid bg-slate-200 p-2 rounded-lg" style="aspect-ratio: 1/1; max-width: 400px;">
+                    <!-- 棋盘将通过JS动态生成在这里 -->
+                </div>
+            </div>
+
+        </div>
+    </div>
+
+    <script>
+        // --- 全局变量和DOM元素引用 ---
+        const kSlider = document.getElementById('k-slider');
+        const kValueSpan = document.getElementById('k-value');
+        const generateBtn = document.getElementById('generate-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const solveStepBtn = document.getElementById('solve-step-btn');
+        const solveInstantBtn = document.getElementById('solve-instant-btn');
+        const boardContainer = document.getElementById('board-container');
+        const statusMessage = document.getElementById('status-message');
+
+        let k = 3;
+        let boardSize = 8;
+        let defectCell = null; // 特殊方格 {r, c}
+        let tileId = 0;
+        let stepsQueue = []; // 存储可视化步骤的队列
+        let isSolving = false;
+        let colors = [];
+
+        // --- 初始化 ---
+        document.addEventListener('DOMContentLoaded', () => {
+            setupEventListeners();
+            generateBoard();
+        });
+
+        function setupEventListeners() {
+            kSlider.addEventListener('input', () => {
+                k = parseInt(kSlider.value);
+                boardSize = 2 ** k;
+                kValueSpan.textContent = `${k} (${boardSize}x${boardSize})`;
+            });
+            kSlider.addEventListener('change', generateBoard);
+            generateBtn.addEventListener('click', generateBoard);
+            resetBtn.addEventListener('click', generateBoard);
+            solveStepBtn.addEventListener('click', processNextStep);
+            solveInstantBtn.addEventListener('click', solveInstantly);
+        }
+
+        // --- 核心功能函数 ---
+
+        function generateBoard() {
+            boardSize = 2 ** k;
+            boardContainer.innerHTML = '';
+            boardContainer.style.gridTemplateColumns = `repeat(${boardSize}, 1fr)`;
+
+            for (let i = 0; i < boardSize * boardSize; i++) {
+                const cell = document.createElement('div');
+                cell.classList.add('cell', 'border', 'border-slate-300');
+                cell.style.aspectRatio = '1/1';
+                cell.dataset.r = Math.floor(i / boardSize);
+                cell.dataset.c = i % boardSize;
+                cell.addEventListener('click', handleCellClick);
+                boardContainer.appendChild(cell);
+            }
+            resetState();
+        }
+        
+        function resetState() {
+            isSolving = false;
+            defectCell = null;
+            tileId = 0;
+            stepsQueue = [];
+            colors = generateColors((boardSize * boardSize) / 3);
+            
+            statusMessage.textContent = '请在棋盘上点击一个方格，将其设为特殊方格。';
+            solveStepBtn.disabled = true;
+            solveInstantBtn.disabled = true;
+            kSlider.disabled = false;
+            generateBtn.disabled = false;
+        }
+
+        function handleCellClick(event) {
+            if (defectCell || isSolving) return; // 如果已经选择或正在求解，则不响应
+
+            const r = parseInt(event.target.dataset.r);
+            const c = parseInt(event.target.dataset.c);
+            defectCell = { r, c };
+
+            event.target.style.backgroundColor = '#334155'; // 深灰色
+            event.target.classList.add('defect');
+
+            statusMessage.textContent = `特殊方格已选定在 (${r}, ${c})。现在可以开始求解。`;
+            solveStepBtn.disabled = false;
+            solveInstantBtn.disabled = false;
+            kSlider.disabled = true;
+            generateBtn.disabled = true;
+
+            // 生成求解步骤
+            generateSolveSteps(0, 0, r, c, boardSize);
+        }
+
+        function generateSolveSteps(tr, tc, dr, dc, size) {
+            if (size === 1) return;
+
+            const currentTileId = ++tileId;
+            const s = size / 2;
+            const color = colors[currentTileId % colors.length];
+
+            // 1. 高亮当前处理的大区域
+            stepsQueue.push({ type: 'highlight', tr, tc, size });
+            
+            // 2. 决定中心L形地毯的位置，并生成放置步骤
+            const centerPositions = [];
+            
+            // 判断特殊方格在哪个象限，然后填充其他三个象限的中心位置
+            if (dr < tr + s && dc < tc + s) { // 左上象限
+                centerPositions.push({r: tr + s - 1, c: tc + s}, {r: tr + s, c: tc + s - 1}, {r: tr + s, c: tc + s});
+            } else if (dr < tr + s && dc >= tc + s) { // 右上象限
+                centerPositions.push({r: tr + s - 1, c: tc + s - 1}, {r: tr + s, c: tc + s - 1}, {r: tr + s, c: tc + s});
+            } else if (dr >= tr + s && dc < tc + s) { // 左下象限
+                centerPositions.push({r: tr + s - 1, c: tc + s - 1}, {r: tr + s - 1, c: tc + s}, {r: tr + s, c: tc + s});
+            } else { // 右下象限
+                centerPositions.push({r: tr + s - 1, c: tc + s - 1}, {r: tr + s - 1, c: tc + s}, {r: tr + s, c: tc + s - 1});
+            }
+            stepsQueue.push({ type: 'place_tile', positions: centerPositions, color });
+            
+            // 3. 为四个子问题生成递归步骤
+            if (dr < tr + s && dc < tc + s) { // 左上
+                generateSolveSteps(tr, tc, dr, dc, s);
+                generateSolveSteps(tr, tc + s, tr + s - 1, tc + s, s);
+                generateSolveSteps(tr + s, tc, tr + s, tc + s - 1, s);
+                generateSolveSteps(tr + s, tc + s, tr + s, tc + s, s);
+            } else if (dr < tr + s && dc >= tc + s) { // 右上
+                generateSolveSteps(tr, tc, tr + s - 1, tc + s - 1, s);
+                generateSolveSteps(tr, tc + s, dr, dc, s);
+                generateSolveSteps(tr + s, tc, tr + s, tc + s - 1, s);
+                generateSolveSteps(tr + s, tc + s, tr + s, tc + s, s);
+            } else if (dr >= tr + s && dc < tc + s) { // 左下
+                generateSolveSteps(tr, tc, tr + s - 1, tc + s - 1, s);
+                generateSolveSteps(tr, tc + s, tr + s - 1, tc + s, s);
+                generateSolveSteps(tr + s, tc, dr, dc, s);
+                generateSolveSteps(tr + s, tc + s, tr + s, tc + s, s);
+            } else { // 右下
+                generateSolveSteps(tr, tc, tr + s - 1, tc + s - 1, s);
+                generateSolveSteps(tr, tc + s, tr + s - 1, tc + s, s);
+                generateSolveSteps(tr + s, tc, tr + s, tc + s - 1, s);
+                generateSolveSteps(tr + s, tc + s, dr, dc, s);
+            }
+             // 4. 取消高亮
+            stepsQueue.push({ type: 'clear_highlight', tr, tc, size });
+        }
+
+        // --- 可视化处理函数 ---
+
+        function processNextStep() {
+            if (stepsQueue.length === 0) {
+                statusMessage.textContent = '棋盘已完全覆盖！';
+                solveStepBtn.disabled = true;
+                solveInstantBtn.disabled = true;
+                return;
+            }
+            isSolving = true;
+
+            // 清除所有现有的高亮
+            document.querySelectorAll('.highlight').forEach(cell => cell.classList.remove('highlight'));
+
+            const step = stepsQueue.shift();
+            switch (step.type) {
+                case 'highlight':
+                    statusMessage.textContent = `分治：正在处理 ${step.size}x${step.size} 区域，左上角在 (${step.tr}, ${step.tc})。`;
+                    for (let r = step.tr; r < step.tr + step.size; r++) {
+                        for (let c = step.tc; c < step.tc + step.size; c++) {
+                            const cell = document.querySelector(`[data-r='${r}'][data-c='${c}']`);
+                            if (cell) cell.classList.add('highlight');
+                        }
+                    }
+                    break;
+                case 'place_tile':
+                    statusMessage.textContent = `征服：在中心放置一个 L 形地毯，为子问题创造“特殊方格”。`;
+                    step.positions.forEach(pos => {
+                        const cell = document.querySelector(`[data-r='${pos.r}'][data-c='${pos.c}']`);
+                        if (cell) {
+                            cell.style.backgroundColor = step.color;
+                        }
+                    });
+                    break;
+                case 'clear_highlight':
+                     statusMessage.textContent = `完成 ${step.size}x${step.size} 区域的处理。`;
+                     // 清除高亮的逻辑已在开头处理
+                    break;
+            }
+             if (stepsQueue.length === 0) {
+                statusMessage.textContent = '棋盘已完全覆盖！';
+                solveStepBtn.disabled = true;
+                solveInstantBtn.disabled = true;
+            }
+        }
+        
+        function solveInstantly() {
+            if (isSolving) return;
+             isSolving = true;
+             solveStepBtn.disabled = true;
+             solveInstantBtn.disabled = true;
+
+             const intervalId = setInterval(() => {
+                if (stepsQueue.length > 0) {
+                    processNextStep();
+                } else {
+                    clearInterval(intervalId);
+                    isSolving = false;
+                     statusMessage.textContent = '棋盘已完全覆盖！';
+                }
+             }, 50); // 每50毫秒执行一步，形成动画
+        }
+
+        // --- 辅助函数 ---
+
+        function generateColors(count) {
+            const colors = [];
+            for (let i = 0; i < count; i++) {
+                // 使用 HSL 颜色模型可以生成视觉上更和谐的颜色
+                const hue = (i * 360 / count) % 360;
+                colors.push(`hsl(${hue}, 70%, 60%)`);
+            }
+            return colors;
+        }
+
+    </script>
+</body>
+</html>
+
