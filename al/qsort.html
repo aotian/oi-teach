@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式快速排序可视化</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+        }
+        .bar-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            min-height: 400px;
+            transition: all 0.3s ease;
+        }
+        .bar {
+            width: 20px;
+            margin: 0 2px;
+            display: inline-block;
+            transition: all 0.3s ease-in-out;
+            position: relative;
+        }
+        .bar-value {
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: 600;
+            color: #374151;
+        }
+        /* 状态颜色 */
+        .bar-default { background-color: #60a5fa; /* blue-400 */ }
+        .bar-pivot { background-color: #f87171; /* red-400 */ }
+        .bar-pointer-i { border: 2px solid #fb923c; /* orange-400 */ }
+        .bar-pointer-j { border: 2px solid #c084fc; /* purple-400 */ }
+        .bar-swap { background-color: #facc15; /* yellow-400 */ }
+        .bar-partition { background-color: #a78bfa; /* violet-400 */ }
+        .bar-sorted { background-color: #4ade80; /* green-400 */ }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">快速排序算法可视化</h1>
+            <p class="text-gray-600 mt-2">一个用于理解快速排序工作原理的交互式分步图示。</p>
+        </header>
+
+        <main class="bg-white rounded-xl shadow-lg p-4 md:p-6">
+            <!-- 数组可视化区域 -->
+            <div id="bar-container" class="bar-container border border-gray-200 rounded-lg p-4 mb-6"></div>
+
+            <!-- 信息面板 -->
+            <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0 md:space-x-4">
+                 <div class="w-full md:w-3/4">
+                    <p class="text-lg font-semibold">当前步骤说明:</p>
+                    <p id="explanation-text" class="text-gray-700 bg-gray-100 p-3 rounded-lg min-h-[50px] transition-colors duration-300">点击 "开始排序" 或 "下一步" 按钮开始。</p>
+                 </div>
+                 <div id="legend" class="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-sm">
+                    <span class="flex items-center"><span class="w-4 h-4 rounded-full bg-[#f87171] mr-2"></span>主元</span>
+                    <span class="flex items-center"><span class="w-4 h-4 rounded-full border-2 border-[#fb923c] mr-2"></span>左指针 (i)</span>
+                    <span class="flex items-center"><span class="w-4 h-4 rounded-full border-2 border-[#c084fc] mr-2"></span>右指针 (j)</span>
+                    <span class="flex items-center"><span class="w-4 h-4 rounded-full bg-[#4ade80] mr-2"></span>已排序</span>
+                 </div>
+            </div>
+
+            <!-- 控制面板 -->
+            <div class="controls-panel grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+                <button id="randomize-btn" class="col-span-2 md:col-span-1 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">生成随机数组</button>
+                <button id="sort-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">开始排序</button>
+                <button id="next-step-btn" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">下一步</button>
+                <button id="reset-btn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">重置</button>
+                <div class="col-span-2 md:col-span-1 flex items-center justify-center space-x-2">
+                    <label for="speed-slider" class="font-medium text-sm">速度:</label>
+                    <input type="range" id="speed-slider" min="50" max="1000" value="500" class="w-full">
+                </div>
+            </div>
+        </main>
+        
+        <footer class="text-center mt-8 text-gray-500">
+            <p>由 Gemini 构建</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM 元素获取
+        const barContainer = document.getElementById('bar-container');
+        const randomizeBtn = document.getElementById('randomize-btn');
+        const sortBtn = document.getElementById('sort-btn');
+        const nextStepBtn = document.getElementById('next-step-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const speedSlider = document.getElementById('speed-slider');
+        const explanationText = document.getElementById('explanation-text');
+
+        // 全局状态变量
+        let originalArray = [];
+        let displayArray = [];
+        let steps = [];
+        let currentStep = -1;
+        let timeoutId = null;
+        let isSorting = false;
+
+        // 初始化函数
+        function init() {
+            generateRandomArray();
+        }
+
+        // 生成随机数组
+        function generateRandomArray(size = 20) {
+            originalArray = Array.from({ length: size }, () => Math.floor(Math.random() * 90) + 10);
+            resetState();
+        }
+
+        // 重置状态
+        function resetState() {
+            clearTimeout(timeoutId);
+            isSorting = false;
+            steps = [];
+            currentStep = -1;
+            displayArray = [...originalArray];
+            renderArray(displayArray);
+            explanationText.textContent = '数组已重置。点击 "开始排序" 或 "下一步"。';
+            toggleButtons(true);
+        }
+
+        // 渲染数组
+        function renderArray(arr, highlights = {}) {
+            barContainer.innerHTML = '';
+            arr.forEach((value, index) => {
+                const bar = document.createElement('div');
+                bar.style.height = `${value * 4}px`;
+                bar.classList.add('bar');
+                
+                // 添加数值显示
+                const valueSpan = document.createElement('span');
+                valueSpan.textContent = value;
+                valueSpan.classList.add('bar-value');
+                bar.appendChild(valueSpan);
+
+                // 根据高亮信息添加样式
+                let classes = ['bar-default'];
+                if (highlights.sorted && highlights.sorted.includes(index)) {
+                    classes = ['bar-sorted'];
+                } else if (highlights.pivot === index) {
+                    classes.push('bar-pivot');
+                } else if (highlights.swapping && highlights.swapping.includes(index)) {
+                    classes = ['bar-swap'];
+                } else if (highlights.partition && index >= highlights.partition[0] && index <= highlights.partition[1]) {
+                    classes.push('bar-partition');
+                }
+                
+                if (highlights.i === index) classes.push('bar-pointer-i');
+                if (highlights.j === index) classes.push('bar-pointer-j');
+                
+                bar.classList.add(...classes);
+                barContainer.appendChild(bar);
+            });
+        }
+
+        // 切换按钮可用状态
+        function toggleButtons(enabled) {
+            randomizeBtn.disabled = !enabled;
+            sortBtn.disabled = !enabled;
+            nextStepBtn.disabled = !enabled;
+            resetBtn.disabled = !enabled;
+        }
+
+        // 快速排序算法核心 (生成步骤)
+        function generateQuicksortSteps(arr) {
+            const tempArr = [...arr];
+            const localSteps = [];
+            const sortedIndices = [];
+
+            function partition(low, high) {
+                const pivot = tempArr[high];
+                let i = low - 1;
+
+                localSteps.push({
+                    array: [...tempArr],
+                    highlights: { pivot: high, partition: [low, high], i: i, sorted: [...sortedIndices] },
+                    explanation: `开始分区操作。范围: [${low}, ${high}]。选择 ${pivot} (索引 ${high}) 作为主元。`
+                });
+
+                for (let j = low; j < high; j++) {
+                    localSteps.push({
+                        array: [...tempArr],
+                        highlights: { pivot: high, i: i, j: j, partition: [low, high], sorted: [...sortedIndices] },
+                        explanation: `比较元素 ${tempArr[j]} (索引 ${j}) 和主元 ${pivot}。`
+                    });
+
+                    if (tempArr[j] < pivot) {
+                        i++;
+                        [tempArr[i], tempArr[j]] = [tempArr[j], tempArr[i]]; // Swap
+                        localSteps.push({
+                            array: [...tempArr],
+                            highlights: { pivot: high, i: i, j: j, swapping: [i, j], partition: [low, high], sorted: [...sortedIndices] },
+                            explanation: `${tempArr[j]} < ${pivot}，交换索引 ${i} 和 ${j} 的元素。`
+                        });
+                    }
+                }
+                
+                [tempArr[i + 1], tempArr[high]] = [tempArr[high], tempArr[i + 1]]; // Swap pivot to correct position
+                const pivotFinalIndex = i + 1;
+
+                localSteps.push({
+                    array: [...tempArr],
+                    highlights: { swapping: [pivotFinalIndex, high], sorted: [...sortedIndices] },
+                    explanation: `将主元 ${pivot} 移动到其最终位置 (索引 ${pivotFinalIndex})。`
+                });
+
+                sortedIndices.push(pivotFinalIndex);
+
+                localSteps.push({
+                    array: [...tempArr],
+                    highlights: { sorted: [...sortedIndices] },
+                    explanation: `主元 ${pivot} 已就位。分区完成。`
+                });
+
+                return pivotFinalIndex;
+            }
+
+            function quickSort(low, high) {
+                if (low < high) {
+                    const pi = partition(low, high);
+                    quickSort(low, pi - 1);
+                    quickSort(pi + 1, high);
+                } else if (low === high) {
+                     if(!sortedIndices.includes(low)) sortedIndices.push(low);
+                }
+            }
+
+            quickSort(0, tempArr.length - 1);
+            
+            localSteps.push({
+                array: [...tempArr],
+                highlights: { sorted: Array.from(Array(tempArr.length).keys()) },
+                explanation: `排序完成！`
+            });
+
+            return localSteps;
+        }
+
+        // 执行下一步
+        function performNextStep() {
+            if (currentStep >= steps.length - 1) {
+                isSorting = false;
+                toggleButtons(true);
+                return;
+            }
+            currentStep++;
+            const step = steps[currentStep];
+            renderArray(step.array, step.highlights);
+            explanationText.textContent = step.explanation;
+        }
+
+        // 开始自动排序
+        function startSort() {
+            if (isSorting) return;
+            if (currentStep < 0) {
+                 steps = generateQuicksortSteps(originalArray);
+            }
+            if (currentStep >= steps.length - 1) {
+                resetState();
+                steps = generateQuicksortSteps(originalArray);
+            }
+
+            isSorting = true;
+            toggleButtons(false);
+            
+            function autoStep() {
+                if (!isSorting || currentStep >= steps.length - 1) {
+                    isSorting = false;
+                    toggleButtons(true);
+                    // 完全排序后高亮所有
+                    if (steps.length > 0) {
+                       renderArray(steps[steps.length-1].array, steps[steps.length-1].highlights);
+                       explanationText.textContent = steps[steps.length-1].explanation;
+                    }
+                    return;
+                }
+                performNextStep();
+                const delay = 1050 - speedSlider.value;
+                timeoutId = setTimeout(autoStep, delay);
+            }
+            autoStep();
+        }
+        
+        // 事件监听
+        randomizeBtn.addEventListener('click', generateRandomArray);
+        resetBtn.addEventListener('click', resetState);
+        
+        nextStepBtn.addEventListener('click', () => {
+             if (currentStep < 0) {
+                 steps = generateQuicksortSteps(originalArray);
+             }
+             performNextStep();
+        });
+
+        sortBtn.addEventListener('click', startSort);
+        
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
