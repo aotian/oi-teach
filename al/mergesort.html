@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>交互式归并排序与逆序对计数</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+        }
+        .bar-container {
+            display: flex;
+            justify-content: center;
+            align-items: flex-end;
+            min-height: 250px;
+            transition: all 0.3s ease;
+            position: relative;
+            padding: 20px 0;
+        }
+        .bar {
+            width: 25px;
+            margin: 0 2px;
+            display: inline-block;
+            transition: all 0.3s ease-in-out;
+            position: relative;
+            background-color: #9ca3af; /* gray-400 */
+        }
+        .bar-value {
+            position: absolute;
+            top: -24px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: 600;
+            color: #374151;
+        }
+        .aux-container {
+            min-height: 150px;
+            border-top: 2px dashed #d1d5db;
+            margin-top: 20px;
+            padding-top: 20px;
+        }
+        /* 状态颜色 */
+        .bar-default { background-color: #60a5fa; /* blue-400 */ }
+        .bar-compare { background-color: #facc15; /* yellow-400 */ }
+        .bar-sorted { background-color: #4ade80; /* green-400 */ }
+        .bar-merging { background-color: #a78bfa; /* violet-400 */ }
+        .bar-inversion { background-color: #f87171; /* red-400 */ }
+
+        .sub-array-brace {
+            position: absolute;
+            bottom: -30px;
+            height: 20px;
+            border-bottom: 2px solid;
+            border-left: 2px solid;
+            border-right: 2px solid;
+            color: #ef4444; /* red-500 */
+            transition: all 0.3s ease-in-out;
+        }
+        .sub-array-brace::after {
+            content: attr(data-label);
+            position: absolute;
+            bottom: -22px;
+            left: 50%;
+            transform: translateX(-50%);
+            font-size: 12px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-gray-900">归并排序与逆序对计数</h1>
+            <p class="text-gray-600 mt-2">观察数组如何被递归拆分、合并排序，并同步计算逆序对数量。</p>
+        </header>
+
+        <main class="bg-white rounded-xl shadow-lg p-4 md:p-6">
+            <!-- 数组可视化区域 -->
+            <div id="bar-container" class="bar-container border border-gray-200 rounded-lg p-4 mb-6 overflow-x-auto"></div>
+            
+            <div id="aux-container" class="aux-container text-center hidden">
+                <h3 class="text-lg font-semibold mb-2">合并中... (左右两个已排序的子数组)</h3>
+                <div id="aux-bar-container" class="bar-container pt-4"></div>
+            </div>
+
+            <!-- 信息面板 -->
+            <div class="flex flex-col md:flex-row justify-between items-start mb-6 space-y-4 md:space-y-0 md:space-x-4">
+                 <div class="w-full md:w-2/3">
+                    <p class="text-lg font-semibold">当前步骤说明:</p>
+                    <p id="explanation-text" class="text-gray-700 bg-gray-100 p-3 rounded-lg min-h-[70px] transition-colors duration-300">点击 "开始排序" 或 "下一步" 按钮开始。</p>
+                 </div>
+                 <div class="w-full md:w-1/3 flex flex-col items-center">
+                    <div class="text-center mb-4">
+                        <p class="text-lg font-semibold">逆序对累计数量:</p>
+                        <p id="inversion-count" class="text-4xl font-bold text-indigo-600">0</p>
+                    </div>
+                    <div id="legend" class="flex flex-wrap justify-center items-center gap-x-4 gap-y-2 text-sm">
+                        <span class="flex items-center"><span class="w-4 h-4 rounded-full bg-[#a78bfa] mr-2"></span>合并中</span>
+                        <span class="flex items-center"><span class="w-4 h-4 rounded-full bg-[#facc15] mr-2"></span>比较中</span>
+                        <span class="flex items-center"><span class="w-4 h-4 rounded-full bg-[#f87171] mr-2"></span>逆序对</span>
+                        <span class="flex items-center"><span class="w-4 h-4 rounded-full bg-[#4ade80] mr-2"></span>已排序</span>
+                    </div>
+                 </div>
+            </div>
+
+            <!-- 控制面板 -->
+            <div class="controls-panel grid grid-cols-2 md:grid-cols-5 gap-4 text-center">
+                <button id="randomize-btn" class="col-span-2 md:col-span-1 w-full bg-blue-500 hover:bg-blue-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">生成随机数组</button>
+                <button id="sort-btn" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">开始排序</button>
+                <button id="next-step-btn" class="w-full bg-indigo-500 hover:bg-indigo-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">下一步</button>
+                <button id="reset-btn" class="w-full bg-gray-500 hover:bg-gray-600 text-white font-bold py-2 px-4 rounded-lg transition-transform transform hover:scale-105">重置</button>
+                <div class="col-span-2 md:col-span-1 flex items-center justify-center space-x-2">
+                    <label for="speed-slider" class="font-medium text-sm">速度:</label>
+                    <input type="range" id="speed-slider" min="50" max="1000" value="500" class="w-full">
+                </div>
+            </div>
+        </main>
+        
+        <footer class="text-center mt-8 text-gray-500">
+            <p>由 Gemini 构建</p>
+        </footer>
+    </div>
+
+    <script>
+        // DOM 元素获取
+        const barContainer = document.getElementById('bar-container');
+        const auxContainer = document.getElementById('aux-container');
+        const auxBarContainer = document.getElementById('aux-bar-container');
+        const randomizeBtn = document.getElementById('randomize-btn');
+        const sortBtn = document.getElementById('sort-btn');
+        const nextStepBtn = document.getElementById('next-step-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const speedSlider = document.getElementById('speed-slider');
+        const explanationText = document.getElementById('explanation-text');
+        const inversionCountEl = document.getElementById('inversion-count');
+
+        // 全局状态变量
+        let originalArray = [];
+        let steps = [];
+        let currentStep = -1;
+        let timeoutId = null;
+        let isSorting = false;
+
+        // 初始化
+        function init() {
+            generateRandomArray();
+        }
+
+        // 生成随机数组
+        function generateRandomArray(size = 12) {
+            originalArray = Array.from({ length: size }, () => Math.floor(Math.random() * 90) + 10);
+            resetState();
+        }
+
+        // 重置状态
+        function resetState() {
+            clearTimeout(timeoutId);
+            isSorting = false;
+            steps = [];
+            currentStep = -1;
+            renderArray({ array: [...originalArray], inversions: 0, highlights: {} });
+            explanationText.textContent = '数组已重置。点击 "开始排序" 或 "下一步"。';
+            toggleButtons(true);
+            auxContainer.classList.add('hidden');
+        }
+        
+        // 渲染单个数组的函数
+        function renderSingleArray(container, arr, highlights = {}) {
+            container.innerHTML = '';
+            if (!arr) return;
+
+            arr.forEach((value, index) => {
+                const bar = document.createElement('div');
+                bar.style.height = `${value * 2}px`;
+                bar.classList.add('bar');
+                
+                const valueSpan = document.createElement('span');
+                valueSpan.textContent = value;
+                valueSpan.classList.add('bar-value');
+                bar.appendChild(valueSpan);
+
+                let classes = ['bar-default'];
+                if (highlights.sortedRanges) {
+                    for (const range of highlights.sortedRanges) {
+                        if (index >= range[0] && index <= range[1]) {
+                            classes = ['bar-sorted'];
+                            break;
+                        }
+                    }
+                }
+                 if (highlights.merging && index >= highlights.merging[0] && index <= highlights.merging[1]) {
+                    classes = ['bar-merging'];
+                }
+                if (highlights.inversion && highlights.inversion.includes(index)) {
+                     classes.push('bar-inversion');
+                }
+                if (highlights.compare && highlights.compare.includes(index)) {
+                     classes.push('bar-compare');
+                }
+                
+                bar.classList.add(...classes);
+                container.appendChild(bar);
+            });
+        }
+
+        // 渲染主函数
+        function renderArray(step) {
+            renderSingleArray(barContainer, step.array, step.highlights);
+            inversionCountEl.textContent = step.inversions;
+            
+            if(step.auxiliary) {
+                auxContainer.classList.remove('hidden');
+                renderSingleArray(auxBarContainer, step.auxiliary, step.highlights.auxHighlights);
+            } else {
+                auxContainer.classList.add('hidden');
+            }
+
+            const existingBraces = barContainer.querySelectorAll('.sub-array-brace');
+            existingBraces.forEach(brace => brace.remove());
+
+            if (step.highlights && step.highlights.subArray) {
+                const range = step.highlights.subArray;
+                const brace = document.createElement('div');
+                brace.classList.add('sub-array-brace');
+                const barWidth = 25 + 4; // width + margin
+                const start = range[0] * barWidth;
+                const width = (range[1] - range[0] + 1) * barWidth;
+                brace.style.left = `calc(50% - ${(originalArray.length / 2) * barWidth}px + ${start}px)`;
+                brace.style.width = `${width}px`;
+                brace.setAttribute('data-label', `拆分/合并范围`);
+                barContainer.appendChild(brace);
+            }
+        }
+
+        function toggleButtons(enabled) {
+            randomizeBtn.disabled = !enabled;
+            sortBtn.disabled = !enabled;
+            nextStepBtn.disabled = !enabled;
+            resetBtn.disabled = !enabled;
+        }
+
+        function generateMergeSortSteps(arr) {
+            const localSteps = [];
+            const tempArr = [...arr];
+            const sortedRanges = [];
+            let totalInversions = 0;
+
+            function merge(l, m, r) {
+                const n1 = m - l + 1;
+                const n2 = r - m;
+                const L = new Array(n1);
+                const R = new Array(n2);
+
+                for (let i = 0; i < n1; i++) L[i] = tempArr[l + i];
+                for (let j = 0; j < n2; j++) R[j] = tempArr[m + 1 + j];
+
+                localSteps.push({
+                    array: [...tempArr],
+                    auxiliary: [...L, ...R],
+                    inversions: totalInversions,
+                    highlights: { subArray: [l, r], merging: [l,r], sortedRanges: [...sortedRanges], auxHighlights: {} },
+                    explanation: `准备合并左右两个已排序的子数组。左: [${L.join(', ')}], 右: [${R.join(', ')}]。`
+                });
+
+                let i = 0, j = 0, k = l;
+                while (i < n1 && j < n2) {
+                    localSteps.push({
+                        array: [...tempArr],
+                        auxiliary: [...L, ...R],
+                        inversions: totalInversions,
+                        highlights: { subArray: [l, r], merging: [l,r], sortedRanges: [...sortedRanges], auxHighlights: {compare: [i, n1 + j]} },
+                        explanation: `比较左数组的 ${L[i]} 和右数组的 ${R[j]}。`
+                    });
+
+                    if (L[i] <= R[j]) {
+                        tempArr[k] = L[i];
+                        localSteps.push({
+                            array: [...tempArr], auxiliary: [...L, ...R], inversions: totalInversions,
+                            highlights: { subArray: [l, r], merging: [l, k], sortedRanges: [...sortedRanges] },
+                            explanation: `${L[i]} <= ${R[j]}，将 ${L[i]} 放回原数组索引 ${k} 的位置。`
+                        });
+                        i++;
+                    } else {
+                        const inversionsFound = n1 - i;
+                        const remainingL = L.slice(i);
+                        totalInversions += inversionsFound;
+
+                        localSteps.push({
+                            array: [...tempArr], auxiliary: [...L, ...R], inversions: totalInversions,
+                            highlights: { subArray: [l, r], merging: [l, r], sortedRanges: [...sortedRanges], auxHighlights: {inversion: Array.from({length: remainingL.length}, (_, idx) => i + idx).concat(n1 + j)} },
+                            explanation: `${R[j]} < ${L[i]}！发现 ${inversionsFound} 个逆序对。(${R[j]} 与左数组中剩余的 [${remainingL.join(', ')}] 都构成逆序对)`
+                        });
+
+                        tempArr[k] = R[j];
+                        
+                        localSteps.push({
+                            array: [...tempArr], auxiliary: [...L, ...R], inversions: totalInversions,
+                            highlights: { subArray: [l, r], merging: [l, k], sortedRanges: [...sortedRanges] },
+                            explanation: `将 ${R[j]} 放回原数组索引 ${k} 的位置。`
+                        });
+                        j++;
+                    }
+                    k++;
+                }
+
+                while (i < n1) {
+                    tempArr[k] = L[i];
+                     localSteps.push({
+                        array: [...tempArr], inversions: totalInversions,
+                        highlights: { subArray: [l, r], merging: [l,k], sortedRanges: [...sortedRanges] },
+                        explanation: `将左数组剩余的 ${L[i]} 放回。`
+                    });
+                    i++; k++;
+                }
+                while (j < n2) {
+                    tempArr[k] = R[j];
+                    localSteps.push({
+                        array: [...tempArr], inversions: totalInversions,
+                        highlights: { subArray: [l, r], merging: [l,k], sortedRanges: [...sortedRanges] },
+                        explanation: `将右数组剩余的 ${R[j]} 放回。`
+                    });
+                    j++; k++;
+                }
+                
+                sortedRanges.push([l, r]);
+                 localSteps.push({
+                    array: [...tempArr],
+                    inversions: totalInversions,
+                    highlights: { sortedRanges: [...sortedRanges] },
+                    explanation: `范围 [${l}, ${r}] 合并完成，现在已有序。`
+                });
+            }
+
+            function mergeSort(l, r) {
+                if (l >= r) {
+                    if (l === r && !sortedRanges.some(range => range[0] === l && range[1] === r)) sortedRanges.push([l,r]);
+                    return;
+                }
+                const m = l + Math.floor((r - l) / 2);
+                
+                localSteps.push({
+                    array: [...tempArr],
+                    inversions: totalInversions,
+                    highlights: { subArray: [l, r], sortedRanges: [...sortedRanges] },
+                    explanation: `递归拆分，当前处理范围 [${l}, ${r}]。`
+                });
+
+                mergeSort(l, m);
+                mergeSort(m + 1, r);
+                merge(l, m, r);
+            }
+
+            mergeSort(0, tempArr.length - 1);
+            localSteps.push({
+                array: [...tempArr],
+                inversions: totalInversions,
+                highlights: { sortedRanges: [[0, tempArr.length - 1]] },
+                explanation: '排序完成！'
+            });
+            return localSteps;
+        }
+        
+        function performNextStep() {
+            if (currentStep >= steps.length - 1) {
+                isSorting = false;
+                toggleButtons(true);
+                return;
+            }
+            currentStep++;
+            const step = steps[currentStep];
+            renderArray(step);
+            explanationText.textContent = step.explanation;
+        }
+        
+        function startSort() {
+            if (isSorting) return;
+            if (currentStep < 0 || currentStep >= steps.length - 1) {
+                 steps = generateMergeSortSteps(originalArray);
+                 currentStep = -1;
+            }
+            
+            isSorting = true;
+            toggleButtons(false);
+            
+            function autoStep() {
+                if (!isSorting || currentStep >= steps.length - 1) {
+                    isSorting = false;
+                    toggleButtons(true);
+                     if (steps.length > 0) {
+                       renderArray(steps[steps.length - 1]);
+                       explanationText.textContent = steps[steps.length - 1].explanation;
+                    }
+                    return;
+                }
+                performNextStep();
+                const delay = 1050 - speedSlider.value;
+                timeoutId = setTimeout(autoStep, delay);
+            }
+            autoStep();
+        }
+
+        // 事件监听
+        randomizeBtn.addEventListener('click', generateRandomArray);
+        resetBtn.addEventListener('click', resetState);
+        nextStepBtn.addEventListener('click', () => {
+             if (currentStep < 0) {
+                 steps = generateMergeSortSteps(originalArray);
+             }
+             performNextStep();
+        });
+        sortBtn.addEventListener('click', startSort);
+        
+        document.addEventListener('DOMContentLoaded', init);
+    </script>
+</body>
+</html>
+
