@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数位 DP 交互式演示 - Windy 数</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', 'PingFang SC', 'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+        }
+        .trace-line {
+            padding-left: calc(var(--depth) * 20px);
+            transition: background-color 0.3s;
+        }
+        .trace-call { background-color: rgba(239, 246, 255, 0.8); }
+        .trace-return { background-color: rgba(240, 253, 244, 0.8); }
+        .trace-memo { background-color: rgba(254, 252, 232, 0.8); color: #b45309; }
+        .trace-prune { color: #9ca3af; }
+        .limit-true { color: #be123c; font-weight: 600; }
+        .lead-true { color: #1d4ed8; font-weight: 600; }
+        .code-block::before {
+            content: 'C++';
+            position: absolute;
+            top: -10px;
+            right: 15px;
+            background: #4a5568;
+            color: #e2e8f0;
+            font-size: 0.75rem;
+            font-weight: bold;
+            padding: 2px 8px;
+            border-radius: 0.375rem;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8 max-w-5xl">
+        <header class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-slate-900">数位 DP 交互式演示</h1>
+            <p class="mt-2 text-lg text-slate-600">以 "[SCOI2009] Windy 数" 为例</p>
+        </header>
+
+        <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+            <h2 class="text-xl font-bold mb-2">题目描述</h2>
+            <p class="text-slate-700">不含前导零且相邻两个数字之差至少为 2 的正整数被称为 Windy 数。我们来计算在给定区间 `[a, b]` 内总共有多少个 Windy 数。</p>
+        </div>
+
+        <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+            <h2 class="text-xl font-bold mb-4">计算器</h2>
+            <div class="flex flex-col sm:flex-row items-center gap-4">
+                <div class="w-full">
+                    <label for="input-a" class="block text-sm font-medium text-slate-700">起始数 a</label>
+                    <input type="number" id="input-a" value="1" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-3">
+                </div>
+                <div class="w-full">
+                    <label for="input-b" class="block text-sm font-medium text-slate-700">结束数 b</label>
+                    <input type="number" id="input-b" value="50" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-sky-500 focus:ring-sky-500 sm:text-sm p-3">
+                </div>
+                <button id="calculate-btn" class="w-full sm:w-auto bg-sky-600 text-white font-bold py-3 px-6 rounded-lg hover:bg-sky-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-transform duration-200 active:scale-95 mt-2 sm:mt-6">
+                    计算
+                </button>
+            </div>
+        </div>
+        
+        <!-- 新增的模板代码模块 -->
+        <div class="bg-white p-6 rounded-2xl shadow-lg mb-8">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold">数位 DP 通用模板代码</h2>
+                <button id="copy-btn" class="bg-slate-200 text-slate-700 font-semibold py-2 px-4 rounded-lg hover:bg-slate-300 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-sky-500 transition-all duration-200 text-sm active:scale-95">
+                    复制代码
+                </button>
+            </div>
+            <div class="bg-slate-800 text-white p-4 rounded-lg overflow-x-auto relative code-block">
+                <pre><code id="template-code" class="language-cpp">
+#include &lt;string&gt;
+#include &lt;vector&gt;
+#include &lt;iostream&gt;
+#include &lt;algorithm&gt;
+
+using namespace std;
+
+// --- 模板核心部分 ---
+
+// dp 数组用于记忆化，维度根据 state 的数量和范围决定
+long long dp[20][...]; 
+
+// 将数字 x 转换为字符串
+string num_str;
+
+/**
+ * @param pos 当前处理的位数 (从高位到低位)
+ * @param ...state_vars...  一个或多个状态变量，根据题目性质决定
+ * @param is_limit 当前位的选择是否受原数限制
+ * @param is_lead_zero 当前是否是前导零
+ * @return 合法数字的数量
+ */
+long long dfs(int pos, /* ...state_vars..., */ bool is_limit, bool is_lead_zero) {
+    // 1. 递归边界
+    if (pos == num_str.length()) return 1;
+
+    // 2. 记忆化
+    if (!is_limit && !is_lead_zero && dp[pos][...state_vars...] != -1) {
+        return dp[pos][...state_vars...];
+    }
+
+    long long count = 0;
+    // 3. 获取当前位上限并循环
+    int up_bound = is_limit ? (num_str[pos] - '0') : 9;
+
+    for (int d = 0; d &lt;= up_bound; ++d) {
+        // 4. 根据题目性质进行判断 (这是唯一需要大量修改的地方)
+        // if (不满足条件) continue;
+        
+        // 5. 递归到下一位
+        count += dfs(pos + 1, 
+                     /* ...new_state_vars..., */ // 根据 d 更新 state
+                     is_limit && (d == up_bound), 
+                     is_lead_zero && (d == 0));
+    }
+
+    // 6. 记录结果到 dp 数组
+    if (!is_limit && !is_lead_zero) {
+        dp[pos][...state_vars...] = count;
+    }
+
+    return count;
+}
+
+// 解决 [0, x] 区间问题的入口函数
+long long solve(long long x) {
+    if (x &lt; 0) return 0;
+    num_str = to_string(x);
+    // memset(dp, -1, sizeof(dp)); // 初始化 dp 数组
+    return dfs(0, /* ...initial_state_vars..., */ true, true);
+}
+
+// 主函数框架
+int main() {
+    long long l, r;
+    cin &gt;&gt; l &gt;&gt; r;
+    cout &lt;&lt; solve(r) - solve(l - 1) &lt;&lt; endl;
+    return 0;
+}
+                </code></pre>
+            </div>
+        </div>
+
+        <div id="result-container" class="hidden bg-white p-6 rounded-2xl shadow-lg mb-8">
+             <h2 class="text-xl font-bold mb-2">计算结果</h2>
+             <p id="result-text" class="text-2xl font-mono text-emerald-600 font-semibold"></p>
+        </div>
+        
+        <div id="trace-container" class="hidden bg-slate-900 text-white p-6 rounded-2xl shadow-2xl font-mono text-sm leading-6">
+            <h2 class="text-xl font-bold mb-4 text-slate-100">DFS 调用追踪 (solve(<span id="trace-target"></span>))</h2>
+            <div id="trace-output" class="w-full overflow-x-auto h-[500px] bg-slate-800 rounded-lg p-4"></div>
+        </div>
+    </div>
+
+    <script>
+        // --- 数位 DP 核心逻辑 (Windy 数) ---
+        let dp;
+        let num_str;
+        let traceLog;
+        let depth;
+
+        function dfs(pos, prev_digit, is_limit, is_lead_zero) {
+            const currentDepth = depth;
+            if(traceLog) traceLog.push({ type: 'call', depth: currentDepth, text: `dfs(pos=${pos}, prev=${prev_digit}, limit=<span class="limit-true">${is_limit}</span>, lead=<span class="lead-true">${is_lead_zero}</span>)` });
+
+            if (pos === num_str.length) {
+                if(traceLog) traceLog.push({ type: 'return', depth: currentDepth, text: `  -> 达到边界, 找到一个合法解, 返回 1` });
+                return 1;
+            }
+
+            if (!is_limit && !is_lead_zero && dp[pos][prev_digit] !== -1) {
+                if(traceLog) traceLog.push({ type: 'memo', depth: currentDepth, text: `  -> 记忆化命中! dp[${pos}][${prev_digit}] = ${dp[pos][prev_digit]}, 直接返回` });
+                return dp[pos][prev_digit];
+            }
+
+            let count = 0;
+            const up_bound = is_limit ? (num_str[pos] - '0') : 9;
+            if(traceLog) traceLog.push({ type: 'info', depth: currentDepth, text: `  - 循环上限 up_bound = ${up_bound}` });
+            
+            depth++;
+            for (let d = 0; d <= up_bound; d++) {
+                if (!is_lead_zero && Math.abs(d - prev_digit) < 2) {
+                     if(traceLog) traceLog.push({ type: 'prune', depth: depth, text: `d=${d}: |${d} - ${prev_digit}| < 2, 剪枝` });
+                    continue;
+                }
+                
+                if(traceLog) traceLog.push({ type: 'info', depth: depth, text: `d=${d}: 合法选择, 递归调用...` });
+                count += dfs(
+                    pos + 1,
+                    d,
+                    is_limit && (d === up_bound),
+                    is_lead_zero && (d === 0)
+                );
+            }
+            depth--;
+            
+            if (!is_limit && !is_lead_zero) {
+                dp[pos][prev_digit] = count;
+                if(traceLog) traceLog.push({ type: 'info', depth: currentDepth, text: `  - 存入记忆: dp[${pos}][${prev_digit}] = ${count}` });
+            }
+
+            if(traceLog) traceLog.push({ type: 'return', depth: currentDepth, text: `  -> 本层计算结束, 返回 ${count}` });
+            return count;
+        }
+
+        function solve(x, enableLog = false) {
+            if (x < 0) return 0;
+            if (x === 0) return 0;
+            num_str = x.toString();
+
+            dp = Array(20).fill(0).map(() => Array(10).fill(-1));
+            
+            traceLog = enableLog ? [] : null;
+            depth = 0;
+            
+            const result = dfs(0, 0, true, true) - 1; // -1 to exclude 0
+            return result;
+        }
+
+        // --- 网页交互逻辑 ---
+        const btn = document.getElementById('calculate-btn');
+        const inputA = document.getElementById('input-a');
+        const inputB = document.getElementById('input-b');
+        const resultContainer = document.getElementById('result-container');
+        const resultText = document.getElementById('result-text');
+        const traceContainer = document.getElementById('trace-container');
+        const traceOutput = document.getElementById('trace-output');
+        const traceTarget = document.getElementById('trace-target');
+        const copyBtn = document.getElementById('copy-btn');
+        const templateCode = document.getElementById('template-code');
+
+        btn.addEventListener('click', () => {
+            const a = parseInt(inputA.value, 10);
+            const b = parseInt(inputB.value, 10);
+
+            if (isNaN(a) || isNaN(b) || a > b || a < 0 || b < 0) {
+                alert('请输入有效的正整数区间 [a, b]！');
+                return;
+            }
+            
+            const resultB = solve(b, true);
+            const traceForB = [...traceLog];
+            const resultA_minus_1 = solve(a - 1);
+
+            const finalResult = resultB - resultA_minus_1;
+
+            resultText.innerHTML = `solve(${b}) - solve(${a - 1}) = ${resultB} - ${resultA_minus_1} = <span class="text-sky-600">${finalResult}</span>`;
+            resultContainer.classList.remove('hidden');
+
+            traceTarget.textContent = b;
+            let traceHTML = '';
+            traceForB.forEach(log => {
+                const typeClass = `trace-${log.type}`;
+                traceHTML += `<div class="trace-line ${typeClass}" style="--depth: ${log.depth}">${log.text}</div>`;
+            });
+            traceOutput.innerHTML = traceHTML;
+            traceContainer.classList.remove('hidden');
+        });
+
+        copyBtn.addEventListener('click', () => {
+            // 使用现代的 Clipboard API，更安全可靠
+            navigator.clipboard.writeText(templateCode.innerText).then(() => {
+                copyBtn.textContent = '已复制!';
+                setTimeout(() => {
+                    copyBtn.textContent = '复制代码';
+                }, 2000);
+            }).catch(err => {
+                console.error('无法复制文本: ', err);
+                copyBtn.textContent = '复制失败';
+                setTimeout(() => {
+                    copyBtn.textContent = '复制代码';
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>
+
