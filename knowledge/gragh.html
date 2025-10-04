@@ -1,0 +1,403 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>图论交互式学习指南</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc; /* slate-50 */
+        }
+        .content-section { display: none; }
+        .content-section.active { display: block; }
+        .code-block {
+            background-color: #1e293b; /* slate-800 */
+            color: #e2e8f0; /* slate-200 */
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.875rem;
+        }
+        .concept-box {
+            background-color: #e0f2fe; /* sky-100 */
+            border-left: 4px solid #0ea5e9; /* sky-500 */
+            padding: 1rem;
+            border-radius: 0.25rem;
+        }
+        .problem-link {
+            display: block;
+            padding: 0.75rem 1rem;
+            background-color: #f1f5f9;
+            border-radius: 0.375rem;
+            color: #0ea5e9;
+            font-weight: 500;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .problem-link:hover {
+            background-color: #e2e8f0;
+            color: #0284c7;
+        }
+    </style>
+</head>
+<body class="text-slate-800">
+
+    <div class="container mx-auto p-4 md:p-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-900">图论交互式学习指南</h1>
+            <p class="mt-4 text-lg text-slate-600">从基础到核心算法，全面掌握图论知识</p>
+        </header>
+
+        <div class="flex flex-col md:flex-row gap-8">
+            <!-- Navigation Sidebar -->
+            <aside class="w-full md:w-1/4">
+                <div class="sticky top-8 bg-white p-4 rounded-lg shadow-md">
+                    <h3 class="font-bold text-lg mb-4 border-b pb-2">学习大纲</h3>
+                    <nav id="nav-menu" class="flex flex-wrap md:flex-col gap-2">
+                        <button data-target="ch1" class="w-full text-left p-3 rounded-md bg-sky-500 text-white font-semibold">第一章: 图的基础</button>
+                        <button data-target="ch2" class="w-full text-left p-3 rounded-md hover:bg-sky-100 transition-colors">第二章: 图的遍历</button>
+                        <button data-target="ch3" class="w-full text-left p-3 rounded-md hover:bg-sky-100 transition-colors">第三章: 最小生成树</button>
+                        <button data-target="ch4" class="w-full text-left p-3 rounded-md hover:bg-sky-100 transition-colors">第四章: 最短路径</button>
+                        <button data-target="ch5" class="w-full text-left p-3 rounded-md hover:bg-sky-100 transition-colors">第五章: 拓扑排序与网络流</button>
+                        <button data-target="ch6" class="w-full text-left p-3 rounded-md hover:bg-sky-100 transition-colors">第六章: 题目与实战</button>
+                    </nav>
+                </div>
+            </aside>
+
+            <!-- Main Content -->
+            <main class="w-full md:w-3/4">
+                <!-- Chapter 1: Graph Basics -->
+                <section id="ch1" class="content-section active">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h2 class="text-3xl font-bold mb-4">第一章: 图的基础</h2>
+                        <p class="mb-4">图 (Graph) 是由一组**顶点 (Vertices)** 和一组连接顶点的**边 (Edges)** 构成的数学结构，用于表示对象之间的各种关系。它是计算机科学中表达能力最强的数据结构之一。</p>
+                        
+                        <h3 class="text-2xl font-bold mt-6 mb-4">常用术语与分类</h3>
+                        <div class="concept-box mb-6">
+                            <ul class="list-disc list-inside mt-2 space-y-2">
+                                <li><strong>顶点(Vertex/Node):</strong> 图中的一个点，代表一个实体。</li>
+                                <li><strong>边(Edge):</strong> 连接两个顶点的线，代表它们之间的关系。</li>
+                                <li><strong>有向图 vs 无向图:</strong> 边有方向的图称为有向图（如社交网络中的“关注”），边没有方向的图称为无向图（如“好友”关系）。</li>
+                                <li><strong>带权图 vs 无权图:</strong> 边上附带数值（权重/成本/距离）的图称为带权图，否则为无权图。</li>
+                                <li><strong>连通图:</strong> 在无向图中，如果任意两个顶点之间都存在路径，则称该图为连通图。</li>
+                            </ul>
+                        </div>
+
+                        <h3 class="text-2xl font-bold mt-6 mb-4">C++表示法</h3>
+                        <p class="mb-2">存储图结构最常用的方法是邻接表和邻接矩阵。</p>
+                        <h4 class="font-semibold text-lg mb-2">邻接表 (Adjacency List)</h4>
+                        <div class="concept-box mb-2">
+                            <p>为每个顶点维护一个列表，存储其所有邻居。对于有 V 个顶点和 E 条边的图，空间复杂度为 O(V+E)，是稀疏图（E 远小于 V²）的首选。</p>
+                        </div>
+                        <div class="code-block">
+<pre><code>#include &lt;vector&gt;
+#include &lt;list&gt;
+
+const int MAXN = 100005;
+// 带权图的邻接表
+std::vector&lt;std::pair&lt;int, int&gt;&gt; adj[MAXN]; // {neighbor, weight}
+
+void addEdge(int u, int v, int weight) {
+    adj[u].push_back({v, weight});
+    adj[v].push_back({u, weight}); // 无向图
+}
+</code></pre>
+                        </div>
+                        <h4 class="font-semibold text-lg mt-4 mb-2">邻接矩阵 (Adjacency Matrix)</h4>
+                         <div class="concept-box mb-2">
+                            <p>使用 V x V 的二维数组 `matrix[i][j]` 存储顶点 `i` 和 `j` 之间边的信息（权重或是否存在）。空间复杂度为 O(V²)，适用于稠密图。</p>
+                        </div>
+                         <div class="code-block">
+<pre><code>#include &lt;vector&gt;
+const int MAXV = 1005;
+int matrix[MAXV][MAXV];
+
+void addEdge(int u, int v, int weight) {
+    matrix[u][v] = weight;
+    matrix[v][u] = weight; // 无向图
+}
+</code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Chapter 2: Graph Traversal -->
+                <section id="ch2" class="content-section">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h2 class="text-3xl font-bold mb-4">第二章: 图的遍历</h2>
+                        <p class="mb-4">图遍历是指从图中某一顶点出发，系统地访问图中的所有顶点，且每个顶点仅被访问一次。它是所有图算法的基石。</p>
+
+                        <h3 class="text-2xl font-bold mt-6 mb-4">深度优先搜索 (DFS)</h3>
+                        <div class="concept-box mb-6">
+                            <p>DFS 沿着一条路径深入，直到无法再前进时才回溯。它使用递归或栈实现，非常适合解决与“路径”相关的问题，如寻找路径、检测环、寻找连通分量等。时间复杂度 O(V+E)。</p>
+                        </div>
+                        <div class="code-block">
+<pre><code>std::vector&lt;bool&gt; visited(MAXN, false);
+void dfs(int u) {
+    visited[u] = true;
+    // Process node u
+    for (auto& edge : adj[u]) {
+        int v = edge.first;
+        if (!visited[v]) {
+            dfs(v);
+        }
+    }
+}
+</code></pre>
+                        </div>
+                        
+                        <h3 class="text-2xl font-bold mt-6 mb-4">广度优先搜索 (BFS)</h3>
+                        <div class="concept-box mb-6">
+                            <p>BFS 从起点开始，按距离逐层向外扩展。它使用队列实现，其特性使其成为在**无权图**中求解最短路径问题的最佳选择。时间复杂度 O(V+E)。</p>
+                        </div>
+                        <div class="code-block">
+<pre><code>#include &lt;queue&gt;
+void bfs(int start_node) {
+    std::vector&lt;bool&gt; visited(MAXN, false);
+    std::queue&lt;int&gt; q;
+
+    q.push(start_node);
+    visited[start_node] = true;
+
+    while(!q.empty()) {
+        int u = q.front();
+        q.pop();
+        // Process node u
+        for (auto& edge : adj[u]) {
+            int v = edge.first;
+            if (!visited[v]) {
+                visited[v] = true;
+                q.push(v);
+            }
+        }
+    }
+}
+</code></pre>
+                        </div>
+                    </div>
+                </section>
+
+                <!-- Chapter 3: MST -->
+                <section id="ch3" class="content-section">
+                     <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h2 class="text-3xl font-bold mb-4">第三章: 最小生成树 (MST)</h2>
+                        <p class="mb-4">在一个连通的、带权的无向图中，找到一个边的子集，这个子集连接了所有顶点，没有环，且总权重最小。常用于网络建设、布线等成本优化问题。</p>
+                        
+                        <h3 class="text-2xl font-bold mt-6 mb-4">Kruskal 算法</h3>
+                        <div class="concept-box mb-6">
+                            <p>Kruskal 是一种基于边的贪心算法。它将所有边按权重从小到大排序，然后依次检查每条边。如果一条边连接的两个顶点不在同一个集合中（通过并查集判断），则将该边加入MST。时间复杂度 O(E log E)。</p>
+                        </div>
+                        
+                        <h3 class="text-2xl font-bold mt-6 mb-4">Prim 算法</h3>
+                        <div class="concept-box mb-6">
+                            <p>Prim 是一种基于顶点的贪心算法。它从任意顶点开始，逐步构建一棵树。每一步都选择一条连接树内顶点和树外顶点的、权重最小的边，并将其加入树中。使用优先队列优化后，时间复杂度为 O(E log V)。</p>
+                        </div>
+
+                        <h3 class="text-2xl font-bold mt-6 mb-4">C++ 代码示例：Kruskal</h3>
+                        <div class="code-block">
+<pre><code>#include &lt;algorithm&gt;
+#include &lt;numeric&gt;
+
+struct Edge { int u, v, weight; };
+struct DSU { /* ... 并查集实现 ... */ };
+
+int kruskal(int V, std::vector&lt;Edge&gt;& edges) {
+    std::sort(edges.begin(), edges.end(), [](const Edge& a, const Edge& b){
+        return a.weight < b.weight;
+    });
+    DSU dsu(V);
+    int total_weight = 0;
+    int edges_count = 0;
+    for (const auto& edge : edges) {
+        if (dsu.find(edge.u) != dsu.find(edge.v)) {
+            dsu.unite(edge.u, edge.v);
+            total_weight += edge.weight;
+            edges_count++;
+            if (edges_count == V - 1) break;
+        }
+    }
+    return total_weight;
+}
+</code></pre>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Chapter 4: Shortest Path -->
+                <section id="ch4" class="content-section">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h2 class="text-3xl font-bold mb-4">第四章: 最短路径</h2>
+                        <p class="mb-4">最短路径问题旨在寻找图中两点之间的最短路径。根据图的特性和需求，需要选择不同的算法。</p>
+                        
+                        <h3 class="text-2xl font-bold mt-6 mb-4">Dijkstra 算法</h3>
+                        <div class="concept-box mb-6">
+                            <p>用于解决**无负权边**的单源最短路径问题。它是一种贪心算法，每次选择当前已知距离起点最近的未访问顶点进行扩展。使用优先队列优化后，时间复杂度为 O(E log V)。</p>
+                        </div>
+                        
+                        <h3 class="text-2xl font-bold mt-6 mb-4">Bellman-Ford 算法</h3>
+                        <div class="concept-box mb-6">
+                            <p>可以处理**带负权边**的单源最短路径问题。它通过对所有边进行 V-1 轮松弛操作来找到最短路径，并能检测出负权环。时间复杂度 O(V * E)。</p>
+                        </div>
+                        
+                        <h3 class="text-2xl font-bold mt-6 mb-4">Floyd-Warshall 算法</h3>
+                        <div class="concept-box mb-6">
+                            <p>用于解决**所有顶点对之间**的最短路径问题。它是一种动态规划算法，可以处理负权边（但不能有负权环）。时间复杂度 O(V³)。</p>
+                        </div>
+
+                        <h3 class="text-2xl font-bold mt-6 mb-4">C++ 代码示例：Dijkstra</h3>
+                        <div class="code-block">
+<pre><code>#include &lt;queue&gt;
+const int INF = 1e9;
+
+void dijkstra(int start_node, int V) {
+    std::vector&lt;int&gt; dist(V + 1, INF);
+    std::priority_queue&lt;std::pair&lt;int, int&gt;, 
+                          std::vector&lt;std::pair&lt;int, int&gt;&gt;, 
+                          std::greater&lt;std::pair&lt;int, int&gt;&gt;&gt; pq;
+
+    dist[start_node] = 0;
+    pq.push({0, start_node}); // {distance, node}
+
+    while (!pq.empty()) {
+        int u = pq.top().second;
+        int d = pq.top().first;
+        pq.pop();
+
+        if (d > dist[u]) continue;
+
+        for (auto& edge : adj[u]) {
+            int v = edge.first;
+            int weight = edge.second;
+            if (dist[u] + weight < dist[v]) {
+                dist[v] = dist[u] + weight;
+                pq.push({dist[v], v});
+            }
+        }
+    }
+}
+</code></pre>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Chapter 5: Advanced Topics -->
+                <section id="ch5" class="content-section">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h2 class="text-3xl font-bold mb-4">第五章: 拓扑排序与网络流</h2>
+                        
+                        <h3 class="text-2xl font-bold mt-6 mb-4">拓扑排序 (Topological Sort)</h3>
+                        <div class="concept-box mb-6">
+                            <p>对一个**有向无环图 (DAG)** 的顶点进行排序，使得对任意一条边 (u, v)，顶点 u 都出现在顶点 v 之前。常用于解决有依赖关系的任务调度问题。常用 Kahn 算法（基于BFS）或基于DFS的算法实现。</p>
+                        </div>
+                         <div class="code-block">
+<pre><code>// Kahn's Algorithm (BFS-based)
+std::vector&lt;int&gt; topological_sort(int V) {
+    std::vector&lt;int&gt; in_degree(V + 1, 0);
+    for (int i = 1; i <= V; ++i) {
+        for (auto& edge : adj[i]) {
+            in_degree[edge.first]++;
+        }
+    }
+
+    std::queue&lt;int&gt; q;
+    for (int i = 1; i <= V; ++i) {
+        if (in_degree[i] == 0) {
+            q.push(i);
+        }
+    }
+
+    std::vector&lt;int&gt; result;
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        result.push_back(u);
+
+        for (auto& edge : adj[u]) {
+            int v = edge.first;
+            in_degree[v]--;
+            if (in_degree[v] == 0) {
+                q.push(v);
+            }
+        }
+    }
+    return result; // If result.size() < V, graph has a cycle.
+}
+</code></pre>
+                        </div>
+
+                        <h3 class="text-2xl font-bold mt-6 mb-4">网络流 (Network Flow)</h3>
+                        <div class="concept-box mb-6">
+                            <p>在有容量限制的有向图中，计算从源点到汇点所能通过的最大流量。网络流是组合优化中的一个强大工具，其核心是最大流最小割定理。Edmonds-Karp 是解决最大流问题的经典算法。</p>
+                        </div>
+                    </div>
+                </section>
+                
+                <!-- Chapter 6: Problems and Practice -->
+                <section id="ch6" class="content-section">
+                    <div class="bg-white p-6 rounded-lg shadow-md">
+                        <h2 class="text-3xl font-bold mb-4">第六章: 题目与实战</h2>
+                        <p class="mb-4">理论结合实践是最好的学习方式。下面为每个章节的核心知识点提供了一些经典的练习题目。</p>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <h3 class="text-xl font-bold mb-2">图的遍历</h3>
+                                <a href="https://leetcode.cn/problems/number-of-islands/" target="_blank" class="problem-link">LeetCode 200. 岛屿数量 (DFS/BFS)</a>
+                                <a href="https://www.luogu.com.cn/problem/P1141" target="_blank" class="problem-link">洛谷 P1141 01迷宫 (BFS求连通块)</a>
+                            </div>
+
+                            <div>
+                                <h3 class="text-xl font-bold mb-2">最小生成树</h3>
+                                <a href="https://www.luogu.com.cn/problem/P3366" target="_blank" class="problem-link">洛谷 P3366 【模板】最小生成树</a>
+                            </div>
+
+                            <div>
+                                <h3 class="text-xl font-bold mb-2">最短路径</h3>
+                                <a href="https://www.luogu.com.cn/problem/P4779" target="_blank" class="problem-link">洛谷 P4779 【模板】单源最短路径 (标准版) - Dijkstra</a>
+                                <a href="https://www.luogu.com.cn/problem/P3385" target="_blank" class="problem-link">洛谷 P3385 【模板】负环 - Bellman-Ford</a>
+                            </div>
+
+                            <div>
+                                <h3 class="text-xl font-bold mb-2">拓扑排序</h3>
+                                 <a href="https://www.luogu.com.cn/problem/P4017" target="_blank" class="problem-link">洛谷 P4017 最大食物链计数</a>
+                            </div>
+                        </div>
+                    </div>
+                </section>
+            </main>
+        </div>
+    </div>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const navMenu = document.getElementById('nav-menu');
+    const contentSections = document.querySelectorAll('.content-section');
+    const navButtons = navMenu.querySelectorAll('button');
+
+    navMenu.addEventListener('click', (e) => {
+        if (e.target.tagName === 'BUTTON') {
+            const targetId = e.target.dataset.target;
+
+            navButtons.forEach(btn => {
+                btn.classList.remove('bg-sky-500', 'text-white', 'font-semibold');
+                btn.classList.add('hover:bg-sky-100');
+            });
+            e.target.classList.add('bg-sky-500', 'text-white', 'font-semibold');
+            e.target.classList.remove('hover:bg-sky-100');
+
+            contentSections.forEach(section => {
+                section.classList.remove('active');
+                if (section.id === targetId) {
+                    section.classList.add('active');
+                }
+            });
+             window.scrollTo(0, 0);
+        }
+    });
+});
+</script>
+</body>
+</html>
