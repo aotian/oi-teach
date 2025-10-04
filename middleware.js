@@ -1,39 +1,34 @@
-// middleware.js (通用版本，不依赖任何框架)
+// middleware.js (最终修正版 - 纯 Web 标准 API)
 
 export const config = {
-  /*
-   * 匹配除了以下路径之外的所有请求路径:
-   * - api (API routes)
-   * - _next/static (static files)
-   * - _next/image (image optimization files)
-   * - favicon.ico (favicon file)
-   */
   matcher: '/((?!api|_next/static|_next/image|favicon.ico).*)',
 };
 
 export default function middleware(request) {
-  const { pathname } = request.nextUrl;
-  
-  // 你的密码验证页面的路径
+  // 1. 使用标准的 URL API 来解析请求的 URL 和路径
+  const url = new URL(request.url);
+  const { pathname } = url;
+
   const PASSWORD_PROTECT_PAGE = '/password-protect.html';
 
-  // 如果访问的是密码页本身，直接放行，不执行任何操作
+  // 如果访问的是密码页本身，直接放行
   if (pathname === PASSWORD_PROTECT_PAGE) {
     return; // 让请求继续
   }
 
-  // 从 Cookie 中获取密码验证状态
-  const isAuthenticated = request.cookies.get('password_correct')?.value === 'true';
+  // 2. 从请求头中获取 cookie 字符串
+  const cookieString = request.headers.get('cookie') || '';
+  
+  // 3. 通过简单的字符串检查来判断是否已认证
+  // 这种方法对于我们简单的 'true' 值判断是足够且可靠的
+  const isAuthenticated = cookieString.includes('password_correct=true');
 
   // 如果已经验证通过，也直接放行
   if (isAuthenticated) {
     return; // 让请求继续
   }
 
-  // 如果以上条件都不满足（即：访问受保护页面且未验证），则重定向到密码输入页面
-  const url = new URL(PASSWORD_PROTECT_PAGE, request.url);
-  
-  // 使用 Web 标准的 Response.redirect() 方法
-  // 307 是一个临时重定向的状态码
-  return Response.redirect(url, 307);
+  // 如果未验证，则重定向到密码输入页面
+  const redirectUrl = new URL(PASSWORD_PROTECT_PAGE, request.url);
+  return Response.redirect(redirectUrl, 307);
 }
