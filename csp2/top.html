@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拓扑排序算法交互式详解</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Calm Sky & Slate -->
+    <!-- Application Structure Plan: A single-page, vertically scrolling layout similar to the Dijkstra guide. The structure is: Core Concept, Interactive Visualization, Code Template, and Practice Problems. This linear flow is effective for teaching a single, specific algorithm. The core of this page is the interactive DOM-based graph visualization for the Kahn's algorithm (queue-based topological sort), which makes the concept of "in-degrees" and node processing tangible. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: Topological Sort Core Logic -> Goal: Explain the concept of in-degree and dependency resolution -> Viz: Structured text with an analogy (course prerequisites) -> Justification: An analogy is highly effective for explaining the real-world application of topological sorting.
+        - Report Info: Kahn's Algorithm Steps -> Goal: Show the queue-based process -> Viz: Interactive DOM graph animation -> Interaction: 'Run' button animates finding zero in-degree nodes, adding them to a queue, processing them, and updating neighbors' in-degrees -> Justification: This dynamic process is hard to grasp from static text alone; an animation is essential. Method: DOM manipulation.
+        - Report Info: C++ Implementation -> Goal: Provide a standard code template -> Viz: A styled code block with a copy button -> Interaction: Copy button -> Justification: Provides a practical, error-free way for students to get the standard implementation.
+        - Report Info: Practice -> Goal: Guide further learning -> Viz: Interactive cards linking to online judge problems -> Justification: Connects learning with immediate application.
+     -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        :root {
+            --bg-main: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --accent-primary: #0ea5e9;
+            --accent-secondary: #10b981;
+            --border-color: #e5e7eb;
+        }
+        html { scroll-behavior: smooth; }
+        body { background-color: var(--bg-main); color: var(--text-primary); }
+        h2, h3 { color: var(--text-primary); font-weight: 700; }
+        .code-block {
+            background-color: #1f2937;
+            color: #d1d5db;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            position: relative;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: auto;
+        }
+        .copy-btn {
+            position: absolute; top: 0.75rem; right: 0.75rem; background-color: #4b5563;
+            color: white; padding: 0.25rem 0.5rem; border-radius: 0.375rem;
+            font-size: 0.875rem; cursor: pointer; transition: background-color 0.2s;
+        }
+        .copy-btn:hover { background-color: #6b7280; }
+        .graph-container {
+            position: relative; width: 100%; height: 350px; background-color: #f9fafb;
+            border: 1px solid var(--border-color); border-radius: 0.5rem;
+        }
+        .graph-node {
+            position: absolute; width: 44px; height: 44px; border-radius: 50%;
+            background-color: #d1d5db; border: 2px solid #6b7280; display: flex;
+            flex-direction: column; justify-content: center; align-items: center;
+            font-weight: bold; color: #374151; transition: all 0.3s ease;
+            transform: translate(-50%, -50%); font-size: 0.9rem;
+        }
+        .graph-node .indegree { font-size: 0.7rem; color: #ef4444; }
+        .graph-node.in-queue { background-color: #fef9c3; border-color: #f59e0b; }
+        .graph-node.processed { background-color: #dcfce7; border-color: #22c55e; }
+        .graph-node.current { background-color: #c7d2fe; border-color: #6366f1; transform: translate(-50%, -50%) scale(1.15); }
+        .graph-edge {
+            position: absolute; background-color: #9ca3af; height: 2px;
+            transform-origin: 0 0;
+        }
+        .graph-edge::after {
+            content: ''; position: absolute; right: -1px; top: -3px;
+            border-top: 4px solid transparent; border-bottom: 4px solid transparent;
+            border-left: 6px solid #9ca3af;
+        }
+    </style>
+</head>
+<body class="font-sans">
+
+    <div id="main-content" class="container mx-auto px-4 py-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">拓扑排序 (Topological Sort) 算法详解</h1>
+            <p class="text-lg text-gray-600 mt-2">解决任务依赖问题的关键</p>
+        </header>
+
+        <main class="space-y-8">
+            <section id="section-concept" class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl mb-4 border-b pb-2">一、核心思想：逐层解锁</h2>
+                <p class="text-secondary mb-4">拓扑排序是对**有向无环图 (DAG)** 的顶点进行排序，使得对于图中每一条有向边 `(u, v)`，节点 `u` 都排在节点 `v` 的前面。如果图中存在环，则无法进行拓扑排序。</p>
+                <p class="text-secondary mb-4">您可以把它想象成大学里的**课程表**。有些课程有先修要求，比如你必须先学完《C语言程序设计》，才能学习《数据结构》。拓扑排序就是要给所有课程排出一个合法的学习顺序。</p>
+                
+                <h3 class="text-xl mt-6 mb-3">Kahn 算法流程 (基于BFS):</h3>
+                <div class="space-y-4">
+                    <p>1.  **计算入度：** 统计图中每个节点的**入度**（有多少条边指向它）。入度为0，意味着它不依赖任何其他节点（没有先修课）。</p>
+                    <p>2.  **初始化队列：** 将所有入度为0的节点放入一个队列中。</p>
+                    <p>3.  **循环处理：** 当队列不为空时，执行以下操作：
+                        <ul class="list-['-_'] list-inside ml-4 mt-1 text-secondary">
+                           <li>从队列中取出一个节点 `u`，并将其加入拓扑排序的结果序列中。</li>
+                           <li>遍历从 `u` 出发的所有边 `(u, v)`。</li>
+                           <li>将 `v` 的入度减1。这相当于“修完了 `u` 这门先修课，依赖它的课程 `v` 的限制就少了一个”。</li>
+                           <li>如果 `v` 的入度减为0，说明 `v` 的所有先修课都已修完，可以将 `v` 放入队列中。</li>
+                        </ul>
+                    </p>
+                    <p>4.  **检查结果：** 算法结束后，如果结果序列中的节点数量等于图中的总节点数，说明拓扑排序成功。否则，说明图中存在环。</p>
+                </div>
+            </section>
+
+            <section id="section-interactive" class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl mb-4 border-b pb-2">二、交互式动画演示</h2>
+                <p class="text-secondary mb-4">下面的动画将演示Kahn算法如何对一个课程依赖图进行拓扑排序。</p>
+                <div class="grid lg:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <button id="run-topo" class="w-full px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition mb-4">运行动画</button>
+                        <button id="reset-topo" class="w-full px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">重置</button>
+                        <p id="topo-status" class="text-center font-semibold mt-4 h-12"></p>
+                        <div class="mt-4">
+                            <h3 class="font-semibold">队列: <span id="queue-vis" class="font-mono text-gray-700">[]</span></h3>
+                            <h3 class="font-semibold">拓扑序列: <span id="result-vis" class="font-mono text-green-700">[]</span></h3>
+                        </div>
+                    </div>
+                    <div id="topo-graph" class="graph-container"></div>
+                </div>
+            </section>
+
+            <section id="section-code" class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl mb-4 border-b pb-2">三、C++ 核心代码模板 (Kahn 算法)</h2>
+                <p class="text-secondary mb-4">这是竞赛中常用的基于队列的拓扑排序实现，时间复杂度为 O(N + E)，其中 N 是节点数，E 是边数。</p>
+                <div class="code-block">
+                   <button class="copy-btn" onclick="copyCode(this)">复制</button>
+                   <pre><code>#include <iostream>
+#include <vector>
+#include <queue>
+#include <algorithm>
+
+using namespace std;
+
+const int N = 100005;
+
+vector<int> adj[N];
+int indegree[N];
+vector<int> result;
+
+bool topological_sort(int n) {
+    queue<int> q;
+
+    // 1. 将所有入度为0的节点入队
+    for (int i = 1; i <= n; ++i) {
+        if (indegree[i] == 0) {
+            q.push(i);
+        }
+    }
+
+    while (!q.empty()) {
+        int u = q.front();
+        q.pop();
+        result.push_back(u);
+
+        // 2. 遍历u的所有邻接点
+        for (int v : adj[u]) {
+            // 3. 将邻接点的入度减1
+            indegree[v]--;
+            // 4. 如果邻接点入度变为0，则入队
+            if (indegree[v] == 0) {
+                q.push(v);
+            }
+        }
+    }
+
+    // 5. 检查是否存在环
+    return result.size() == n;
+}
+
+int main() {
+    ios_base::sync_with_stdio(false);
+    cin.tie(NULL);
+
+    int n, m; // 节点数, 边数
+    cin >> n >> m;
+
+    for (int i = 0; i < m; ++i) {
+        int u, v;
+        cin >> u >> v;
+        adj[u].push_back(v);
+        indegree[v]++;
+    }
+
+    if (topological_sort(n)) {
+        cout << "拓扑序列: ";
+        for (int i = 0; i < result.size(); ++i) {
+            cout << result[i] << (i == result.size() - 1 ? "" : " -> ");
+        }
+        cout << endl;
+    } else {
+        cout << "图中存在环，无法进行拓扑排序！" << endl;
+    }
+    
+    return 0;
+}
+</code></pre>
+                </div>
+            </section>
+
+             <section id="section-practice" class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl mb-4 border-b pb-2">四、实战演练</h2>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                        <h4 class="font-bold text-lg">P3387 【模板】缩点</h4>
+                        <p class="text-sm text-gray-600 my-2">虽然是Tarjan模板题，但其第二步就是在缩点后形成的DAG上进行拓扑排序+DP。</p>
+                        <a href="https://www.luogu.com.cn/problem/P3387" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition">前往挑战</a>
+                    </div>
+                    <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                        <h4 class="font-bold text-lg">P1113 杂务</h4>
+                        <p class="text-sm text-gray-600 my-2">拓扑排序的经典应用，在拓扑排序的同时进行动态规划，求解完成所有任务的最短时间。</p>
+                        <a href="https://www.luogu.com.cn/problem/P1113" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-sky-600 text-white rounded-lg hover:bg-sky-700 transition">前往挑战</a>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+<script>
+    let isAnimating = false;
+    const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+    // --- Code Copy ---
+    function copyCode(button) {
+        const pre = button.nextElementSibling;
+        navigator.clipboard.writeText(pre.innerText).then(() => {
+            const originalText = button.innerText;
+            button.innerText = '已复制!';
+            setTimeout(() => { button.innerText = originalText; }, 2000);
+        });
+    }
+
+    // --- Topological Sort Visualization ---
+    const topoGraphDiv = document.getElementById('topo-graph');
+    const topoStatus = document.getElementById('topo-status');
+    const queueVis = document.getElementById('queue-vis');
+    const resultVis = document.getElementById('result-vis');
+    
+    const nodes = [
+        {x: 100, y: 50,  id: 1, name: 'C语言'}, 
+        {x: 250, y: 50,  id: 2, name: '离散数学'},
+        {x: 100, y: 175, id: 3, name: '数据结构'},
+        {x: 250, y: 175, id: 4, name: '算法导论'},
+        {x: 175, y: 300, id: 5, name: '编译原理'}
+    ];
+    const edges = [ {from: 0, to: 2}, {from: 1, to: 3}, {from: 2, to: 4}, {from: 3, to: 4} ];
+    let nodeElements = {};
+
+    function drawTopoGraph(indegrees) {
+        topoGraphDiv.innerHTML = '';
+        nodeElements = {};
+
+        edges.forEach(edge => {
+            const n1 = nodes[edge.from];
+            const n2 = nodes[edge.to];
+            const angle = Math.atan2(n2.y - n1.y, n2.x - n1.x) * 180 / Math.PI;
+            const length = Math.sqrt(Math.pow(n2.x - n1.x, 2) + Math.pow(n2.y - n1.y, 2)) - 44; // Adjust for node radius
+
+            const dx = n2.x - n1.x;
+            const dy = n2.y - n1.y;
+            const norm = Math.sqrt(dx*dx + dy*dy);
+            const startX = n1.x + (dx/norm * 22);
+            const startY = n1.y + (dy/norm * 22);
+
+            const edgeEl = document.createElement('div');
+            edgeEl.className = 'graph-edge';
+            edgeEl.style.left = `${startX}px`;
+            edgeEl.style.top = `${startY}px`;
+            edgeEl.style.width = `${length}px`;
+            edgeEl.style.transform = `rotate(${angle}deg)`;
+            topoGraphDiv.appendChild(edgeEl);
+        });
+
+        nodes.forEach((node, i) => {
+            const nodeEl = document.createElement('div');
+            nodeEl.id = `topo-node-${i}`;
+            nodeEl.className = 'graph-node';
+            nodeEl.style.left = `${node.x}px`;
+            nodeEl.style.top = `${node.y}px`;
+            nodeEl.innerHTML = `${node.id}<span id="indegree-${i}" class="indegree">(${indegrees[i]})</span>`;
+            topoGraphDiv.appendChild(nodeEl);
+            nodeElements[i] = nodeEl;
+        });
+    }
+
+    async function animateTopoSort() {
+        if (isAnimating) return;
+        isAnimating = true;
+        
+        let indegrees = Array(nodes.length).fill(0);
+        edges.forEach(e => indegrees[e.to]++);
+        
+        drawTopoGraph(indegrees);
+        topoStatus.innerText = "1. 计算所有节点的入度";
+        await sleep(1500);
+
+        const q = [];
+        const result = [];
+        
+        for(let i=0; i<nodes.length; i++) {
+            if(indegrees[i] === 0) {
+                q.push(i);
+                nodeElements[i].classList.add('in-queue');
+            }
+        }
+        queueVis.innerText = `[${q.map(i => nodes[i].id).join(', ')}]`;
+        topoStatus.innerText = "2. 将所有入度为0的节点入队";
+        await sleep(1500);
+
+        while(q.length > 0) {
+            const u_idx = q.shift();
+            queueVis.innerText = `[${q.map(i => nodes[i].id).join(', ')}]`;
+            result.push(nodes[u_idx].id);
+            
+            nodeElements[u_idx].classList.remove('in-queue');
+            nodeElements[u_idx].classList.add('current');
+            topoStatus.innerText = `3. 处理节点 ${nodes[u_idx].id} (出队)`;
+            resultVis.innerText = `[${result.join(', ')}]`;
+            await sleep(1500);
+
+            edges.forEach(edge => {
+                if(edge.from === u_idx) {
+                    const v_idx = edge.to;
+                    indegrees[v_idx]--;
+                    document.getElementById(`indegree-${v_idx}`).innerText = `(${indegrees[v_idx]})`;
+                    if(indegrees[v_idx] === 0) {
+                        q.push(v_idx);
+                        nodeElements[v_idx].classList.add('in-queue');
+                        queueVis.innerText = `[${q.map(i => nodes[i].id).join(', ')}]`;
+                    }
+                }
+            });
+
+            nodeElements[u_idx].classList.remove('current');
+            nodeElements[u_idx].classList.add('processed');
+            topoStatus.innerText = `4. 更新其邻接点入度`;
+            await sleep(1500);
+        }
+
+        if(result.length === nodes.length){
+             topoStatus.innerText = "完成！拓扑排序成功。";
+        } else {
+             topoStatus.innerText = "图中存在环，排序失败！";
+        }
+
+        isAnimating = false;
+    }
+    
+    function resetTopo() {
+        if(isAnimating) return;
+        let indegrees = Array(nodes.length).fill(0);
+        edges.forEach(e => indegrees[e.to]++);
+        drawTopoGraph(indegrees);
+        topoStatus.innerText = '';
+        queueVis.innerText = '[]';
+        resultVis.innerText = '[]';
+    }
+
+    document.getElementById('run-topo').addEventListener('click', animateTopoSort);
+    document.getElementById('reset-topo').addEventListener('click', resetTopo);
+
+    window.onload = () => {
+       resetTopo();
+    };
+</script>
+
+</body>
+</html>
