@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>KMP 算法交互式演示</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', 'Noto Sans SC', sans-serif;
+            background-color: #f8fafc;
+        }
+        .char-box {
+            width: 40px;
+            height: 40px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            border: 1px solid #cbd5e1;
+            margin: 2px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+        .pointer {
+            position: absolute;
+            bottom: -35px; /* 调整垂直位置 */
+            width: 44px; /* 匹配 char-box 宽度 + margin */
+            left: 0;
+            text-align: center;
+            transition: transform 0.3s ease-in-out; /* 使用 transform 动画 */
+            font-size: 0.9rem;
+            color: #ef4444;
+            line-height: 1;
+            display: flex; /* 使用 flex 布局 */
+            flex-direction: column; /* 垂直排列 */
+            align-items: center; /* 居中对齐 */
+        }
+        .pointer-label {
+            font-weight: bold;
+            font-size: 1rem;
+        }
+        .pointer-arrow {
+            font-size: 0.8rem;
+        }
+        .code-block {
+            background-color: #1e293b;
+            color: #e2e8f0;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            overflow-x: auto;
+            font-family: 'Courier New', Courier, monospace;
+        }
+        .comment {
+            color: #64748b;
+        }
+        .keyword {
+            color: #93c5fd;
+        }
+        .function {
+            color: #a78bfa;
+        }
+        .string {
+            color: #fcd34d;
+        }
+        button:disabled {
+            cursor: not-allowed;
+            opacity: 0.6;
+        }
+    </style>
+</head>
+<body class="p-4 md:p-8">
+    <div class="max-w-7xl mx-auto bg-white p-6 rounded-xl shadow-lg">
+        <h1 class="text-3xl font-bold text-slate-800 mb-2">KMP 算法交互式演示</h1>
+        <p class="text-slate-600 mb-6">通过动画直观地理解 KMP 算法的每一步。</p>
+
+        <!-- 定义区域 -->
+        <div class="my-6 p-4 border-l-4 border-indigo-400 bg-indigo-50 rounded-r-lg">
+            <h2 class="text-xl font-bold text-slate-800 mb-2">核心概念定义</h2>
+            <div class="space-y-2 text-slate-700">
+                <p><strong>KMP 算法是什么？</strong> KMP 算法是一种高效的字符串匹配算法，它能在主串 <code>s1</code> 中快速查找模式串 <code>s2</code> 的所有出现位置。它的核心优势在于，当发生不匹配时，它能利用已经计算好的 <code>next</code> 数组，智能地将模式串向后滑动，从而避免了不必要的回溯和重复比较。</p>
+                <p><strong>什么是 Border (最长公共前后缀)？</strong> 一个字符串的 "Border" 是指它自身的一个子串，这个子串既是它的前缀，又是它的后缀，但不等于字符串本身。例如，<code>"ABCABC"</code> 的最长 Border 是 <code>"ABC"</code>。KMP算法中的 <code>next</code> 数组存储的就是模式串每个前缀的最长 Border 长度，这是实现高效滑动的关键。</p>
+            </div>
+        </div>
+
+        <!-- 输入区域 -->
+        <div class="grid md:grid-cols-2 gap-4 mb-6">
+            <div>
+                <label for="s1" class="block text-sm font-medium text-slate-700">主串 (s1)</label>
+                <input type="text" id="s1" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value="ABABABC">
+            </div>
+            <div>
+                <label for="s2" class="block text-sm font-medium text-slate-700">模式串 (s2)</label>
+                <input type="text" id="s2" class="mt-1 block w-full rounded-md border-slate-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" value="ABA">
+            </div>
+        </div>
+        <div class="flex items-center gap-4 mb-6">
+             <button id="controlBtn" class="bg-indigo-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition">开始演示</button>
+             <button id="resetBtn" class="bg-red-600 text-white font-semibold py-2 px-4 rounded-lg shadow-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 transition hidden">重置</button>
+        </div>
+
+        <!-- 演示区域 -->
+        <div id="visualization-area" class="space-y-8">
+            <!-- Part 1: Next 数组计算 -->
+            <div id="next-calculation" class="p-4 border rounded-lg bg-slate-50 hidden">
+                <h2 class="text-xl font-semibold text-slate-700 mb-4">第一步：计算模式串 s2 的 next 数组</h2>
+                <div id="s2-display-next" class="relative mb-8 text-center"></div>
+                <div id="next-array-display" class="mb-4 text-center"></div>
+                <div id="explanation-next" class="p-3 bg-indigo-100 text-indigo-800 rounded-md text-sm min-h-[50px]"></div>
+            </div>
+
+            <!-- Part 2: 字符串匹配 -->
+            <div id="matching-process" class="p-4 border rounded-lg bg-slate-50 hidden">
+                <h2 class="text-xl font-semibold text-slate-700 mb-4">第二步：在主串 s1 中进行匹配</h2>
+                <div id="s1-display-match" class="relative mb-12 text-center"></div>
+                <div id="s2-display-match" class="relative text-center"></div>
+                 <div id="explanation-match" class="mt-8 p-3 bg-green-100 text-green-800 rounded-md text-sm min-h-[50px]"></div>
+            </div>
+            
+            <!-- Part 3: 结果 -->
+            <div id="result-area" class="p-4 border rounded-lg bg-slate-50 hidden">
+                 <h2 class="text-xl font-semibold text-slate-700 mb-4">最终结果</h2>
+                 <p class="text-slate-600">s2 在 s1 中出现的位置 (1-indexed):</p>
+                 <div id="occurrences-output" class="font-mono text-lg text-indigo-600 my-2"></div>
+                 <p class="text-slate-600">s2 的 next 数组 (即每个前缀的最长 border 长度):</p>
+                 <div id="final-next-array" class="font-mono text-lg text-indigo-600 my-2"></div>
+            </div>
+        </div>
+
+        <!-- 代码解释 -->
+        <div class="mt-12">
+            <h2 class="text-2xl font-bold text-slate-800 mb-4">代码解释</h2>
+            <p class="text-slate-600 mb-4">这是 KMP 算法的 C++ 实现，你可以将上面的动画过程与下面的代码行对应起来看。</p>
+            <div class="code-block">
+                <pre><code><span class="comment">// 提高 cin/cout 效率</span>
+<span class="keyword">#include</span> <span class="string">&lt;iostream&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;string&gt;</span>
+<span class="keyword">#include</span> <span class="string">&lt;vector&gt;</span>
+
+<span class="keyword">using namespace</span> std;
+
+<span class="keyword">int</span> <span class="function">main</span>() {
+    <span class="comment">// ... I/O setup ...</span>
+    string s1, s2;
+    cin >> s1 >> s2;
+    <span class="keyword">int</span> n = s1.length();
+    <span class="keyword">int</span> m = s2.length();
+
+    <span class="comment">// --- Part 1: 计算模式串 s2 的 next 数组 ---</span>
+    <span class="comment">// next_val[i] 存储 s2[0...i] 的最长 border 长度</span>
+    vector&lt;<span class="keyword">int</span>&gt; next_val(m, 0);
+    <span class="comment">// j 是前缀指针，i 是后缀指针</span>
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = 1, j = 0; i < m; i++) {
+        <span class="comment">// 如果不匹配，j 就回退到上一个可能的 border 位置</span>
+        <span class="keyword">while</span> (j > 0 && s2[i] != s2[j]) {
+            j = next_val[j - 1];
+        }
+        <span class="comment">// 如果匹配，j 就向前移动</span>
+        <span class="keyword">if</span> (s2[i] == s2[j]) {
+            j++;
+        }
+        <span class="comment">// 更新 next 数组</span>
+        next_val[i] = j;
+    }
+
+    <span class="comment">// --- Part 2: 在主串 s1 中进行匹配 ---</span>
+    vector&lt;<span class="keyword">int</span>&gt; occurrences;
+    <span class="comment">// i 是主串指针，j 是模式串指针</span>
+    <span class="keyword">for</span> (<span class="keyword">int</span> i = 0, j = 0; i < n; i++) {
+        <span class="comment">// 如果不匹配，模式串指针 j 利用 next 数组回退</span>
+        <span class="keyword">while</span> (j > 0 && s1[i] != s2[j]) {
+            j = next_val[j - 1];
+        }
+        <span class="comment">// 如果匹配，模式串指针 j 向前移动</span>
+        <span class="keyword">if</span> (s1[i] == s2[j]) {
+            j++;
+        }
+        <span class="comment">// 如果 j 到达模式串末尾，说明找到一个完整匹配</span>
+        <span class="keyword">if</span> (j == m) {
+            <span class="comment">// C++ 字符串是 0-indexed，题目要求 1-indexed 位置</span>
+            occurrences.push_back(i - j + 2);
+            <span class="comment">// 继续寻找下一个匹配，j 回退</span>
+            j = next_val[j - 1];
+        }
+    }
+
+    <span class="comment">// --- Part 3: 输出结果 ---</span>
+    <span class="comment">// ... output logic ...</span>
+}
+</code></pre>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        const controlBtn = document.getElementById('controlBtn');
+        const resetBtn = document.getElementById('resetBtn');
+        const s1Input = document.getElementById('s1');
+        const s2Input = document.getElementById('s2');
+
+        const nextCalculationDiv = document.getElementById('next-calculation');
+        const matchingProcessDiv = document.getElementById('matching-process');
+        const resultAreaDiv = document.getElementById('result-area');
+        
+        const s2DisplayNext = document.getElementById('s2-display-next');
+        const nextArrayDisplay = document.getElementById('next-array-display');
+        const explanationNext = document.getElementById('explanation-next');
+        
+        const s1DisplayMatch = document.getElementById('s1-display-match');
+        const s2DisplayMatch = document.getElementById('s2-display-match');
+        const explanationMatch = document.getElementById('explanation-match');
+
+        const occurrencesOutput = document.getElementById('occurrences-output');
+        const finalNextArray = document.getElementById('final-next-array');
+
+        let animationState = 'idle'; // idle, running, finished
+        let stepPromiseResolve = null;
+
+        const step = () => {
+            return new Promise(resolve => {
+                stepPromiseResolve = resolve;
+            });
+        };
+
+        function createCharBoxes(str, container) {
+            container.innerHTML = '';
+            for (let i = 0; i < str.length; i++) {
+                const charBox = document.createElement('div');
+                charBox.className = 'char-box';
+                charBox.textContent = str[i];
+                charBox.id = `${container.id}-char-${i}`;
+                container.appendChild(charBox);
+            }
+        }
+        
+        function createPointer(id, label, container) {
+            const pointer = document.createElement('div');
+            pointer.className = 'pointer';
+            pointer.id = id;
+            pointer.innerHTML = `<span class="pointer-label">${label}</span><span class="pointer-arrow">▲</span>`;
+            container.appendChild(pointer);
+            return pointer;
+        }
+
+        async function calculateNext(s2) {
+            const m = s2.length;
+            const next_val = new Array(m).fill(0);
+
+            createCharBoxes(s2, s2DisplayNext);
+            const iPointer = createPointer('next-i-ptr', 'i', s2DisplayNext);
+            const jPointer = createPointer('next-j-ptr', 'j', s2DisplayNext);
+
+            nextArrayDisplay.innerHTML = `<strong>next 数组:</strong> ${next_val.join(' ')}`;
+            
+            let j = 0;
+            updatePointer(jPointer, 0);
+            
+            for (let i = 1; i < m; i++) {
+                updatePointer(iPointer, i);
+                await step();
+                
+                explanationNext.textContent = `i=${i}, j=${j}. 比较 s2[${i}] ('${s2[i]}') 和 s2[${j}] ('${s2[j]}')...`;
+                highlight(s2DisplayNext, i, 'bg-blue-200');
+                highlight(s2DisplayNext, j, 'bg-blue-200');
+                await step();
+                
+                while (j > 0 && s2[i] !== s2[j]) {
+                    highlight(s2DisplayNext, i, 'bg-red-300');
+                    highlight(s2DisplayNext, j, 'bg-red-300');
+                    explanationNext.textContent = `不匹配! s2[${i}] != s2[${j}]. j 回退到 next_val[${j-1}] (${next_val[j - 1]}).`;
+                    await step();
+                    
+                    resetHighlight(s2DisplayNext, i);
+                    resetHighlight(s2DisplayNext, j);
+                    
+                    j = next_val[j - 1];
+                    updatePointer(jPointer, j);
+                    await step();
+
+                    if (j > 0) {
+                        explanationNext.textContent = `回退后, i=${i}, j=${j}. 再次比较 s2[${i}] 和 s2[${j}]...`;
+                        highlight(s2DisplayNext, i, 'bg-blue-200');
+                        highlight(s2DisplayNext, j, 'bg-blue-200');
+                        await step();
+                    } else {
+                         explanationNext.textContent = `j 回退到 0.`;
+                         await step();
+                    }
+                }
+
+                if (s2[i] === s2[j]) {
+                    highlight(s2DisplayNext, i, 'bg-green-300');
+                    highlight(s2DisplayNext, j, 'bg-green-300');
+                    explanationNext.textContent = `匹配! s2[${i}] == s2[${j}]. j++`;
+                    await step();
+                    j++;
+                    updatePointer(jPointer, j);
+                }
+                
+                next_val[i] = j;
+                explanationNext.textContent = `更新 next_val[${i}] = ${j}.`;
+                nextArrayDisplay.innerHTML = `<strong>next 数组:</strong> ${next_val.map((val, idx) => idx <= i ? `<span class='text-indigo-600 font-bold'>${val}</span>` : val).join(' ')}`;
+                await step();
+                resetHighlight(s2DisplayNext, i);
+                resetHighlight(s2DisplayNext, j-1);
+            }
+            explanationNext.textContent = "next 数组计算完成!";
+            return next_val;
+        }
+
+        async function performMatch(s1, s2, next_val) {
+            const n = s1.length;
+            const m = s2.length;
+            const occurrences = [];
+
+            createCharBoxes(s1, s1DisplayMatch);
+            createCharBoxes(s2, s2DisplayMatch);
+
+            const iPointer = createPointer('match-i-ptr', 'i', s1DisplayMatch);
+            const jPointer = createPointer('match-j-ptr', 'j', s2DisplayMatch);
+            
+            let j = 0;
+            for (let i = 0; i < n; i++) {
+                updatePointer(iPointer, i);
+                updatePointer(jPointer, j);
+                s2DisplayMatch.style.transition = 'margin-left 0.3s ease-in-out';
+                s2DisplayMatch.style.marginLeft = `${(i - j) * 44}px`;
+                await step();
+
+                explanationMatch.textContent = `i=${i}, j=${j}. 比较 s1[${i}] ('${s1[i]}') 和 s2[${j}] ('${s2[j]}')...`;
+                highlight(s1DisplayMatch, i, 'bg-blue-200');
+                highlight(s2DisplayMatch, j, 'bg-blue-200');
+                await step();
+
+                while (j > 0 && s1[i] !== s2[j]) {
+                    highlight(s1DisplayMatch, i, 'bg-red-300');
+                    highlight(s2DisplayMatch, j, 'bg-red-300');
+                    explanationMatch.textContent = `不匹配! s1[${i}] != s2[${j}]. 模式串指针 j 回退到 next_val[${j-1}] (${next_val[j - 1]}).`;
+                    
+                    await step();
+
+                    resetHighlight(s1DisplayMatch, i);
+                    resetHighlight(s2DisplayMatch, j);
+
+                    j = next_val[j-1];
+                    updatePointer(jPointer, j);
+                    s2DisplayMatch.style.marginLeft = `${(i - j) * 44}px`;
+
+                    await step();
+                }
+
+                if (s1[i] === s2[j]) {
+                    highlight(s1DisplayMatch, i, 'bg-green-300');
+                    highlight(s2DisplayMatch, j, 'bg-green-300');
+                    explanationMatch.textContent = `匹配! s1[${i}] == s2[${j}]. j++`;
+                    await step();
+                    j++;
+                }
+                
+                if (j === m) {
+                    explanationMatch.textContent = `模式串完全匹配! 在位置 ${i - j + 2} 找到.`;
+                    for(let k=0; k<m; k++) {
+                        highlight(s1DisplayMatch, i-k, 'bg-indigo-400 text-white');
+                    }
+                    occurrences.push(i - j + 2);
+                    await step();
+                    
+                    explanationMatch.textContent = `继续寻找下一个匹配, j 回退到 next_val[${j-1}] (${next_val[j-1]}).`;
+                    j = next_val[j-1];
+                }
+                 updatePointer(jPointer, j);
+            }
+
+             explanationMatch.textContent = "主串扫描完成!";
+             return occurrences;
+        }
+
+        function updatePointer(ptr, index) {
+            // 修改为使用 transform 进行移动
+            ptr.style.transform = `translateX(${index * 44}px)`;
+        }
+        
+        function highlight(container, index, className) {
+            const charBox = document.getElementById(`${container.id}-char-${index}`);
+            if (charBox) {
+                 charBox.classList.remove('bg-blue-200', 'bg-red-300', 'bg-green-300', 'bg-indigo-400', 'text-white');
+                 charBox.classList.add(...className.split(' '));
+            }
+        }
+        
+        function resetHighlight(container, index) {
+            const charBox = document.getElementById(`${container.id}-char-${index}`);
+            if(charBox) {
+                charBox.classList.remove('bg-blue-200', 'bg-red-300', 'bg-green-300', 'bg-indigo-400', 'text-white');
+            }
+        }
+        
+        async function runVisualization() {
+            animationState = 'running';
+            controlBtn.textContent = "下一步";
+            controlBtn.disabled = false;
+            resetBtn.classList.remove('hidden');
+
+            const s1 = s1Input.value;
+            const s2 = s2Input.value;
+            
+            // Part 1
+            nextCalculationDiv.classList.remove('hidden');
+            const next_val = await calculateNext(s2);
+
+            // Part 2
+            matchingProcessDiv.classList.remove('hidden');
+            const occurrences = await performMatch(s1, s2, next_val);
+
+            // Part 3
+            resultAreaDiv.classList.remove('hidden');
+            occurrencesOutput.textContent = occurrences.length > 0 ? occurrences.join(' ') : '未找到';
+            finalNextArray.textContent = next_val.join(' ');
+            
+            animationState = 'finished';
+            controlBtn.textContent = '演示完成';
+            controlBtn.disabled = true;
+        }
+
+        controlBtn.addEventListener('click', () => {
+            if (animationState === 'idle') {
+                const s1 = s1Input.value;
+                const s2 = s2Input.value;
+                if (!s1 || !s2) {
+                    alert("主串和模式串都不能为空!");
+                    return;
+                }
+                s1Input.disabled = true;
+                s2Input.disabled = true;
+                runVisualization();
+            } else if (animationState === 'running') {
+                if (stepPromiseResolve) {
+                    stepPromiseResolve();
+                }
+            }
+        });
+
+        resetBtn.addEventListener('click', () => {
+             // A simple way to reset is to reload the page
+             location.reload();
+        });
+
+    </script>
+</body>
+</html>
+
