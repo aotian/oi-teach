@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LIS 最长上升子序列算法详解</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Calm Green & Amber -->
+    <!-- Application Structure Plan: A single-page, vertically scrolling layout is chosen for this detailed algorithm explanation. The structure follows the established template: Core Concept, Interactive Visualization, Code Template, and Practice Problems. This linear flow is effective for teaching a single, specific algorithm. The centerpiece is the interactive DOM-based animation for the O(n log n) LIS algorithm, which is crucial for understanding its non-trivial greedy and binary search logic. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: LIS Core Logic (O(n^2) vs O(n log n)) -> Goal: Explain both approaches -> Viz: Structured text with comparisons, and now an interactive animation for the O(n^2) method as well -> Justification: Adding a DP table-filling animation for the O(n^2) approach provides a foundational understanding before moving to the more abstract O(n log n) optimization.
+        - Report Info: LIS O(n log n) Algorithm Steps -> Goal: Show the process of building the 'tails' array -> Viz: Interactive DOM animation -> Interaction: 'Run' button animates the traversal of the input array and the binary search/update process on the 'tails' array -> Justification: The greedy choice of replacing elements in the `tails` array is the most confusing part of this algorithm, and an animation makes this process transparent. Method: DOM manipulation.
+        - Report Info: C++ Implementation -> Goal: Provide code for both O(n^2) and O(n log n) solutions -> Viz: A styled code block with a copy button -> Interaction: Copy button -> Justification: Providing both implementations allows for a direct comparison and lets students master the optimized version.
+        - Report Info: Practice -> Goal: Guide further learning -> Viz: Interactive cards linking to online judge problems -> Justification: Connects learning with immediate application.
+     -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        :root {
+            --bg-main: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --accent-primary: #10b981;
+            --accent-secondary: #f59e0b;
+            --border-color: #e5e7eb;
+        }
+        html { scroll-behavior: smooth; }
+        body { background-color: var(--bg-main); color: var(--text-primary); }
+        h2, h3 { color: var(--text-primary); font-weight: 700; }
+        .code-block {
+            background-color: #1f2937;
+            color: #d1d5db;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            position: relative;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: auto;
+        }
+        .copy-btn {
+            position: absolute; top: 0.75rem; right: 0.75rem; background-color: #4b5563;
+            color: white; padding: 0.25rem 0.5rem; border-radius: 0.375rem;
+            font-size: 0.875rem; cursor: pointer; transition: background-color 0.2s;
+        }
+        .copy-btn:hover { background-color: #6b7280; }
+        
+        /* LIS Styles */
+        .lis-container { display: flex; flex-direction: column; gap: 0.5rem; font-family: 'Courier New', Courier, monospace; }
+        .lis-row { display: flex; gap: 0.5rem; align-items: center; min-height: 50px; }
+        .lis-label { width: 80px; font-weight: bold; text-align: right; }
+        .lis-item {
+            width: 40px; height: 40px; display: flex; justify-content: center; align-items: center;
+            border: 1px solid var(--border-color); border-radius: 0.25rem;
+            background-color: #f1f5f9; font-weight: bold; transition: all 0.3s ease;
+        }
+        .lis-item.current { border-color: var(--accent-secondary); background-color: #fef3c7; transform: scale(1.1); }
+        .lis-item.compare { border-color: #f472b6; background-color: #fce7f3; }
+        .lis-item.placed { border-color: var(--accent-primary); background-color: #dcfce7; }
+        .lis-item.final { background-color: #dcfce7; }
+        button:disabled { background-color: #9ca3af; cursor: not-allowed; }
+    </style>
+</head>
+<body class="font-sans">
+
+    <div id="main-content" class="container mx-auto px-4 py-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">最长上升子序列 (LIS) 算法详解</h1>
+            <p class="text-lg text-gray-600 mt-2">从 O(n²) 到 O(n log n) 的飞跃</p>
+        </header>
+
+        <main class="space-y-8">
+            <section id="section-concept" class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl mb-4 border-b pb-2">一、核心思想：两种解法</h2>
+                <p class="text-secondary mb-4">最长上升子序列 (Longest Increasing Subsequence) 问题是给定一个序列，找到其最长的一个子序列，使得这个子序列是单调递增的。例如，序列 `[3, 5, 2, 8, 4, 10, 6]` 的 LIS 是 `[3, 5, 8, 10]` 或 `[3, 4, 6, ...]`，长度为4。</p>
+                <div class="grid md:grid-cols-2 gap-8">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">解法一：动态规划 (O(n²))</h3>
+                        <p class="text-secondary">这是最直观的DP思路。我们定义 `dp[i]` 为**以 `nums[i]` 结尾**的最长上升子序列的长度。为了计算 `dp[i]`，我们需要遍历 `i` 之前的所有元素 `j` (从 0 到 `i-1`)，如果 `nums[i] > nums[j]`，说明 `nums[i]` 可以接在以 `nums[j]` 结尾的上升子序列后面，于是我们有状态转移：`dp[i] = max(dp[i], dp[j] + 1)`。最终的答案是所有 `dp` 值中的最大值。</p>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">解法二：贪心 + 二分查找 (O(n log n))</h3>
+                        <p class="text-secondary">这是一个非常巧妙的优化 (也是**竞赛推荐解法**)。我们维护一个名为 `tails` 的数组，其中 `tails[i]` 存储的是所有长度为 `i+1` 的上升子序列中，**结尾元素最小的值**。遍历原数组，对于每个数 `num`：</p>
+                        <ul class="list-disc list-inside space-y-2 mt-2 text-sm text-secondary">
+                            <li>如果 `num` 大于 `tails` 数组中所有的元素，说明我们可以把它接在最长的子序列后面，形成一个更长的子序列。直接将 `num` 添加到 `tails` 数组末尾。</li>
+                            <li>否则，在 `tails` 数组中找到第一个**大于等于** `num` 的元素，并用 `num` 替换它。这一步是贪心的核心：我们找到了一个结尾更小的、同样长度的上升子序列，这为后续元素提供了更多可能性。</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+            
+            <section id="section-interactive-n2" class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl mb-4 border-b pb-2">二、O(n²) DP解法交互式动画</h2>
+                <p class="text-secondary mb-4">下面的动画将演示DP解法如何通过“填表”来计算以每个元素结尾的LIS长度。请点击“下一步”来执行算法的每一步。</p>
+                <div class="grid lg:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <div class="flex space-x-4">
+                           <button id="run-lis-n2" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">下一步</button>
+                           <button id="reset-lis-n2" class="w-full px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">重置</button>
+                        </div>
+                        <p id="lis-n2-status" class="text-center font-semibold mt-4 h-12"></p>
+                    </div>
+                    <div id="lis-n2-vis" class="lis-container"></div>
+                </div>
+            </section>
+
+            <section id="section-interactive" class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl mb-4 border-b pb-2">三、O(n log n) 解法交互式动画</h2>
+                <p class="text-secondary mb-4">下面的动画将演示“贪心+二分”的解法如何处理序列 `[3, 5, 2, 8, 4, 10, 6]`。请点击“下一步”来执行算法的每一步。</p>
+                <div class="grid lg:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <div class="flex space-x-4">
+                            <button id="run-lis" class="w-full px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">下一步</button>
+                            <button id="reset-lis" class="w-full px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">重置</button>
+                        </div>
+                        <p id="lis-status" class="text-center font-semibold mt-4 h-12"></p>
+                    </div>
+                    <div id="lis-vis" class="lis-container"></div>
+                </div>
+            </section>
+
+            <section id="section-code" class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl mb-4 border-b pb-2">四、C++ 核心代码模板</h2>
+                 <div class="grid md:grid-cols-2 gap-8 items-start">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">O(n²) DP 解法</h3>
+                        <div class="code-block">
+                           <button class="copy-btn" onclick="copyCode(this)">复制</button>
+                           <pre><code>int lengthOfLIS_N2(vector<int>& nums) {
+    if (nums.empty()) return 0;
+    vector<int> dp(nums.size(), 1);
+    int max_len = 1;
+    for (int i = 1; i < nums.size(); i++) {
+        for (int j = 0; j < i; j++) {
+            if (nums[i] > nums[j]) {
+                dp[i] = max(dp[i], dp[j] + 1);
+            }
+        }
+        max_len = max(max_len, dp[i]);
+    }
+    return max_len;
+}</code></pre>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">O(n log n) 优化解法</h3>
+                        <div class="code-block">
+                           <button class="copy-btn" onclick="copyCode(this)">复制</button>
+                           <pre><code>int lengthOfLIS_NLogN(vector<int>& nums) {
+    if (nums.empty()) return 0;
+    vector<int> tails;
+    for (int num : nums) {
+        // 寻找第一个大于等于num的元素
+        auto it = lower_bound(tails.begin(), tails.end(), num);
+        
+        if (it == tails.end()) {
+            // 如果num比所有tails都大，加到末尾
+            tails.push_back(num);
+        } else {
+            // 否则，替换掉第一个大于等于它的数
+            *it = num;
+        }
+    }
+    return tails.size();
+}</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+             <section id="section-practice" class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl mb-4 border-b pb-2">五、实战演练</h2>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                        <h4 class="font-bold text-lg">P1020 [NOIP1999 普及组] 导弹拦截</h4>
+                        <p class="text-sm text-gray-600 my-2">本题第一问即为“最长不升子序列”，与LIS类似但条件是 `> ` 变为 `<=`。是练习 O(n log n) 写法的绝佳模板题。</p>
+                        <a href="https://www.luogu.com.cn/problem/P1020" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">前往挑战</a>
+                    </div>
+                    <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                        <h4 class="font-bold text-lg">P1091 [NOIP2004 提高组] 合唱队形</h4>
+                        <p class="text-sm text-gray-600 my-2">经典的 LIS 变种题。思路是枚举“山顶”位置，分别从左到右求一次LIS，再从右到左求一次LIS，找出两者之和的最大值。</p>
+                        <a href="https://www.luogu.com.cn/problem/P1091" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition">前往挑战</a>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+<script>
+    let isStepInProgress = false;
+    const sleep = ms => new Promise(res => setTimeout(res, ms));
+
+    // --- Code Copy ---
+    function copyCode(button) {
+        const pre = button.nextElementSibling;
+        navigator.clipboard.writeText(pre.innerText).then(() => {
+            const originalText = button.innerText;
+            button.innerText = '已复制!';
+            setTimeout(() => { button.innerText = originalText; }, 2000);
+        });
+    }
+
+    // --- LIS Logic ---
+    const lisNums = [3, 5, 2, 8, 4, 10, 6];
+
+    // O(n log n) animation state
+    const lisVis = document.getElementById('lis-vis');
+    const lisStatus = document.getElementById('lis-status');
+    const runLisBtn = document.getElementById('run-lis');
+    let lis_i = 0;
+    let lis_tails = [];
+
+    function initLisVis() {
+        lis_i = 0;
+        lis_tails = [];
+        lisVis.innerHTML = `
+            <div class="lis-row"><div class="lis-label">Input:</div><div id="lis-input-row" class="flex gap-2 flex-wrap"></div></div>
+            <div class="lis-row"><div class="lis-label">Tails:</div><div id="lis-tails-row" class="flex gap-2 flex-wrap"></div></div>
+        `;
+        const inputRow = document.getElementById('lis-input-row');
+        lisNums.forEach((num, i) => {
+            inputRow.innerHTML += `<div id="lis-in-${i}" class="lis-item">${num}</div>`;
+        });
+        lisStatus.innerText = '准备开始...';
+        runLisBtn.disabled = false;
+    }
+    
+    async function stepLIS() {
+        if (isStepInProgress) return;
+        isStepInProgress = true;
+        
+        document.querySelectorAll('.lis-item').forEach(el => el.classList.remove('current', 'compare', 'placed'));
+
+        if (lis_i >= lisNums.length) {
+            lisStatus.innerText = `完成! LIS 长度为: ${lis_tails.length}`;
+            runLisBtn.disabled = true;
+            isStepInProgress = false;
+            return;
+        }
+
+        const num = lisNums[lis_i];
+        const currentItem = document.getElementById(`lis-in-${lis_i}`);
+        currentItem.classList.add('current');
+        lisStatus.innerText = `处理元素: ${num}`;
+        
+        await sleep(500);
+
+        let low = 0, high = lis_tails.length;
+        while (low < high) {
+            if (lis_tails[low] < num) { low++; } else { break; }
+        }
+        
+        if (low === lis_tails.length) {
+            lisStatus.innerText = `${num} > 所有Tails, 添加到末尾`;
+            lis_tails.push(num);
+            document.getElementById('lis-tails-row').innerHTML += `<div id="lis-tail-${low}" class="lis-item">${num}</div>`;
+            await sleep(500);
+            document.getElementById('lis-tails-row').lastChild.classList.add('placed');
+        } else {
+            lisStatus.innerText = `在位置 ${low} 找到 >= ${num} 的数 (${lis_tails[low]}), 进行替换`;
+            lis_tails[low] = num;
+            const tailItem = document.getElementById(`lis-tail-${low}`);
+            tailItem.classList.add('placed');
+            tailItem.style.transform = 'scale(1.2)';
+            await sleep(500);
+            tailItem.innerText = num;
+            tailItem.style.transform = 'scale(1)';
+        }
+        
+        lis_i++;
+        isStepInProgress = false;
+    }
+    
+    // O(n^2) animation state
+    const lisN2Vis = document.getElementById('lis-n2-vis');
+    const lisN2Status = document.getElementById('lis-n2-status');
+    const runLisN2Btn = document.getElementById('run-lis-n2');
+    let lisN2_i = 1, lisN2_j = 0;
+    let lisN2_dp = [];
+    let lisN2_maxLen = 1;
+
+    function initLisN2Vis() {
+        lisN2_i = 1; lisN2_j = 0; lisN2_maxLen = 1;
+        lisN2_dp = Array(lisNums.length).fill(1);
+        
+        lisN2Vis.innerHTML = `
+            <div class="lis-row"><div class="lis-label">Nums:</div><div id="lis-n2-input-row" class="flex gap-2 flex-wrap"></div></div>
+            <div class="lis-row"><div class="lis-label">DP:</div><div id="lis-n2-dp-row" class="flex gap-2 flex-wrap"></div></div>
+        `;
+        const inputRow = document.getElementById('lis-n2-input-row');
+        const dpRow = document.getElementById('lis-n2-dp-row');
+        lisNums.forEach((num, i) => {
+            inputRow.innerHTML += `<div id="lis-n2-in-${i}" class="lis-item">${num}</div>`;
+            dpRow.innerHTML += `<div id="lis-n2-dp-${i}" class="lis-item">1</div>`;
+        });
+        document.getElementById('lis-n2-dp-0').classList.add('final');
+        lisN2Status.innerText = '准备开始...';
+        runLisN2Btn.disabled = false;
+    }
+
+    async function stepLIS_N2() {
+        if (isStepInProgress) return;
+        isStepInProgress = true;
+
+        document.querySelectorAll('.lis-item').forEach(el => el.classList.remove('current', 'compare'));
+
+        if (lisN2_i >= lisNums.length) {
+            lisN2Status.innerText = `完成! LIS 长度为: ${lisN2_maxLen}`;
+            runLisN2Btn.disabled = true;
+            isStepInProgress = false;
+            return;
+        }
+
+        const currentNumItem = document.getElementById(`lis-n2-in-${lisN2_i}`);
+        const currentDpItem = document.getElementById(`lis-n2-dp-${lisN2_i}`);
+        currentNumItem.classList.add('current');
+        currentDpItem.classList.add('current');
+
+        if (lisN2_j < lisN2_i) {
+            const compareNumItem = document.getElementById(`lis-n2-in-${lisN2_j}`);
+            const compareDpItem = document.getElementById(`lis-n2-dp-${lisN2_j}`);
+            compareNumItem.classList.add('compare');
+            compareDpItem.classList.add('compare');
+            lisN2Status.innerText = `比较 nums[${lisN2_i}]=${lisNums[lisN2_i]} 和 nums[${lisN2_j}]=${lisNums[lisN2_j]}`;
+
+            if (lisNums[lisN2_i] > lisNums[lisN2_j]) {
+                if (lisN2_dp[lisN2_j] + 1 > lisN2_dp[lisN2_i]) {
+                    lisN2_dp[lisN2_i] = lisN2_dp[lisN2_j] + 1;
+                    lisN2Status.innerText = `更新 dp[${lisN2_i}] = dp[${lisN2_j}] + 1 = ${lisN2_dp[lisN2_i]}`;
+                    currentDpItem.innerText = lisN2_dp[lisN2_i];
+                }
+            }
+            lisN2_j++;
+        } else {
+            lisN2_maxLen = Math.max(lisN2_maxLen, lisN2_dp[lisN2_i]);
+            lisN2Status.innerText = `dp[${lisN2_i}] 计算完毕, 值为 ${lisN2_dp[lisN2_i]}`;
+            currentDpItem.classList.add('final');
+            lisN2_i++;
+            lisN2_j = 0;
+        }
+        
+        isStepInProgress = false;
+    }
+
+    document.getElementById('run-lis').addEventListener('click', stepLIS);
+    document.getElementById('reset-lis').addEventListener('click', initLisVis);
+    document.getElementById('run-lis-n2').addEventListener('click', stepLIS_N2);
+    document.getElementById('reset-lis-n2').addEventListener('click', initLisN2Vis);
+
+    window.onload = () => {
+       initLisVis();
+       initLisN2Vis();
+    };
+</script>
+
+</body>
+</html>
+
