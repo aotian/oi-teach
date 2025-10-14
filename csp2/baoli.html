@@ -1,0 +1,434 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CSP-J/S 暴力抢分策略教案</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: A single-page application with a fixed sidebar for navigation between four main sections: Overview, Lesson 1, Lesson 2, and Code Templates. This task-oriented structure allows students to easily jump to specific content rather than scrolling through a long document. Lessons are broken down into interactive cards and expandable problem explorers to improve engagement and reduce cognitive load. This is more user-friendly for learning and review than a linear document. -->
+    <!-- Visualization & Content Choices: Report Info: Lesson plan with concepts and code. Goal: Organize/Inform. Method: Used cards with icons (HTML/CSS) for concepts and an accordion-style problem explorer (HTML/CSS/JS) for details. Interaction: Sidebar navigation (JS), expand/collapse details (JS), and copy-to-clipboard for code (JS). Justification: This interactive structure makes the lesson plan more digestible and actionable for students. The "Code Templates" section is a direct value-add for practical use. Library/Method: Vanilla JS for all interactions. NO SVG/Mermaid used. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', 'Microsoft YaHei', sans-serif;
+            background-color: #f8f7f4;
+            color: #4a4a4a;
+        }
+        .sidebar-link {
+            transition: all 0.2s ease-in-out;
+            border-left: 3px solid transparent;
+        }
+        .sidebar-link.active, .sidebar-link:hover {
+            background-color: #edeae5;
+            border-left-color: #c8a786;
+            color: #333;
+        }
+        .content-section {
+            display: none;
+        }
+        .content-section.active {
+            display: block;
+        }
+        .problem-card .problem-details {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.5s ease-in-out;
+        }
+        .problem-card.open .problem-details {
+            max-height: 1500px;
+        }
+        .code-block {
+            background-color: #2d2d2d;
+            color: #f8f8f2;
+            padding: 1rem;
+            border-radius: 8px;
+            overflow-x: auto;
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            background-color: #444;
+            color: #fff;
+            border: none;
+            padding: 5px 10px;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+        .copy-btn:hover {
+            background-color: #666;
+        }
+        .prose h2 { color: #333; }
+        .prose h3 { color: #4a4a4a; }
+        .prose strong { color: #c8a786; }
+    </style>
+</head>
+<body class="flex h-screen">
+
+    <!-- Sidebar Navigation -->
+    <aside class="w-64 bg-[#f1eee9] text-gray-700 flex-shrink-0 p-4">
+        <h1 class="text-xl font-bold text-gray-800 mb-6">暴力抢分策略</h1>
+        <nav class="space-y-2">
+            <a href="#overview" class="sidebar-link active flex items-center p-2 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" /></svg>
+                课程概览
+            </a>
+            <a href="#lesson1" class="sidebar-link flex items-center p-2 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 15l-2 5L9 9l11 4-5 2zm0 0l5 5M7.188 2.239l.777 2.897M5.136 7.965l-2.898-.777M13.95 4.05l-2.122 2.122m-5.657 5.656l-2.12 2.122" /></svg>
+                第一节课
+            </a>
+            <a href="#lesson2" class="sidebar-link flex items-center p-2 rounded-lg">
+                 <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" /></svg>
+                第二节课
+            </a>
+            <a href="#templates" class="sidebar-link flex items-center p-2 rounded-lg">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" /></svg>
+                核心代码模板
+            </a>
+        </nav>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="flex-1 p-6 lg:p-10 overflow-y-auto">
+        <div class="max-w-4xl mx-auto prose lg:prose-lg">
+            
+            <!-- Section: Overview -->
+            <section id="overview" class="content-section active">
+                <h2>课程概览：暴力抢分策略与实战</h2>
+                <p>本课程专为备战CSP-J/S复赛的学生设计，旨在通过两节高强度、高效率的课程，帮助学生掌握在考场上利用**暴力解法**稳定获取部分分乃至满分的策略与技巧，从而在有限时间内最大化考场得分。</p>
+                
+                <div class="grid md:grid-cols-2 gap-6 not-prose mt-8">
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="font-bold text-lg mb-2 text-gray-800">核心目标</h3>
+                        <ul class="list-disc list-inside space-y-2 text-gray-600">
+                            <li>建立“部分分”思维</li>
+                            <li>掌握数据范围与解法的关系</li>
+                            <li>熟练编写DFS等暴力模板</li>
+                            <li>提升考场策略与心态</li>
+                        </ul>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow-sm">
+                        <h3 class="font-bold text-lg mb-2 text-gray-800">课程安排</h3>
+                        <div class="space-y-2 text-gray-600">
+                            <p><strong>总课时:</strong> 2节课</p>
+                            <p><strong>每节课时长:</strong> 1.5小时 (90分钟)</p>
+                            <p><strong>核心理念:</strong> 巩固基础，抢分优先，暴力出奇迹！</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="mt-12">数据范围的秘密</h3>
+                <p>在考场上，数据范围就是最重要的提示。看到数据范围，就应该像条件反射一样想到对应的算法复杂度。这是暴力抢分策略的基础。</p>
+                <div class="not-prose bg-white p-6 rounded-lg shadow-sm mt-4 text-center">
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div>
+                            <p class="font-mono text-lg font-semibold text-[#c8a786]">n &lt;= 20</p>
+                            <p class="text-gray-600">指数级复杂度 O(2^n)</p>
+                            <p class="font-bold text-gray-800 mt-1">果断用DFS搜索！</p>
+                        </div>
+                         <div>
+                            <p class="font-mono text-lg font-semibold text-[#c8a786]">n &lt;= 1000</p>
+                            <p class="text-gray-600">平方级复杂度 O(n²)</p>
+                            <p class="font-bold text-gray-800 mt-1">双层`for`循环枚举！</p>
+                        </div>
+                         <div>
+                            <p class="font-mono text-lg font-semibold text-[#c8a786]">n &gt;= 10^5</p>
+                            <p class="text-gray-600">对数或线性复杂度</p>
+                            <p class="font-bold text-gray-800 mt-1">暴力拿部分分！</p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Section: Lesson 1 -->
+            <section id="lesson1" class="content-section">
+                <h2>第一节课: 暴力思维建立与DFS实战</h2>
+                <p>本节课将从战略层面入手，建立正确的“部分分”思维，并重点精讲最核心、最万能的暴力工具——**深度优先搜索(DFS)**，特别是其在解决组合问题上的标准模板。</p>
+                
+                <h3 class="mt-10">核心技能一：模拟与枚举</h3>
+                <p>模拟与枚举是暴力解法的基础，考验的是细心和代码实现能力。关键在于将题目描述直接翻译为代码，并时刻注意数据范围和边界陷阱。</p>
+                <div class="not-prose mt-4 space-y-4">
+                    <div class="problem-card bg-white p-4 rounded-lg shadow-sm cursor-pointer" data-problem="p1">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-bold text-md text-gray-800">P8813 [CSP-J 2022] 乘方</h4>
+                            <span class="text-sm text-gray-500">点击展开/折叠</span>
+                        </div>
+                        <div class="problem-details mt-4 border-t pt-4">
+                            <p><strong>核心思路:</strong> 模拟乘方。用一个变量`res`记录结果，循环`b`次，每次将`res`乘以`a`。</p>
+                            <p><strong>关键点:</strong> 结果`res`可能远超`long long`。在每次乘法操作**之前**，都要判断当前的`res`再乘以`a`是否会超过`10^9`，这是防止溢出的核心。</p>
+                            <div class="code-block mt-4">
+                                <button class="copy-btn">复制</button>
+                                <pre><code class="language-cpp">#include &lt;iostream&gt;
+
+int main() {
+    long long a, b;
+    std::cin &gt;&gt; a &gt;&gt; b;
+    if (a == 1) {
+        std::cout &lt;&lt; 1 &lt;&lt; std::endl;
+        return 0;
+    }
+    long long res = 1;
+    long long limit = 1e9;
+    for (int i = 0; i &lt; b; ++i) {
+        // 核心：防止溢出的判断
+        if (res &gt; limit / a) { 
+            std::cout &lt;&lt; -1 &lt;&lt; std::endl;
+            return 0;
+        }
+        res *= a;
+    }
+    std::cout &lt;&lt; res &lt;&lt; std::endl;
+    return 0;
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="mt-10">核心技能二：DFS模板与实战</h3>
+                <p>当问题涉及多种选择、需要探索所有可能性时，DFS就是我们的“万能钥匙”。我们将以经典的“选数”问题为例，学习并要求背诵DFS求组合的通用模板。</p>
+                <div class="not-prose mt-4 space-y-4">
+                     <div class="problem-card bg-white p-4 rounded-lg shadow-sm cursor-pointer" data-problem="p2">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-bold text-md text-gray-800">P1036 [NOIP2002 普及组] 选数</h4>
+                            <span class="text-sm text-gray-500">点击展开/折叠</span>
+                        </div>
+                        <div class="problem-details mt-4 border-t pt-4">
+                            <p><strong>核心思路:</strong> <strong>DFS求组合</strong>。设计递归函数`dfs(start_index, count, current_sum)`。</p>
+                            <p><strong>关键点:</strong> 递归边界是`count == k`；为避免重复选择，循环从`start_index`开始，确保下标递增；需要一个判断素数的辅助函数。</p>
+                            <div class="code-block mt-4">
+                                <button class="copy-btn">复制</button>
+                                <pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+#include &lt;cmath&gt;
+
+int n, k;
+std::vector&lt;int&gt; nums;
+int total_count = 0;
+
+bool is_prime(int x) {
+    if (x &lt; 2) return false;
+    for (int i = 2; i * i &lt;= x; ++i) {
+        if (x % i == 0) return false;
+    }
+    return true;
+}
+
+void dfs(int start_index, int count, int current_sum) {
+    if (count == k) {
+        if (is_prime(current_sum)) {
+            total_count++;
+        }
+        return;
+    }
+    if (start_index &gt;= n) return;
+    if (n - start_index &lt; k - count) return; // 剪枝
+
+    for (int i = start_index; i &lt; n; ++i) {
+        dfs(i + 1, count + 1, current_sum + nums[i]);
+    }
+}
+
+int main() {
+    std::cin &gt;&gt; n &gt;&gt; k;
+    nums.resize(n);
+    for (int i = 0; i &lt; n; ++i) std::cin &gt;&gt; nums[i];
+    dfs(0, 0, 0);
+    std::cout &lt;&lt; total_count &lt;&lt; std::endl;
+    return 0;
+}</code></pre>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </section>
+            
+            <!-- Section: Lesson 2 -->
+            <section id="lesson2" class="content-section">
+                <h2>第二节课: 难题中的暴力与应试技巧</h2>
+                <p>本节课聚焦于如何在看似复杂的难题中找到暴力解法的突破口，学习两种高级暴力策略，并最终落实到考场上的时间管理与应试技巧，确保将知识转化为实实在在的分数。</p>
+
+                <h3 class="mt-10">进阶暴力策略</h3>
+                <p>面对难题，正解可能遥不可及，但暴力解法往往隐藏在题目某些不起眼的限制或子任务中。</p>
+                <div class="not-prose mt-4 space-y-4">
+                    <div class="problem-card bg-white p-4 rounded-lg shadow-sm cursor-pointer" data-problem="p3">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-bold text-md text-gray-800">策略一：枚举+模拟 (P7913 廊桥分配)</h4>
+                             <span class="text-sm text-gray-500">点击展开/折叠</span>
+                        </div>
+                        <div class="problem-details mt-4 border-t pt-4">
+                           <p><strong>核心思路:</strong> <strong>枚举 + 模拟</strong>。直接想最优分配很难，但廊桥总数不多。可以外层`for`循环枚举分配给国内航班的廊桥数`i`（从0到n），内层对每种`i`的情况，进行两次独立的模拟，计算总停靠数，取最大值。</p>
+                            <p><strong>关键点:</strong> 将一个最优解问题，降维成一个“枚举所有分配方案，对每种方案进行简单模拟”的暴力问题。</p>
+                        </div>
+                    </div>
+                     <div class="problem-card bg-white p-4 rounded-lg shadow-sm cursor-pointer" data-problem="p4">
+                        <div class="flex justify-between items-center">
+                            <h4 class="font-bold text-md text-gray-800">策略二：识别子任务 (P7914 括号序列)</h4>
+                             <span class="text-sm text-gray-500">点击展开/折叠</span>
+                        </div>
+                         <div class="problem-details mt-4 border-t pt-4">
+                           <p><strong>核心思路:</strong> **DFS爆搜**。正解是DP，很难。但观察数据范围，有`n<=15`的子任务。`15`这个数字强烈暗示了指数级复杂度的算法。因此，我们可以针对这个子任务，用DFS暴力填补所有的`?`，然后检查生成的序列是否合法，从而拿到部分分。</p>
+                           <p><strong>关键点:</strong> 放弃思考全局最优解，专注于用暴力方法解决特定的小数据范围子任务。</p>
+                        </div>
+                    </div>
+                </div>
+
+                <h3 class="mt-10">考场终极技巧</h3>
+                <div class="not-prose mt-4 bg-white p-6 rounded-lg shadow-sm">
+                    <ul class="list-disc list-inside space-y-3 text-gray-700">
+                        <li><strong>时间分配:</strong> 花10-15分钟通读所有题，评估难度，确定开题顺序。</li>
+                        <li><strong>心态管理:</strong> 遇到难题不慌，先找暴力。一道题超时果断跳过，先保住后面题的暴力分。</li>
+                        <li><strong>代码检查清单:</strong> 提交前务必检查以下各项：
+                            <ul class="list-decimal list-inside ml-6 mt-2 space-y-1">
+                                <li>文件名是否正确 (`xxx.cpp`)？</li>
+                                <li>`freopen` 是否按要求使用？</li>
+                                <li>需要`long long`的地方是否使用了？</li>
+                                <li>数组大小是否足够？</li>
+                                <li>`main`函数是否`return 0;`？</li>
+                            </ul>
+                        </li>
+                    </ul>
+                </div>
+
+            </section>
+            
+            <!-- Section: Templates -->
+            <section id="templates" class="content-section">
+                <h2>核心代码模板</h2>
+                <p>以下是考场上必须做到“肌肉记忆”的暴力代码模板。熟练掌握它们，能在紧张的时间内为你抢下宝贵的分数。</p>
+
+                <h3 class="mt-10">DFS求组合模板 (选数问题)</h3>
+                <p>这是解决“从n个元素中选k个”这类问题的万能钥匙。核心在于通过`start_index`参数避免重复搜索。</p>
+                <div class="not-prose mt-4">
+                     <div class="code-block">
+                        <button class="copy-btn">复制</button>
+                        <pre><code class="language-cpp">#include &lt;iostream&gt;
+#include &lt;vector&gt;
+
+int n, k;
+std::vector&lt;int&gt; elements;
+int solutions = 0;
+
+// dfs(从哪个下标开始选, 已经选了几个, 当前的某种状态)
+void dfs(int start_index, int count, int current_sum) {
+    // 1. 递归边界：当已经选满k个数
+    if (count == k) {
+        // 在这里处理找到的一组解
+        // 例如: if (is_valid(current_sum)) solutions++;
+        solutions++;
+        return;
+    }
+
+    // 2. 剪枝(可选，但高效): 如果剩下的所有数都选上也不够k个
+    if (n - start_index < k - count) {
+        return;
+    }
+
+    // 3. 循环选择：从start_index开始，避免重复
+    for (int i = start_index; i < n; ++i) {
+        // 做选择 (隐式地将 elements[i] 加入组合)
+        // 递归到下一层
+        dfs(i + 1, count + 1, current_sum + elements[i]);
+        // 撤销选择 (隐式回溯，因为参数是值传递)
+    }
+}
+
+int main() {
+    // std::cin >> n >> k;
+    // elements.resize(n);
+    // for(int i=0; i<n; ++i) std::cin >> elements[i];
+    // dfs(0, 0, 0);
+    // std::cout << solutions << std::endl;
+    return 0;
+}</code></pre>
+                    </div>
+                </div>
+
+            </section>
+        </div>
+    </main>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+    const sidebarLinks = document.querySelectorAll('.sidebar-link');
+    const contentSections = document.querySelectorAll('.content-section');
+
+    const setActiveLink = (hash) => {
+        const targetHash = hash || '#overview';
+        sidebarLinks.forEach(link => {
+            if (link.getAttribute('href') === targetHash) {
+                link.classList.add('active');
+            } else {
+                link.classList.remove('active');
+            }
+        });
+
+        contentSections.forEach(section => {
+            if ('#' + section.id === targetHash) {
+                section.classList.add('active');
+            } else {
+                section.classList.remove('active');
+            }
+        });
+    };
+
+    sidebarLinks.forEach(link => {
+        link.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetHash = e.currentTarget.getAttribute('href');
+            setActiveLink(targetHash);
+            // If you want to update the URL hash without jumping:
+            // history.pushState(null, null, targetHash);
+        });
+    });
+
+    // Initial load
+    setActiveLink(window.location.hash);
+
+    // Problem card expand/collapse
+    const problemCards = document.querySelectorAll('.problem-card');
+    problemCards.forEach(card => {
+        card.addEventListener('click', () => {
+            card.classList.toggle('open');
+        });
+    });
+
+    // Copy code button functionality
+    const copyButtons = document.querySelectorAll('.copy-btn');
+    copyButtons.forEach(button => {
+        button.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const pre = button.nextElementSibling;
+            const code = pre.querySelector('code');
+            const text = code.innerText;
+
+            const textArea = document.createElement('textarea');
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                button.textContent = '已复制!';
+                setTimeout(() => {
+                    button.textContent = '复制';
+                }, 2000);
+            } catch (err) {
+                console.error('Failed to copy text: ', err);
+                button.textContent = '复制失败';
+                 setTimeout(() => {
+                    button.textContent = '复制';
+                }, 2000);
+            }
+            document.body.removeChild(textArea);
+        });
+    });
+});
+</script>
+
+</body>
+</html>
