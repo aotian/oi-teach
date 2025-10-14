@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>深度优先搜索 (DFS) 算法详解</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chosen Palette: Calm Teal & Slate -->
+    <!-- Application Structure Plan: A single-page, vertically scrolling layout following the established template: Core Concept, Interactive Visualization, Code Template, and Practice Problems. The centerpiece is the interactive, step-by-step DOM-based animation of a DFS traversal on a graph. -->
+    <!-- Visualization & Content Choices:
+        - Report Info: DFS Core Logic -> Goal: Explain the "go deep first" and "backtrack" strategy -> Viz: Structured text with a maze analogy -> Justification: An analogy is highly effective for explaining the intuitive nature of DFS.
+        - Report Info: DFS Algorithm Steps -> Goal: Show the recursive traversal, visited marking, and backtracking -> Viz: Interactive DOM graph animation -> Interaction: 'Next Step' button to control the animation pace, highlighting the current node, the recursion stack, and visited nodes -> Justification: A step-by-step visualizer is crucial for teaching recursion. It makes the call stack and the backtracking process explicit and easy to follow. Method: DOM manipulation.
+        - Report Info: C++ Implementation -> Goal: Provide standard code templates for both adjacency list and matrix -> Viz: Two styled code blocks with copy buttons -> Justification: Shows how the same algorithm is implemented with different graph representations.
+        - Report Info: Practice -> Goal: Guide further learning -> Viz: Interactive cards linking to classic DFS problems -> Justification: Connects learning with immediate application.
+     -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        :root {
+            --bg-main: #f3f4f6;
+            --bg-card: #ffffff;
+            --text-primary: #111827;
+            --text-secondary: #4b5563;
+            --accent-primary: #0d9488;
+            --accent-secondary: #64748b;
+            --border-color: #e5e7eb;
+        }
+        html { scroll-behavior: smooth; }
+        body { background-color: var(--bg-main); color: var(--text-primary); }
+        h2, h3 { color: var(--text-primary); font-weight: 700; }
+        .code-block {
+            background-color: #1f2937;
+            color: #d1d5db;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            position: relative;
+            font-family: 'Courier New', Courier, monospace;
+            overflow-x: auto;
+        }
+        .copy-btn {
+            position: absolute; top: 0.75rem; right: 0.75rem; background-color: #4b5563;
+            color: white; padding: 0.25rem 0.5rem; border-radius: 0.375rem;
+            font-size: 0.875rem; cursor: pointer; transition: background-color 0.2s;
+        }
+        .copy-btn:hover { background-color: #6b7280; }
+        button:disabled { background-color: #9ca3af; cursor: not-allowed; }
+
+        .graph-container {
+            position: relative; width: 100%; height: 350px; background-color: #f9fafb;
+            border: 1px solid var(--border-color); border-radius: 0.5rem;
+        }
+        .graph-node {
+            position: absolute; width: 44px; height: 44px; border-radius: 50%;
+            background-color: #d1d5db; border: 2px solid #6b7280; display: flex;
+            justify-content: center; align-items: center;
+            font-weight: bold; color: #374151; transition: all 0.3s ease;
+            transform: translate(-50%, -50%); font-size: 0.9rem;
+        }
+        .graph-node.visited { background-color: #ccfbf1; border-color: var(--accent-primary); }
+        .graph-node.current { background-color: #fde047; border-color: #f59e0b; transform: translate(-50%, -50%) scale(1.15); }
+        .graph-node.finished { background-color: #e2e8f0; border-color: #94a3b8;}
+        .graph-edge {
+            position: absolute; background-color: #9ca3af; height: 2px;
+            transform-origin: 0 0;
+        }
+        .stack-vis {
+            font-family: 'Courier New', Courier, monospace;
+            background-color: #f9fafb;
+            border: 1px solid var(--border-color);
+            padding: 0.5rem;
+            border-radius: 0.5rem;
+            min-height: 100px;
+        }
+    </style>
+</head>
+<body class="font-sans">
+
+    <div id="main-content" class="container mx-auto px-4 py-8">
+        <header class="text-center mb-10">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-900">深度优先搜索 (DFS) 算法详解</h1>
+            <p class="text-lg text-gray-600 mt-2">不撞南墙不回头的探索之旅</p>
+        </header>
+
+        <main class="space-y-8">
+            <section id="section-concept" class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl mb-4 border-b pb-2">一、核心思想：一条路走到黑</h2>
+                <p class="text-secondary mb-4">深度优先搜索（Depth-First Search, DFS）是一种用于遍历或搜索树或图的算法。它从一个起始节点开始，沿着一条路径一直走到底，直到不能再走下去为止，然后返回（回溯）到上一个节点，尝试另一条路径。</p>
+                <p class="text-secondary mb-4">您可以把它想象成**走迷宫**：你总是选择一条路一直走，遇到死胡同就退回到上一个路口，然后换个方向继续走。为了不重复走同样的路，你会在走过的路上做标记。</p>
+                
+                <div class="grid md:grid-cols-2 gap-8 mt-6">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">实现方式</h3>
+                        <p class="text-secondary">DFS 通常使用**递归**来实现，代码简洁且直观。递归的调用栈天然地帮助我们保存了路径信息，当递归函数返回时，就自然地完成了“回溯”操作。</p>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">关键要素</h3>
+                        <ul class="list-disc list-inside space-y-2 text-secondary">
+                           <li>**递归函数：** 设计一个函数 `dfs(currentNode)`，表示对当前节点进行深度优先搜索。</li>
+                           <li>**访问标记：** 需要一个 `visited` 数组来标记已访问过的节点，避免重复访问和陷入死循环。</li>
+                           <li>**递归终止：** 当一个节点的所有邻居都已被访问过，递归自然结束并返回上一层。</li>
+                        </ul>
+                    </div>
+                </div>
+            </section>
+
+            <section id="section-interactive" class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl mb-4 border-b pb-2">二、步进式交互动画 (图遍历)</h2>
+                <p class="text-secondary mb-4">下面的动画将分步演示DFS算法如何从节点 `A` 开始，对一个图进行遍历。请点击“下一步”来执行算法的每一个关键步骤。</p>
+                <div class="grid lg:grid-cols-2 gap-8 items-center">
+                    <div>
+                        <div class="flex space-x-4">
+                           <button id="run-dfs" class="w-full px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition">下一步</button>
+                           <button id="reset-dfs" class="w-full px-4 py-2 bg-gray-500 text-white rounded-lg hover:bg-gray-600 transition">重置</button>
+                        </div>
+                        <p id="dfs-status" class="text-center font-semibold mt-4 h-12"></p>
+                        <div class="mt-4">
+                            <h3 class="font-semibold mb-2">递归调用栈:</h3>
+                            <div id="stack-vis" class="stack-vis"></div>
+                        </div>
+                    </div>
+                    <div id="dfs-graph" class="graph-container"></div>
+                </div>
+            </section>
+
+            <section id="section-code" class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl mb-4 border-b pb-2">三、C++ 核心代码模板</h2>
+                 <div class="grid md:grid-cols-2 gap-8 items-start">
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">模板一：图/树的遍历</h3>
+                        <div class="code-block">
+                           <button class="copy-btn" onclick="copyCode(this)">复制</button>
+                           <pre><code>#include <iostream>
+#include <vector>
+
+using namespace std;
+
+const int N = 100005;
+vector<int> adj[N];
+bool visited[N];
+
+void dfs(int u) {
+    // 1. 标记当前节点已访问
+    visited[u] = true;
+    cout << u << " "; // 访问节点 u
+
+    // 2. 遍历 u 的所有邻居 v
+    for (int v : adj[u]) {
+        // 3. 如果 v 未被访问，则递归访问 v
+        if (!visited[v]) {
+            dfs(v);
+        }
+    }
+    // 4. 当所有邻居都访问完毕，函数返回，即为“回溯”
+}
+</code></pre>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold mb-2">模板二：组合枚举 (以“选数”为例)</h3>
+                        <div class="code-block">
+                           <button class="copy-btn" onclick="copyCode(this)">复制</button>
+                           <pre><code>#include <iostream>
+#include <vector>
+
+using namespace std;
+
+int n, k;
+vector<int> nums;
+int ans = 0;
+
+// start: 当前选择的起始下标
+// count: 已经选了几个数
+// sum: 当前已选数的和
+void dfs_combine(int start, int count, int sum) {
+    // 剪枝: 剩余的数不够选了
+    if (n - start < k - count) {
+        return;
+    }
+    // 终止条件: 已经选了 k 个数
+    if (count == k) {
+        if (is_prime(sum)) { // 假设 is_prime 已实现
+            ans++;
+        }
+        return;
+    }
+    // 从 start 开始遍历可选的数
+    for (int i = start; i < n; ++i) {
+        // 选择 nums[i]，并进入下一层递归
+        dfs_combine(i + 1, count + 1, sum + nums[i]);
+    }
+}
+</code></pre>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+             <section id="section-practice" class="bg-white p-6 md:p-8 rounded-lg shadow-md">
+                <h2 class="text-2xl mb-4 border-b pb-2">四、实战演练</h2>
+                <div class="grid md:grid-cols-2 gap-4">
+                    <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                        <h4 class="font-bold text-lg">P1596 [USACO10OCT] Lake Counting S</h4>
+                        <p class="text-sm text-gray-600 my-2">经典的DFS入门题。从任意一个未访问过的水洼格子开始DFS，标记所有能访问到的相邻水洼，计数器加一。重复此过程直到所有格子都被访问。</p>
+                        <a href="https://www.luogu.com.cn/problem/P1596" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition">前往挑战</a>
+                    </div>
+                    <div class="border rounded-lg p-4 bg-gray-50 hover:shadow-lg transition">
+                        <h4 class="font-bold text-lg">P1036 [NOIP2002 普及组] 选数</h4>
+                        <p class="text-sm text-gray-600 my-2">DFS用于组合枚举。设计递归函数 `dfs(index, count, sum)` 表示从第 `index` 个数开始选，已经选了 `count` 个数，当前和为 `sum`。</p>
+                        <a href="https://www.luogu.com.cn/problem/P1036" target="_blank" class="block w-full text-center mt-4 px-4 py-2 bg-teal-600 text-white rounded-lg hover:bg-teal-700 transition">前往挑战</a>
+                    </div>
+                </div>
+            </section>
+        </main>
+    </div>
+
+<script>
+    // --- Code Copy ---
+    function copyCode(button) {
+        const pre = button.nextElementSibling;
+        navigator.clipboard.writeText(pre.innerText).then(() => {
+            const originalText = button.innerText;
+            button.innerText = '已复制!';
+            setTimeout(() => { button.innerText = originalText; }, 2000);
+        });
+    }
+
+    // --- DFS Visualization ---
+    const dfsGraphDiv = document.getElementById('dfs-graph');
+    const dfsStatus = document.getElementById('dfs-status');
+    const stackVis = document.getElementById('stack-vis');
+    const runBtn = document.getElementById('run-dfs');
+
+    const nodes = [
+        { x: 100, y: 50, id: 'A' }, { x: 50, y: 150, id: 'B' }, { x: 150, y: 150, id: 'C' },
+        { x: 50, y: 250, id: 'D' }, { x: 250, y: 100, id: 'E' }, { x: 250, y: 200, id: 'F' }
+    ];
+    const edges = [
+        { from: 0, to: 1 }, { from: 0, to: 2 },
+        { from: 1, to: 3 },
+        { from: 2, to: 4 }, { from: 2, to: 5 }
+    ];
+    const adj = Array.from({ length: nodes.length }, () => []);
+    edges.forEach(e => {
+        adj[e.from].push(e.to);
+        adj[e.to].push(e.from);
+    });
+    // 为了让动画顺序固定，对邻接表排序
+    adj.forEach(neighbors => neighbors.sort((a, b) => a - b));
+
+    let nodeElements = {};
+    let animationGenerator;
+    
+    function drawGraph(visited = []) {
+        dfsGraphDiv.innerHTML = '';
+        nodeElements = {};
+
+        edges.forEach(edge => {
+            const n1 = nodes[edge.from];
+            const n2 = nodes[edge.to];
+            const angle = Math.atan2(n2.y - n1.y, n2.x - n1.x) * 180 / Math.PI;
+            const length = Math.sqrt(Math.pow(n2.x - n1.x, 2) + Math.pow(n2.y - n1.y, 2));
+
+            const edgeEl = document.createElement('div');
+            edgeEl.className = 'graph-edge';
+            edgeEl.style.left = `${n1.x}px`;
+            edgeEl.style.top = `${n1.y}px`;
+            edgeEl.style.width = `${length}px`;
+            edgeEl.style.transform = `rotate(${angle}deg)`;
+            dfsGraphDiv.appendChild(edgeEl);
+        });
+
+        nodes.forEach((node, i) => {
+            const nodeEl = document.createElement('div');
+            nodeEl.id = `dfs-node-${i}`;
+            nodeEl.className = 'graph-node';
+            nodeEl.style.left = `${node.x}px`;
+            nodeEl.style.top = `${node.y}px`;
+            nodeEl.innerText = node.id;
+            if (visited[i]) nodeEl.classList.add('visited');
+            dfsGraphDiv.appendChild(nodeEl);
+            nodeElements[i] = nodeEl;
+        });
+    }
+
+    function* dfsGenerator() {
+        let visited = Array(nodes.length).fill(false);
+        let stack = [];
+
+        function* dfs(u, p) {
+            visited[u] = true;
+            stack.push(nodes[u].id);
+            yield { type: 'visit', node: u, stack: [...stack] };
+
+            for (const v of adj[u]) {
+                if (v === p) continue;
+                if (!visited[v]) {
+                    yield* dfs(v, u);
+                     yield { type: 'backtrack', from: v, to: u, stack: [...stack] };
+                }
+            }
+            stack.pop();
+        }
+        
+        yield* dfs(0, -1);
+        yield { type: 'finish' };
+    }
+    
+    function updateStackVis(stack) {
+        stackVis.innerHTML = '';
+        if (stack.length === 0) {
+            stackVis.innerHTML = '<p class="text-gray-400">空</p>';
+            return;
+        }
+        stack.slice().reverse().forEach((item, index) => {
+            const isTop = index === 0;
+            stackVis.innerHTML += `<div class="p-1 ${isTop ? 'bg-yellow-200 rounded' : ''}">${item}</div>`;
+        });
+    }
+    
+    function step() {
+        if (isAnimating) return;
+        isAnimating = true;
+        runBtn.disabled = true;
+
+        const result = animationGenerator.next();
+        if (result.done) {
+            isAnimating = false;
+            return;
+        }
+
+        const stepData = result.value;
+        document.querySelectorAll('.graph-node').forEach(el => el.classList.remove('current', 'finished'));
+
+        if (stepData.type === 'visit') {
+            const { node, stack } = stepData;
+            dfsStatus.innerText = `访问节点 ${nodes[node].id}，将其加入调用栈。`;
+            nodeElements[node].classList.add('visited', 'current');
+            updateStackVis(stack);
+        } else if (stepData.type === 'backtrack') {
+            const { from, to, stack } = stepData;
+             dfsStatus.innerText = `节点 ${nodes[from].id} 的邻居已访问完毕, 回溯到 ${nodes[to].id}。`;
+            nodeElements[from].classList.add('finished');
+            nodeElements[to].classList.add('current');
+            updateStackVis(stack);
+        } else if (stepData.type === 'finish') {
+            dfsStatus.innerText = '所有可达节点已访问完毕！';
+            document.querySelectorAll('.graph-node.visited').forEach(el => el.classList.add('finished'));
+        }
+        
+        setTimeout(() => {
+            isAnimating = false;
+            if(!result.done) runBtn.disabled = false;
+        }, 300);
+    }
+    
+    function reset() {
+        isAnimating = false;
+        animationGenerator = dfsGenerator();
+        drawGraph();
+        updateStackVis([]);
+        dfsStatus.innerText = '准备开始... (从节点A)';
+        runBtn.disabled = false;
+    }
+    
+    document.getElementById('run-dfs').addEventListener('click', step);
+    document.getElementById('reset-dfs').addEventListener('click', reset);
+
+    window.onload = () => {
+       reset();
+    };
+</script>
+
+</body>
+</html>
+
