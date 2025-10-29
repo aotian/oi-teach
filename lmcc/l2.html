@@ -1,0 +1,264 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第2课：LMCC 单选题挑战</title>
+    <!-- Chosen Palette: Calm Harmony (Warm Neutrals: bg-gray-50, text-gray-800, accent-blue-600) -->
+    <!-- Application Structure Plan: Lesson 2 of 3. This page focuses on single-choice questions. It features the original 20-question interactive quiz from the exam (with prev/next logic) and adds a new mock quiz with more advanced conceptual questions (PPL, Pass@K, RLHF). -->
+    <!-- Visualization & Content Choices: Original 20 Quiz -> Test Knowledge -> HTML Radio/Text (one-by-one) -> Click, Prev/Next -> Justification: Simulates original exam flow. | Mock Quiz 2 (List) -> Test Knowledge -> HTML Radio/Text (all-at-once) -> Click -> Justification: Active recall of advanced concepts. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .nav-link { cursor: pointer; padding: 0.75rem 1rem; border-bottom: 3px solid transparent; transition: all 0.3s; }
+        .nav-link.active { border-bottom-color: #2563EB; color: #2563EB; font-weight: 600; }
+        .nav-link:not(.active):hover { background-color: #F3F4F6; }
+        .option-label { display: block; padding: 0.75rem 1rem; border: 1px solid #D1D5DB; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s; margin-bottom: 0.5rem; }
+        .option-label:hover { background-color: #F9FAFB; }
+        .option-label.correct { background-color: #D1FAE5; border-color: #10B981; font-weight: 600; }
+        .option-label.incorrect { background-color: #FEE2E2; border-color: #EF4444; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="min-h-screen flex flex-col">
+        
+        <header class="bg-white shadow-sm sticky top-0 z-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <h1 class="text-3xl font-bold text-blue-700">LMCC 青少年组 - 交互式学习站</h1>
+            </div>
+            <nav class="border-b border-gray-200">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex space-x-4">
+                        <a href="./lesson1.html" class="nav-link" data-page="lesson1">第1课：核心概念与总览</a>
+                        <a href="./lesson2.html" class="nav-link active" data-page="lesson2">第2课：单选题挑战</a>
+                        <a href="./lesson3.html" class="nav-link" data-page="lesson3">第3课：编程题闯关</a>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+            
+            <section id="lesson2" class="page active">
+                <h2 class="text-2xl font-semibold mb-4">第2课：例卷单选题挑战</h2>
+                <p class="mb-8 text-gray-700">
+                    在第二节课，我们将来挑战例卷中的全部20道单选题。使用“上一题”和“下一题”按钮来导航。
+                </p>
+                
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold">例卷挑战 (<span id="sc-question-number">1</span>/20)</h3>
+                    <div>
+                        <button id="sc-prev" class="bg-gray-300 hover:bg-gray-400 text-gray-800 font-bold py-2 px-4 rounded-lg transition disabled:opacity-50" disabled>上一题</button>
+                        <button id="sc-next" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition ml-2">下一题</button>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <div id="sc-question-container">
+                        <!-- 问题将动态加载在这里 -->
+                    </div>
+                    <div id="sc-options-container" class="mt-4">
+                        <!-- 选项将动态加载在这里 -->
+                    </div>
+                    <div id="sc-explanation-container" class="mt-6 p-4 bg-gray-50 rounded-lg border border-gray-200 hidden">
+                        <!-- 解析将动态加载在这里 -->
+                    </div>
+                </div>
+
+                <hr class="my-12 border-gray-300">
+
+                <h2 class="text-2xl font-semibold mb-6">第2课 - 进阶概念模拟挑战</h2>
+                <p class="mb-6 text-gray-700">掌握了例卷题目？来试试这些更深入的模拟题吧！</p>
+                <div id="mock-quiz-l2" class="space-y-8">
+                    <!-- 模拟题将动态加载在这里 -->
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // --- 数据存储 ---
+        const lesson2Data = {
+            singleChoice: [
+                { q: 1, question: "在掩码语言模型预训练中,核心任务“掩码预测”的主要目的是什么?", options: ["A. 学习语言的深层双向上下文表征", "B. 评估模型最终的分类准确率", "C. 专门优化模型的文本生成流畅度", "D. 减少模型训练所需的计算资源"], answer: "A", explanation: "掩码语言模型(如BERT)通过预测被[MASK]遮住的词，被迫同时学习左边和右边的上下文信息，从而理解语言的深层语义和语法结构。" },
+                { q: 2, question: "为什么小华能获得远比小明更好的结果？", options: ["A. 因为小华提问时，大语言模型的知识库恰好更新了", "B. 因为小华的提示词更长、更复杂，文字量与生成质量成正比", "C. 因为小华的提示词为模型设定了明确的角色、目标受众和具体约束，有效地引导了模型", "D. 因为大语言模型具有真正的创造力和情感理解能力"], answer: "C", explanation: "提示词工程的关键在于“引导”。小华的提示词非常具体，给了模型清晰的“角色”（科幻小说家）、“受众”（中学生）、“约束”（500字、主角名）和“风格”（紧张刺激），这极大地缩小了AI的搜索范围，使其聚焦于高质量的输出。" },
+                { q: 3, question: "Transformer架构中,使大语言模型能够有效处理长距离依赖关系的关键组件是:", options: ["A. 前馈神经网络", "B. 层归一化", "C. 自注意力机制", "D. 残差连接"], answer: "C", explanation: "自注意力机制（Self-Attention）允许模型在处理序列中的每一个词时，都能直接计算并关注到序列中所有其他词（无论多远）对它自己的重要性。这使它能直接捕捉到“The cat... was full”中“cat”和“was”的联系。" },
+                { q: 4, question: "指令微调的主要目的是什么?", options: ["A. 让模型从零开始学习海量无标注数据中的通用知识", "B. 增强模型理解和遵循人类指令或意图的能力,并改善其输出风格", "C. 大幅降低模型的基础参数量,以提高推理速度", "D. 专门用于修复模型在预训练阶段产生的事实性错误"], answer: "B", explanation: "预训练（A选项）让模型学习通用知识。而指令微调是“上补习班”，使用（指令, 期望输出）这样的配对数据，教模型如何“听话”，如何按照人类的意图和风格来回答问题。" },
+                { q: 5, question: "大语言模型中存在的社会偏见,其主要根源最可能是:", options: ["A. 模型训练时使用的GPU硬件存在设计缺陷", "B. 模型 Transformer 架构中的注意力机制算法存在固有偏差", "C. 模型从预训练数据中学习了现实世界中存在的社会偏见", "D. 模型在指令微调阶段,工程师有意注入了有偏见的指令"], answer: "C", explanation: "AI模型本身是中立的，但它们学习的“教材”（海量的互联网文本）中充满了人类社会已有的偏见和刻板印象。模型在学习语言模式时，也会把这些偏见学进去。" },
+                { q: 6, question: "目前主流的生成式大语言模型(如GPT系列)的核心架构通常基于:", options: ["A. 编码器模型", "B. 编码器-解码器模型", "C. 解码器模型", "D. 卷积神经网络模型"], answer: "C", explanation: "生成式模型（如GPT, LLaMA）的核心任务是“预测下一个词”。它们使用解码器（Decoder-only）架构，因为解码器天然适合这种从左到右的自回归生成任务。编码器模型（如BERT）更擅长理解任务（如填空）。" },
+                { q: 7, question: "用于指令微调的数据通常具有什么典型特征?", options: ["A. 大规模、无标注的原始网页文本", "B. 由(指令/问题, 期望输出)配对组成的监督数据集", "C. 纯粹的代码仓库和编程语言片段", "D. 未经处理的原始音频和图像数据"], answer: "B", explanation: "指令微调是一种监督学习。它需要“标准答案”来告诉模型怎样做才是对的。因此，它的数据是成对出现的，例如 (问题：“请总结这段文字”，输出：“这段文字的摘要是...”)。" },
+                { q: 8, question: "关于“贪心搜索”和“束搜索”这两种解码策略,以下哪种说法是最准确的?", options: ["A. 贪心搜索因为每次都选最好的,所以总能生成最完美、最富有创造力的句子", "B. 束搜索需要同时考虑多条路径,计算起来更复杂,但它更有可能找到一个整体上更通顺、更合理的句子", "C. 束搜索的速度通常比贪心搜索更快,因为它是并行的", "D. 这两种策略没有本质区别,无论用哪一种,AI生成的句子质量都完全一样"], answer: "B", explanation: "贪心搜索只看“眼前”最优（选当前概率最高的词），容易陷入局部最优（比如生成“我我我...”）。束搜索（Beam Search）会同时保留K条“候选路径”，看得更“远”，因此更有可能找到一个“整体上”更通顺的句子，但计算量更大。" },
+                { q: 9, question: "大模型“人类对齐”的核心目标是使得模型的行为:", options: ["A. 在所有的数学计算上达到零误差", "B. 无限接近地在所有任务上超越人类专家水平", "C. 符合人类的价值观、意图,并做到安全、有帮助", "D. 其内部神经网络的计算过程对人类完全透明可解释"], answer: "C", explanation: "“对齐”就是上“品德课”。我们不希望AI成为一个只会计算但没有道德的“怪物”。人类对齐的核心目标是让AI的行为符合人类的价值观（如诚实、公平、乐于助人）和意图，确保它是安全且有益的。" },
+                { q: 10, question: "大语言模型在解决一道复杂的数学应用题时,生成了一段非常长的思考过程...这种推理模式的主要优势是什么?", options: ["A. 能够确保最终答案的正确性,避免计算错误", "B. 通过展示详尽的思维过程,提高了解题逻辑的可解释性和可靠性", "C. 显著减少了模型处理问题所需的总时间和计算资源", "D. 主要目的是为了生成更多的文本内容,使回答看起来更丰富"], answer: "B", explanation: "这种方法叫做“思维链”(Chain of Thought, CoT)。它并不保证答案绝对正确（A），反而会增加计算时间（C）。它的最大优势是让AI“把思考步骤写出来”，这使得我们能理解它是如何一步步推导出答案的，从而提高了逻辑的可解释性和可靠性。" },
+                { q: 11, question: "关于AI 智能体的角色配置文件设置,下列哪个说法是最准确的?", options: ["A. 角色配置文件的主要作用是限制智能体的知识量,防止它回答超出范围的问题", "B. 角色配置文件设置一旦完成就无法改变,智能体将严格按照初始设定运行", "C. 角色配置文件是定义智能体核心身份、行为准则和对话风格的关键,通常通过初始系统指令实现", "D. 角色配置文件的功能与用户每次对话的提问内容作用相同,都是为智能体提供临时信息"], answer: "C", explanation: "角色配置文件（System Prompt）就像给智能体设定的“人设”或“出厂设置”。它定义了智能体的身份（“你是一个幽默的助手”）、行为准则（“你不能说脏话”）和风格。它比用户的提问更根本、更持久。" },
+                { q: 12, question: "Pass@K指标...在100个问题中,有60个问题被成功解决。根据上述描述,以下关于 Pass@K的计算和解释,哪一项是正确的?", options: ["A. 这里 K=5, Pass@5 = 60%。这表示随机抽取一个生成方案,其通过测试的概率是60%", "B. 这里 K=5, Pass@5 = 60%。这表示通过生成5个方案,智能体成功解决其中60%问题的能力", "C. 这里 K=100, Pass@100 = 60%。这表示智能体解决了测试集中60%的问题", "D. 这里 K=5, 但正确的计算方式应为Pass@5 = (60 / (100 * 5)) * 100% = 12%"], answer: "B", explanation: "Pass@K是用来评估代码生成能力的。Pass@5=60% 的意思是：“我们让AI为每个问题尝试K=5次（生成5个不同的代码）。如果这5次尝试中，有任意1次成功了，这个问题就算‘已解决’。最终，我们发现AI‘已解决’了60%的问题。”" },
+                { q: 13, question: "下列哪一项通常不属于对大语言模型进行系统评测的核心内容?", options: ["A. 模型训练所用GPU集群的实时功耗与散热效率", "B. 模型在问答、摘要、代码生成等任务上的准确率与流畅度", "C. 模型输出是否存在社会偏见、歧视性内容等安全性问题", "D. 模型在数学推理、常识推理等复杂任务上的泛化能力"], answer: "A", explanation: "B, C, D 都是评测模型“能力”和“安全性”的核心内容。而 A 选项的“GPU功耗”是评测“硬件工程”或“能效”的，不属于评测模型“智能”本身的核心内容。" },
+                { q: 14, question: "在Transformer 的自注意力机制中,关于Query、Key 和 Value 的来源,以下哪一项描述是最准确的?", options: ["A. Query、Key 和 Value 是由三个完全不同的、随机初始化的参数矩阵生成的,与输入序列无关", "B. Key 和 Value 是输入序列的嵌入向量本身,而Query是目标序列的嵌入向量本身", "C. Query 来自编码器的最终隐藏状态,而Key 和 Value 来自解码器的输入序列", "D. Query、Key 和Value 是由同一个输入向量通过三个不同的线性变换层(权重矩阵)投影得到的"], answer: "D", explanation: "在自注意力中，每个输入的词向量（比如“cat”）都会“分身”成三个角色：Query（查询：我想找谁？）、Key（键：我是谁？）、Value（值：我有什么信息？）。这三个“分身”都是由“cat”这同一个输入向量，分别乘以三个不同的权重矩阵（Wq, Wk, Wv）变换（投影）得到的。" },
+                { q: 15, question: "下列哪一项不属于测试时间拓展(Test Time Scaling, TTS)技术?", options: ["A. 对单个测试样本进行多种变换(如翻转、裁剪),并将所有变换版本的预测结果进行集成", "B. 在模型推理时,仍然随机丢弃部分神经元,进行多次前向传播并将结果平均", "C. 为每个测试样本定义一个辅助任务,利用该样本对模型进行一步梯度下降微调,再完成主任务预测", "D. 在一个大型源数据集上预训练模型,然后在一个较小的目标数据集上对模型的所有权重进行微调"], answer: "D", explanation: "“测试时间”拓展（TTS）是指在“推理阶段”（即考试时）才使用的技巧。A, B, C 都是在推理时为了提高单样本准确率做的额外操作。而 D 选项的“预训练+微调”是在“训练阶段”（即上学时）就完成的，不属于“测试时间”的操作。" },
+                { q: 16, question: "为了保障社会群体的“公平安全”,避免模型输出产生歧视性内容,最关键的缓解方法是在哪个阶段介入?", options: ["A. 仅在模型推理部署后,通过实时过滤敏感词来屏蔽有害输出", "B. 主要依靠扩大模型规模,期望其自动学习并消除偏见", "C. 在模型预训练和微调阶段,系统性地清洗数据和引入公平性约束", "D. 完全依赖第三方评测机构在发布前进行一次性的偏见评估"], answer: "C", explanation: "偏见源于训练数据（Q5）。“事后过滤”（A）治标不治本。最关键的方法是在“源头”上解决问题，即在预训练和微调阶段，就系统性地清理有偏见的数据，并加入公平性约束（比如通过RLHF）来“教”模型什么是公平。" },
+                { q: 17, question: "当前意义上的“大语言模型”最显著的特征不包括以下哪一项?", options: ["A. 模型参数量巨大,但仅在特定领域的小规模数据上训练", "B. 展现出强大的涌现能力,如推理、编程和创造性写作", "C. 基于“下一个词预测”等自监督目标在海量互联网文本上训练", "D. 具有强大的上下文学习能力,无需梯度更新即可根据提示完成新任务"], answer: "A", explanation: "大语言模型的“大”体现在两个方面：1. 参数量巨大；2. 训练数据规模巨大（海量互联网文本）。A选项说“仅在小规模数据上训练”是错误的，这与“大模型”的定义相矛盾。" },
+                { q: 18, question: "基于强化学习的推理能力优化方法面临的主要挑战是什么?", options: ["A. 模型会因此完全丧失其原有的语言生成能力", "B. 推理路径的搜索空间巨大,导致训练不稳定和效率低下", "C. 强化学习会使模型的词汇量急剧减少", "D. 该方法只能应用于数学推理,无法泛化到其他领域"], answer: "B", explanation: "强化学习（RL）需要模型去“探索”可能的答案路径。在复杂的推理任务（如数学或逻辑）中，可能的“思考路径”是海量的，就像一个巨大的迷宫。模型在如此巨大的“搜索空间”中探索，很容易“迷路”，导致训练过程非常不稳定且效率低下。" },
+                { q: 19, question: "关于语言模型的困惑度,以下描述正确的是:", options: ["A. 困惑度越低,说明模型对测试数据的预测越不确定,性能越差", "B. 困惑度是模型在训练集上的准确率直接转换而来的指标", "C. 困惑度反映模型对一组文本的平均预测不确定性,值越低表示模型性能越好", "D. 困惑度与模型的训练步数无关,只与模型架构有关"], answer: "C", explanation: "困惑度（Perplexity, PPL）是衡量模型“有多困惑”的指标。模型对一句话越“不困惑”，说明它越能准确地预测这句话。因此，困惑度越低，代表模型预测越准，性能越好。" },
+                { q: 20, question: "关于监督学习和无监督学习的区别,以下说法正确的是:", options: ["A. 监督学习不需要训练数据,无监督学习需要大量标注数据", "B. 监督学习使用标注数据学习,无监督学习从无标签数据中发现模式", "C. 无监督学习只能处理数值型数据,监督学习可以处理任何类型数据", "D. 无监督学习的模型性能总是优于监督学习"], answer: "B", explanation: "核心区别在于“有无标签”。监督学习需要“标注数据”（即“问题”+“标准答案”），像有老师监督一样。无监督学习只有“数据”（如海量文章），没有“答案”，模型需要自己从数据中寻找规律和模式。" }
+            ],
+            mockQuizL2: [
+                { q: 1, question: "在评估语言模型时，“困惑度”(Perplexity) 这个指标是：", options: ["A. 越高越好，代表模型越有创造力", "B. 越低越好，代表模型对文本的预测越准确", "C. 越高越好，代表模型见过的知识越多", "D. 越低越好，代表模型参数量越少"], answer: "B", explanation: "困惑度(PPL)衡量的是模型对一个句子的“不确定性”。一个好的模型应该能很“确定”地预测出下一个词。因此，PPL越低，模型性能越好。（例卷Q19）" },
+                { q: 2, question: "“Pass@K”指标最常用于评估AI的哪项能力？", options: ["A. 写诗歌的能力", "B. 总结文章的能力", "C. 生成代码的能力", "D. 回答事实性问题的能力"], answer: "C", explanation: "Pass@K是评估代码生成的核心指标。Pass@5的意思是“让AI生成5个代码方案，只要有1个能通过单元测试，就算通过”。（例卷Q12）" },
+                { q: 3, question: "“RLHF” (基于人类反馈的强化学习) 这一技术主要用于解决什么问题？", options: ["A. 模型的预训练", "B. 模型的人类对齐", "C. 模型的解码速度", "D. 模型的参数压缩"], answer: "B", explanation: "RLHF是实现“人类对齐”的关键技术。它通过引入人类对AI答案的“好/坏”排序反馈，来训练AI，使其输出更符合人类的偏好、价值观，变得更安全、更有帮助。（例卷Q9）" },
+                { q: 4, question: "大模型展现出的“涌现能力”(Emergent Abilities) 指的是什么？", options: ["A. 模型突然学会了训练数据中没有的新语言", "B. 只有当模型规模达到一定程度时，才会突然表现出的复杂能力（如推理）", "C. 模型在训练时消耗电量突然增加的现象", "D. 模型能记住所有训练数据的能力"], answer: "B", explanation: "“涌现”是指一些小模型没有、而大模型（如几百亿参数以上）突然“涌现”出来的复杂能力，比如数学推理、思维链等。这是大模型最显著的特征之一。（例卷Q17）" },
+                { q: 5, question: "“测试时间拓展”(TTS) 技术是在哪个阶段发生作用的？", options: ["A. 预训练阶段", "B. 指令微调阶段", "C. 推理阶段（即用户提问时）", "D. 数据清洗阶段"], answer: "C", explanation: "“测试时间”就是指“推理阶段”或“使用阶段”。TTS是通过在推理时做一些额外操作（如对一张图裁剪、翻转后多次提问再取平均）来提升单次回答准确率的技巧。（例卷Q15）" }
+            ]
+        };
+
+        // --- 状态 ---
+        let currentSingleChoiceIndex = 0;
+
+        // --- 例卷单选题逻辑 ---
+        const scQuestionContainer = document.getElementById('sc-question-container');
+        const scOptionsContainer = document.getElementById('sc-options-container');
+        const scExplanationContainer = document.getElementById('sc-explanation-container');
+        const scQuestionNumber = document.getElementById('sc-question-number');
+        const scPrevBtn = document.getElementById('sc-prev');
+        const scNextBtn = document.getElementById('sc-next');
+
+        function renderSingleChoice(index) {
+            const data = lesson2Data.singleChoice[index];
+            scQuestionNumber.textContent = data.q;
+            scQuestionContainer.innerHTML = `<h3 class="text-lg font-medium">${data.q}. ${data.question}</h3>`;
+            
+            scOptionsContainer.innerHTML = '';
+            data.options.forEach(opt => {
+                const [letter, text] = opt.split('. ');
+                const label = document.createElement('label');
+                label.className = 'option-label';
+                label.innerHTML = `
+                    <input type="radio" name="sc-option" value="${letter}" class="sr-only">
+                    <span class="font-semibold">${letter}.</span> ${text}
+                `;
+                scOptionsContainer.appendChild(label);
+            });
+            
+            scExplanationContainer.classList.add('hidden');
+            scExplanationContainer.innerHTML = '';
+            
+            scPrevBtn.disabled = index === 0;
+            scNextBtn.disabled = index === lesson2Data.singleChoice.length - 1;
+
+            addSingleChoiceListeners(data);
+        }
+
+        function addSingleChoiceListeners(data) {
+            const optionLabels = scOptionsContainer.querySelectorAll('.option-label');
+            optionLabels.forEach(label => {
+                label.addEventListener('click', () => {
+                    const input = label.querySelector('input');
+                    const selectedAnswer = input.value;
+                    
+                    optionLabels.forEach(lbl => {
+                        lbl.classList.remove('correct', 'incorrect');
+                    });
+
+                    if (selectedAnswer === data.answer) {
+                        label.classList.add('correct');
+                    } else {
+                        label.classList.add('incorrect');
+                        const correctLabel = Array.from(optionLabels).find(lbl => lbl.querySelector('input').value === data.answer);
+                        if (correctLabel) {
+                            correctLabel.classList.add('correct');
+                        }
+                    }
+                    
+                    scExplanationContainer.innerHTML = `<strong class="text-blue-700">【解析】</strong> ${data.explanation}`;
+                    scExplanationContainer.classList.remove('hidden');
+                    optionLabels.forEach(lbl => lbl.style.pointerEvents = 'none');
+                });
+            });
+        }
+
+        scPrevBtn.addEventListener('click', () => {
+            if (currentSingleChoiceIndex > 0) {
+                currentSingleChoiceIndex--;
+                renderSingleChoice(currentSingleChoiceIndex);
+            }
+        });
+
+        scNextBtn.addEventListener('click', () => {
+            if (currentSingleChoiceIndex < lesson2Data.singleChoice.length - 1) {
+                currentSingleChoiceIndex++;
+                renderSingleChoice(currentSingleChoiceIndex);
+            }
+        });
+
+        // --- 模拟题渲染逻辑 ---
+        function renderMockQuiz(quizData, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            quizData.forEach((data, index) => {
+                const quizBlock = document.createElement('div');
+                quizBlock.className = 'bg-white p-6 rounded-lg shadow';
+
+                let optionsHTML = '';
+                data.options.forEach(opt => {
+                    const [letter, text] = opt.split('. ');
+                    optionsHTML += `
+                        <label class="option-label" data-quiz="${containerId}-q${index}" data-answer="${letter}">
+                            <input type="radio" name="${containerId}-q${index}" value="${letter}" class="sr-only">
+                            <span class="font-semibold">${letter}.</span> ${text}
+                        </label>
+                    `;
+                });
+
+                quizBlock.innerHTML = `
+                    <h3 class="text-lg font-medium mb-4">${data.q}. ${data.question}</h3>
+                    <div class="options-container">${optionsHTML}</div>
+                    <div class="explanation-container mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hidden"></div>
+                `;
+                
+                container.appendChild(quizBlock);
+                addMockQuizListeners(quizBlock, data);
+            });
+        }
+
+        function addMockQuizListeners(quizBlock, data) {
+            const optionLabels = quizBlock.querySelectorAll('.option-label');
+            const explanationContainer = quizBlock.querySelector('.explanation-container');
+
+            optionLabels.forEach(label => {
+                label.addEventListener('click', () => {
+                    const selectedAnswer = label.getAttribute('data-answer');
+                    
+                    optionLabels.forEach(lbl => {
+                        lbl.classList.remove('correct', 'incorrect');
+                        lbl.style.pointerEvents = 'none'; // 答题后禁用
+                    });
+
+                    if (selectedAnswer === data.answer) {
+                        label.classList.add('correct');
+                    } else {
+                        label.classList.add('incorrect');
+                        const correctLabel = quizBlock.querySelector(`.option-label[data-answer="${data.answer}"]`);
+                        if (correctLabel) {
+                            correctLabel.classList.add('correct');
+                        }
+                    }
+                    
+                    explanationContainer.innerHTML = `<strong class="text-blue-700">【解析】</strong> ${data.explanation}`;
+                    explanationContainer.classList.remove('hidden');
+                });
+            });
+        }
+
+        // --- 初始化 ---
+        function initApp() {
+            renderSingleChoice(0);
+            renderMockQuiz(lesson2Data.mockQuizL2, 'mock-quiz-l2');
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>

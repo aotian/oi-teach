@@ -1,0 +1,746 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LMCC 知识点探险站</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <style>
+        body {
+            font-family: 'Inter', 'Helvetica Neue', 'Helvetica', 'Arial', sans-serif;
+        }
+
+        /* ------- Tabs ------- */
+        .tab-btn {
+            padding: 0.5rem 1rem;
+            font-weight: 500;
+            font-size: 0.875rem;
+            border-radius: 0.5rem;
+            transition: all 0.3s;
+        }
+        .tab-btn.active {
+            background-color: rgb(79 70 229); /* indigo-600 */
+            color: #fff;
+            box-shadow: 0 4px 10px rgba(79,70,229,0.4);
+        }
+        .tab-btn:not(.active) {
+            color: rgb(75 85 99); /* gray-600 */
+        }
+        .tab-btn:not(.active):hover {
+            background-color: rgb(229 231 235); /* gray-200 */
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* ------- Accordion ------- */
+        .accordion-header {
+            background-color: #fff;
+            padding: 1.25rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .accordion-header:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            background-color: rgb(238 242 255); /* indigo-50 */
+        }
+        .accordion-header.active {
+            background-color: rgb(224 231 255); /* indigo-100 */
+            color: rgb(55 48 163); /* indigo-800 */
+            border-bottom-left-radius: 0;
+            border-bottom-right-radius: 0;
+        }
+
+        .accordion-content {
+            display: none;
+            background-color: #fff;
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border-top-left-radius: 0;
+            border-top-right-radius: 0;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.03);
+        }
+        .accordion-content.active {
+            display: grid;
+        }
+
+        /* ------- Flashcards ------- */
+        .flashcard {
+            background-color: rgb(248 250 252); /* slate-50 */
+            border: 1px solid rgb(226 232 240);  /* slate-200 */
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            cursor: pointer;
+            transition: all 0.3s;
+            overflow: hidden;
+        }
+        .flashcard:hover {
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08);
+        }
+
+        .flashcard-front,
+        .flashcard-back {
+            padding: 1rem;
+            transition: all 0.3s;
+        }
+
+        /* 默认：只显示 front */
+        .flashcard-front {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .flashcard-back {
+            display: none;
+            background-color: #fff;
+            border-top: 1px solid rgb(226 232 240); /* slate-200 */
+        }
+
+        /* flipped 状态：隐藏 front，显示 back，并给 front 一个“选中高亮”感 */
+        .flashcard.flipped .flashcard-front {
+            background-color: rgb(238 242 255); /* indigo-50 */
+            color: rgb(67 56 202); /* indigo-700 */
+        }
+        .flashcard.flipped .flashcard-back {
+            display: block;
+        }
+
+        /* ------- Charts ------- */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 600px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 400px;
+            }
+        }
+
+        /* ------- Map boxes ------- */
+        .map-box {
+            background-color: #fff;
+            padding: 1rem;
+            border-radius: 0.5rem;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+            text-align: center;
+            transition: all 0.3s;
+        }
+        .map-box:hover {
+            box-shadow: 0 10px 24px rgba(0,0,0,0.12);
+            transform: scale(1.05);
+        }
+
+        .map-arrow {
+            font-size: 1.875rem; /* text-3xl */
+            color: rgb(156 163 175); /* gray-400 */
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-gray-800">
+    <div class="container mx-auto p-4 md:p-8 max-w-7xl">
+        <header class="text-center mb-8">
+            <h1 class="text-4xl font-bold text-indigo-700">LMCC 知识点探险站 🧭</h1>
+            <p class="text-lg text-gray-600 mt-2">专为青少年组同学设计的交互式学习讲义</p>
+        </header>
+
+        <!-- Tabs -->
+        <nav class="flex justify-center bg-white p-2 rounded-lg shadow-inner mb-8 space-x-2">
+            <button class="tab-btn active" data-tab="tab-explore">
+                <span class="text-xl">🗺️</span> 知识点探险
+            </button>
+            <button class="tab-btn" data-tab="tab-map">
+                <span class="text-xl">🧠</span> AI 知识图谱
+            </button>
+            <button class="tab-btn" data-tab="tab-dashboard">
+                <span class="text-xl">📊</span> 学习数据看板
+            </button>
+        </nav>
+
+        <main>
+            <!-- Tab 1 -->
+            <div id="tab-explore" class="tab-content active space-y-6">
+                <p class="text-center text-gray-700 bg-white p-4 rounded-lg shadow">
+                    欢迎来到探险站！我把所有知识点分成了5大主题。点击卡片标题可以“翻转”卡片，查看生动的比喻和解释！
+                </p>
+
+                <div class="accordion-group space-y-4">
+                    <!-- 1 -->
+                    <div class="accordion">
+                        <div class="accordion-header" data-accordion="acc-1">
+                            <h3 class="text-2xl font-semibold">1. AI 是如何“诞生”的？</h3>
+                            <span class="text-2xl transform transition-transform duration-300">▼</span>
+                        </div>
+                        <div class="accordion-content grid md:grid-cols-2 lg:grid-cols-3 gap-4" id="acc-1">
+                            <div class="flashcard" data-concept="ai-concepts">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">AI 基础概念</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>智能:</strong> 就像你学习、思考、解决问题的能力。</p>
+                                    <p><strong>AI:</strong> 让机器也拥有像人一样的“智能”。</p>
+                                    <p><strong>机器学习:</strong> 给机器看“一大堆例子”，让它自己“学”会规律。</p>
+                                    <p><strong>模型:</strong> AI学完后，“大脑”里形成的“知识地图”。</p>
+                                    <p><strong>训练:</strong> “学习”的过程，用数据“喂”给模型。</p>
+                                </div>
+                            </div>
+                            <div class="flashcard" data-concept="ml-process">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">机器学习流程</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>数据预处理:</strong> “洗菜、切菜”，把数据弄干净。</p>
+                                    <p><strong>模型训练:</strong> “学习”的过程。</p>
+                                    <p><strong>验证:</strong> “随堂测验”，用来“调整教学方法”。</p>
+                                    <p><strong>测试:</strong> “期末考试”，用“完全没见过”的卷子给AI打分。</p>
+                                    <p><strong>神经网络:</strong> 模仿人“大脑神经元”的模型，擅长学复杂规律。</p>
+                                </div>
+                            </div>
+                            <div class="flashcard" data-concept="ai-fields">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">AI 应用领域</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>自然语言处理 (NLP):</strong> 教AI“听懂人话、会说人话”（如Siri）。</p>
+                                    <p><strong>计算机视觉 (CV):</strong> 教AI“看懂世界”（如人脸识别）。</p>
+                                </div>
+                            </div>
+                            <div class="flashcard" data-concept="llm-basic">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">大模型 (LLM) 基础</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>大语言模型:</strong> “超级AI大脑”，读了“几乎整个互联网”的书。</p>
+                                    <p><strong>理解 (BERT):</strong> 擅长“做阅读理解”或“完形填空”。</p>
+                                    <p><strong>生成 (GPT):</strong> 擅长“写作文”或“聊天”。</p>
+                                </div>
+                            </div>
+                            <div class="flashcard" data-concept="llm-history">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">语言模型发展史</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>1. 统计语言模型:</strong> 像“接龙”，看哪个词“接”在后面最“顺口”。</p>
+                                    <p><strong>2. 神经网络语言模型:</strong> 用“神经网络”来“猜”下一个词。</p>
+                                    <p><strong>3. 预训练语言模型:</strong> 先“读万卷书”（预训练），再“做特定题”（微调）。</p>
+                                    <p><strong>4. 大语言模型:</strong> 模型“超级巨大”，突然学会了很多“新本领”。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 2 -->
+                    <div class="accordion">
+                        <div class="accordion-header" data-accordion="acc-2">
+                            <h3 class="text-2xl font-semibold">2. AI 是如何“上学”的？</h3>
+                            <span class="text-2xl transform transition-transform duration-300">▼</span>
+                        </div>
+                        <div class="accordion-content grid md:grid-cols-2 lg:grid-cols-3 gap-4" id="acc-2">
+                            <div class="flashcard" data-concept="pretrain-tasks">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">预训练任务 (上小学)</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>下一个词元预测 (GPT):</strong> “写作专家”的训练任务，根据前面的字猜下一个字。</p>
+                                    <p><strong>去噪自编码 (BERT):</strong> “阅读专家”的训练任务，就是“猜词填空”(MLM)。</p>
+                                    <p><strong>自监督学习:</strong> AI“自学”，自己给自己“出题”（比如“猜词填空”或“预测下一个词”）。</p>
+                                </div>
+                            </div>
+                            <div class="flashcard" data-concept="batch-size">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">Batch (批次)</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>Batch (批次):</strong> AI学习时，不能“看一题、学一题”（太慢）。</p>
+                                    <p><strong>Batch Size (批次大小):</strong> 我们让AI“一小批一小批”地学，比如“一次看32个例子”，然后“总结一次经验”。</p>
+                                </div>
+                            </div>
+                            <div class="flashcard" data-concept="finetune">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">指令微调 (上补习班)</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>指令数据:</strong> (问：“法国首都是哪？”，答：“巴黎。”) 这样的“问题”和“标准答案”配对。</p>
+                                    <p><strong>指令微调:</strong> 用成千上万的“指令数据”给AI上“补习班”，让它学会“听懂人话、好好回答”。</p>
+                                    <p><strong>数据合成:</strong> 让“更厉害的AI”来“出题”并“写答案”，用这些数据去教“小一点的AI”。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 3 -->
+                    <div class="accordion">
+                        <div class="accordion-header" data-accordion="acc-3">
+                            <h3 class="text-2xl font-semibold">3. AI 的“大脑”是如何工作的？</h3>
+                            <span class="text-2xl transform transition-transform duration-300">▼</span>
+                        </div>
+                        <div class="accordion-content grid md:grid-cols-2 lg:grid-cols-3 gap-4" id="acc-3">
+                            <div class="flashcard" data-concept="attention">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">注意力机制 (核心)</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>比喻:</strong> 就像去图书馆“查资料”。</p>
+                                    <p><strong>查询 (Q):</strong> 你的“问题”。</p>
+                                    <p><strong>键 (K):</strong> 每本书的“标签”。</p>
+                                    <p><strong>值 (V):</strong> 每本书的“内容”。</p>
+                                    <p><strong>Softmax:</strong> 把“相关度”变成“百分比”，更相关的就重点看。</p>
+                                </div>
+                            </div>
+                            <div class="flashcard" data-concept="architecture">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">主流架构 (Transformer)</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>编码器-解码器:</strong> 像“翻译官”。编码器“读懂”中文，解码器“写出”英文。</p>
+                                    <p><strong>因果解码器 (GPT):</strong> 像“写作专家”。只能“从左往右”看，预测“下一个”字。</p>
+                                    <p><strong>前缀解码器:</strong> 像“填空专家”。能“看全”前缀，再“从左往右”写后缀。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 4 -->
+                    <div class="accordion">
+                        <div class="accordion-header" data-accordion="acc-4">
+                            <h3 class="text-2xl font-semibold">4. 我们如何与 AI “对话”？</h3>
+                            <span class="text-2xl transform transition-transform duration-300">▼</span>
+                        </div>
+                        <div class="accordion-content grid md:grid-cols-2 lg:grid-cols-3 gap-4" id="acc-4">
+                            <div class="flashcard" data-concept="decoding">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">AI 的“说话”方式 (解码)</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>贪心搜索 (Greedy):</strong> 每一步都只选“当前概率最高”的词，容易重复。</p>
+                                    <p><strong>束搜索 (Beam Search):</strong> 同时保留多条候选句子，最后挑整句最优的。</p>
+                                </div>
+                            </div>
+                            <div class="flashcard" data-concept="prompting">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">提示工程 (提问的艺术)</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>目的:</strong> 你问得越好，AI答得越好。</p>
+                                    <ol class="list-decimal list-inside ml-2">
+                                        <li><strong>角色:</strong> “请你扮演一位科幻小说家...”</li>
+                                        <li><strong>约束:</strong> “写500字...”</li>
+                                        <li><strong>风格:</strong> “要紧张刺激...”</li>
+                                    </ol>
+                                </div>
+                            </div>
+                            <div class="flashcard" data-concept="reasoning">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">AI 的“思考” (推理)</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>认知推理:</strong> 像人一样用逻辑判断。</p>
+                                    <p><strong>思维链 (CoT):</strong> 让AI把思考过程写出来，答案更准。</p>
+                                </div>
+                            </div>
+                            <div class="flashcard" data-concept="agent">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">智能体 (Agent)</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>角色(Profile):</strong> 系统提示词，告诉AI“你是谁”。</p>
+                                    <p><strong>角色扮演:</strong> 例如“你是会说河南话的AI助手”。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 5 -->
+                    <div class="accordion">
+                        <div class="accordion-header" data-accordion="acc-5">
+                            <h3 class="text-2xl font-semibold">5. AI 的“品德”与“考试”</h3>
+                            <span class="text-2xl transform transition-transform duration-300">▼</span>
+                        </div>
+                        <div class="accordion-content grid md:grid-cols-2 lg:grid-cols-3 gap-4" id="acc-5">
+                            <div class="flashcard" data-concept="alignment">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">人类对齐 (品德课)</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>无害性:</strong> 不教坏事。</p>
+                                    <p><strong>有用性:</strong> 真的帮到你。</p>
+                                    <p><strong>诚实性:</strong> 不胡说八道。</p>
+                                </div>
+                            </div>
+                            <div class="flashcard" data-concept="evaluation-metrics">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">评测指标 (如何打分)</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>精确率:</strong> 不冤枉好人。</p>
+                                    <p><strong>召回率:</strong> 不放过坏人。</p>
+                                    <p><strong>困惑度 (PPL):</strong> 分数越低越好。</p>
+                                    <p><strong>BLEU / ROUGE:</strong> 评估翻译、总结质量。</p>
+                                </div>
+                            </div>
+                            <div class="flashcard" data-concept="evaluation-methods">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">评测方法 (如何考试)</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>评测基准:</strong> 用统一试卷（如MMLU）。</p>
+                                    <p><strong>人类评估:</strong> 让人来打分好不好。</p>
+                                    <p><strong>模型评估:</strong> 让更强的AI打分。</p>
+                                </div>
+                            </div>
+                            <div class="flashcard" data-concept="ethics">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">伦理与安全 (偏见)</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>来源:</strong> 数据里可能带人类的偏见。</p>
+                                    <p><strong>做法:</strong> 清洗数据 + 微调时加“价值观训练”。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 6 -->
+                    <div class="accordion">
+                        <div class="accordion-header bg-yellow-100" data-accordion="acc-6">
+                            <h3 class="text-2xl font-semibold text-yellow-800">🚀【编程专项】AI 的“超级工具”</h3>
+                            <span class="text-2xl transform transition-transform duration-300">▼</span>
+                        </div>
+                        <div class="accordion-content grid md:grid-cols-2 gap-4" id="acc-6">
+                            <div class="flashcard" data-concept="rag">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">RAG (开卷考试)</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>RAG 是什么？</strong> AI先去资料库检索，再用这些资料回答你。像“开卷考试”。</p>
+                                    <p class="font-semibold">RAG 步骤 (Q21-25):</p>
+                                    <ol class="list-decimal list-inside ml-2 space-y-1">
+                                        <li><strong>分词 (Tokenizer):</strong> 把文字变成ID数字。</li>
+                                        <li><strong>嵌入 (Embedder):</strong> 把句子变成“语义坐标”。</li>
+                                        <li><strong>池化 (Pooling):</strong> 总结整段话的坐标。</li>
+                                        <li><strong>搜索 (Search):</strong> 找到最相关的资料。</li>
+                                        <li><strong>生成 (Generate):</strong> 用这些资料来回答。</li>
+                                    </ol>
+                                </div>
+                            </div>
+                            <div class="flashcard" data-concept="lora">
+                                <div class="flashcard-front">
+                                    <h4 class="font-semibold">LoRA (新技能包)</h4>
+                                    <span class="text-gray-400">点击翻转</span>
+                                </div>
+                                <div class="flashcard-back space-y-2">
+                                    <p><strong>LoRA 是什么？</strong> 给大模型外挂一个“小技能模块”，只训练这个模块就能学会新本领。</p>
+                                    <p class="font-semibold">LoRA 编程考点 (Q26-30):</p>
+                                    <ol class="list-decimal list-inside ml-2 space-y-1">
+                                        <li><strong>r (Rank):</strong> 技能包大小，r小=更省显存。</li>
+                                        <li><strong>target_modules:</strong> 技能装在哪些“思考零件”上。</li>
+                                        <li><strong>batch_size=1:</strong> 显存小，只能一题一题学。</li>
+                                        <li><strong>gradient_accumulation_steps=8:</strong> 记8次笔记再更新。</li>
+                                        <li><strong>fp16=True:</strong> 用半精度，显存减半。</li>
+                                    </ol>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+
+            <!-- Tab 2 -->
+            <div id="tab-map" class="tab-content">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-3xl font-bold text-center mb-8">AI 知识图谱 (简化流程)</h2>
+                    <p class="text-center text-gray-700 mb-8">
+                        这是一个大语言模型从“出生”到“为您服务”的简化流程。点击下面的方块，它会跳回“知识点探险”，自动展开并高亮相关卡片。
+                    </p>
+                    <div class="flex flex-col md:flex-row items-center justify-center space-y-4 md:space-y-0 md:space-x-4">
+                        <div class="map-box w-full md:w-1/4" data-target="pretrain-tasks">
+                            <div class="text-3xl mb-2">📚</div>
+                            <h4 class="font-semibold text-lg">1. 预训练 (上小学)</h4>
+                            <p class="text-sm text-gray-600">AI读“整个互联网”的书，学习“猜词填空”和“预测下一个词”。</p>
+                        </div>
+                        <div class="map-arrow">➡️</div>
+                        <div class="map-box w-full md:w-1/4" data-target="finetune">
+                            <div class="text-3xl mb-2">🎓</div>
+                            <h4 class="font-semibold text-lg">2. 指令微调 (上补习班)</h4>
+                            <p class="text-sm text-gray-600">用“问题-答案”数据对AI进行“特训”，让它学会“听话”。</p>
+                        </div>
+                        <div class="map-arrow">➡️</div>
+                        <div class="map-box w-full md:w-1/4" data-target="alignment">
+                            <div class="text-3xl mb-2">❤️</div>
+                            <h4 class="font-semibold text-lg">3. 人类对齐 (品德课)</h4>
+                            <p class="text-sm text-gray-600">教AI学会“无害、有用、诚实”，成为一个“好AI”。</p>
+                        </div>
+                        <div class="map-arrow">➡️</div>
+                        <div class="map-box w-full md:w-1/4" data-target="prompting">
+                            <div class="text-3xl mb-2">💬</div>
+                            <h4 class="font-semibold text-lg">4. 应用 (为您服务)</h4>
+                            <p class="text-sm text-gray-600">我们通过“提示词”和它对话，它通过“解码”来回答我们。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab 3 -->
+            <div id="tab-dashboard" class="tab-content">
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h2 class="text-3xl font-bold text-center mb-8">学习数据看板</h2>
+                    <p class="text-center text-gray-700 mb-8">
+                        这是对我们这份《知识点精讲》讲义本身的分析。通过图表，我们可以看到哪些模块的知识点“扎堆”了，以及哪些知识点更“进阶”。
+                    </p>
+                    <div class="grid md:grid-cols-2 gap-8">
+                        <div>
+                            <h3 class="text-xl font-semibold text-center mb-4">图表一：各模块知识点数量</h3>
+                            <div class="chart-container">
+                                <canvas id="moduleChart"></canvas>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-4 text-center">
+                                **解读：** 我们可以看到，模块一(AI基础)、模块十一(评测)和模块十三(编程)是知识点最密集的三个模块！
+                            </p>
+                        </div>
+                        <div>
+                            <h3 class="text-xl font-semibold text-center mb-4">图表二：知识点难度分布</h3>
+                            <div class="chart-container">
+                                <canvas id="difficultyChart"></canvas>
+                            </div>
+                             <p class="text-sm text-gray-600 mt-4 text-center">
+                                **解读：** 大部分知识点都是“基础概念”，而“编程实践”(RAG/LoRA)虽然数量不多，但它们是核心的“进阶”知识。
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+
+            const tabs = document.querySelectorAll('.tab-btn');
+            const tabContents = document.querySelectorAll('.tab-content');
+            const accordions = document.querySelectorAll('.accordion-header');
+            const flashcards = document.querySelectorAll('.flashcard');
+            const mapBoxes = document.querySelectorAll('.map-box');
+
+            // --- Tabs ---
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    tabContents.forEach(content => {
+                        content.classList.remove('active');
+                        if (content.id === tab.dataset.tab) {
+                            content.classList.add('active');
+                        }
+                    });
+                });
+            });
+
+            // --- Accordions ---
+            accordions.forEach(accordion => {
+                accordion.addEventListener('click', () => {
+                    const content = document.getElementById(accordion.dataset.accordion);
+                    const icon = accordion.querySelector('span');
+
+                    if (content.classList.contains('active')) {
+                        content.classList.remove('active');
+                        accordion.classList.remove('active');
+                        icon.style.transform = 'rotate(0deg)';
+                    } else {
+                        content.classList.add('active');
+                        accordion.classList.add('active');
+                        icon.style.transform = 'rotate(180deg)';
+                    }
+                });
+            });
+
+            // --- Flashcards flip ---
+            flashcards.forEach(card => {
+                card.addEventListener('click', () => {
+                    card.classList.toggle('flipped');
+                });
+            });
+
+            // --- Map boxes jump ---
+            mapBoxes.forEach(box => {
+                box.addEventListener('click', () => {
+                    const targetConcept = box.dataset.target;
+                    const targetCard = document.querySelector(`.flashcard[data-concept="${targetConcept}"]`);
+
+                    if (targetCard) {
+                        // 切到“知识点探险”tab
+                        document.querySelector('.tab-btn[data-tab="tab-explore"]').click();
+
+                        // 确保对应手风琴展开
+                        const accordionContent = targetCard.closest('.accordion-content');
+                        const accordionHeader = document.querySelector(`.accordion-header[data-accordion="${accordionContent.id}"]`);
+
+                        if (!accordionContent.classList.contains('active')) {
+                            accordionHeader.click();
+                        }
+
+                        // 翻开卡片
+                        if (!targetCard.classList.contains('flipped')) {
+                            targetCard.classList.add('flipped');
+                        }
+
+                        // 滚动并高亮
+                        targetCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        targetCard.classList.add('bg-yellow-100', 'shadow-xl');
+                        setTimeout(() => {
+                            targetCard.classList.remove('bg-yellow-100', 'shadow-xl');
+                        }, 2000);
+                    }
+                });
+            });
+
+            // --- Charts ---
+            const chartData = {
+                modules: {
+                    labels: ['M1 AI基础', 'M2 LLM基础', 'M3 架构', 'M4 预训练', 'M5 微调', 'M6 对齐', 'M7 解码', 'M8 提示', 'M9 推理', 'M10 智能体', 'M11 评测', 'M12 伦理', 'M13 编程'],
+                    data: [5, 3, 3, 4, 3, 2, 2, 3, 2, 2, 6, 2, 8] 
+                },
+                difficulty: {
+                    labels: ['AI 基础概念', 'LLM 核心理论', 'LLM 应用与伦理', '编程实践 (RAG/LoRA)'],
+                    data: [13, 12, 12, 8] 
+                }
+            };
+
+            const ctxModule = document.getElementById('moduleChart');
+            if (ctxModule) {
+                new Chart(ctxModule, {
+                    type: 'bar',
+                    data: {
+                        labels: chartData.modules.labels,
+                        datasets: [{
+                            label: '知识点数量',
+                            data: chartData.modules.data,
+                            backgroundColor: 'rgba(79, 70, 229, 0.7)',
+                            borderColor: 'rgba(79, 70, 229, 1)',
+                            borderWidth: 1,
+                            borderRadius: 4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: '#111827',
+                                titleFont: { size: 14, weight: 'bold' },
+                                bodyFont: { size: 12 },
+                                padding: 10,
+                                cornerRadius: 4
+                            }
+                        },
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                grid: { color: '#e5e7eb' }
+                            },
+                            x: {
+                                grid: { display: false }
+                            }
+                        }
+                    }
+                });
+            }
+
+            const ctxDifficulty = document.getElementById('difficultyChart');
+            if (ctxDifficulty) {
+                new Chart(ctxDifficulty, {
+                    type: 'doughnut',
+                    data: {
+                        labels: chartData.difficulty.labels,
+                        datasets: [{
+                            label: '知识点分布',
+                            data: chartData.difficulty.data,
+                            backgroundColor: [
+                                'rgba(59, 130, 246, 0.7)',
+                                'rgba(79, 70, 229, 0.7)',
+                                'rgba(14, 165, 233, 0.7)',
+                                'rgba(245, 158, 11, 0.7)'
+                            ],
+                            borderColor: [
+                                'rgba(59, 130, 246, 1)',
+                                'rgba(79, 70, 229, 1)',
+                                'rgba(14, 165, 233, 1)',
+                                'rgba(245, 158, 11, 1)'
+                            ],
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: {
+                                position: 'bottom',
+                                labels: {
+                                    padding: 15,
+                                    font: { size: 12 }
+                                }
+                            },
+                            tooltip: {
+                                enabled: true,
+                                backgroundColor: '#111827',
+                                titleFont: { size: 14, weight: 'bold' },
+                                bodyFont: { size: 12 },
+                                padding: 10,
+                                cornerRadius: 4,
+                                callbacks: {
+                                    label: function(context) {
+                                        const label = context.label || '';
+                                        const value = context.raw;
+                                        const total = chartData.difficulty.data.reduce((a,b)=>a+b,0);
+                                        const percentage = ((value / total) * 100).toFixed(1) + '%';
+                                        return `${label}: ${value}个 (${percentage})`;
+                                    }
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

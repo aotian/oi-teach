@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第3课：LMCC 编程题闯关</title>
+    <!-- Chosen Palette: Calm Harmony (Warm Neutrals: bg-gray-50, text-gray-800, accent-blue-600) -->
+    <!-- Application Structure Plan: Lesson 3 of 3. This page focuses on practical application. It features the original 10-question programming quiz (RAG + LoRA) with interactive dropdowns. It adds a new mock quiz with conceptual questions specifically about RAG and LoRA implementation. -->
+    <!-- Visualization & Content Choices: Original 10 Programming Quiz -> Test Code -> HTML <pre>/<select> -> Select, Check -> Justification: Interactive code completion. | Mock Quiz 3 (List) -> Test Knowledge -> HTML Radio/Text (all-at-once) -> Click -> Justification: Active recall of RAG/LoRA concepts. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .nav-link { cursor: pointer; padding: 0.75rem 1rem; border-bottom: 3px solid transparent; transition: all 0.3s; }
+        .nav-link.active { border-bottom-color: #2563EB; color: #2563EB; font-weight: 600; }
+        .nav-link:not(.active):hover { background-color: #F3F4F6; }
+        .option-label { display: block; padding: 0.75rem 1rem; border: 1px solid #D1D5DB; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s; margin-bottom: 0.5rem; }
+        .option-label:hover { background-color: #F9FAFB; }
+        .option-label.correct { background-color: #D1FAE5; border-color: #10B981; font-weight: 600; }
+        .option-label.incorrect { background-color: #FEE2E2; border-color: #EF4444; }
+        .code-select { display: inline-block; padding: 0.25rem 0.5rem; border: 1px solid #D1D5DB; border-radius: 0.375rem; background-color: white; font-family: monospace; cursor: pointer; }
+        .code-select.correct { background-color: #D1FAE5; border-color: #10B981; }
+        .code-select.incorrect { background-color: #FEE2E2; border-color: #EF4444; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="min-h-screen flex flex-col">
+        
+        <header class="bg-white shadow-sm sticky top-0 z-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <h1 class="text-3xl font-bold text-blue-700">LMCC 青少年组 - 交互式学习站</h1>
+            </div>
+            <nav class="border-b border-gray-200">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex space-x-4">
+                        <a href="./lesson1.html" class="nav-link" data-page="lesson1">第1课：核心概念与总览</a>
+                        <a href="./lesson2.html" class="nav-link" data-page="lesson2">第2课：单选题挑战</a>
+                        <a href="./lesson3.html" class="nav-link active" data-page="lesson3">第3课：编程题闯关</a>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+            
+            <section id="lesson3" class="page active">
+                <h2 class="text-2xl font-semibold mb-2">第3课：例卷编程题闯关</h2>
+                <p class="mb-6 text-gray-700">在第三节课，我们将挑战例卷的编程填空题。请在代码中选择正确的选项，完成后点击“检查答案”查看解析。</p>
+                
+                <div class="bg-white p-6 rounded-lg shadow mb-8">
+                    <h3 class="text-xl font-semibold mb-4 text-blue-700">第一部分：检索增强生成 (RAG) (Q21-Q25)</h3>
+                    <pre class="bg-gray-900 text-white p-4 rounded-lg overflow-x-auto text-sm"><code class="language-python">
+import torch
+import torch.nn.functional as F
+from transformers import AutoTokenizer, AutoModel, AutoModelForCausalLM
+
+class Retriever:
+    # ... __init__ ...
+    def _text_to_vector(self, text_batch):
+        enc = <span id="pq-21-wrap"></span>
+        enc = {k: v.to(self.embedder.device) for k, v in enc.items()}
+        with torch.no_grad():
+            outputs = <span id="pq-22-wrap"></span>
+            last_hidden = outputs.last_hidden_state
+            attn_mask = enc["attention_mask"]
+            sent_vecs = <span id="pq-23-wrap"></span>
+            return sent_vecs
+    # ... build_index ...
+def rag_answer(query, retriever, generator, gen_tokenizer, topk=3, max_new_tokens=128):
+    # ... _text_to_vector ...
+    docs = <span id="pq-24-wrap"></span>
+    # ... prompt ...
+    # ... inputs ...
+    with torch.no_grad():
+        output_ids = generator.generate(
+            **inputs, max_new_tokens=max_new_tokens,
+        )
+    new_tokens = <span id="pq-25-wrap"></span>
+    answer = gen_tokenizer.decode(new_tokens, skip_special_tokens=True).strip()
+    return answer
+                    </code></pre>
+                    <button id="pq-rag-check" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">检查 RAG 答案</button>
+                    <div id="pq-rag-explanations" class="mt-6 space-y-4">
+                        <!-- RAG 解析将动态加载在这里 -->
+                    </div>
+                </div>
+
+                <div class="bg-white p-6 rounded-lg shadow">
+                    <h3 class="text-xl font-semibold mb-4 text-blue-700">第二部分：参数高效微调 (LoRA) (Q26-Q30)</h3>
+                    <pre class="bg-gray-900 text-white p-4 rounded-lg overflow-x-auto text-sm"><code class="language-python">
+import torch
+from transformers import AutoTokenizer, AutoModelForCausalLM, TrainingArguments, Trainer
+from peft import LoraConfig, get_peft_model
+
+model_name = "Qwen/Qwen2.5-7B-Instruct"
+
+tokenizer = <span id="pq-26-wrap"></span>
+model = AutoModelForCausalLM.from_pretrained(
+    model_name, device_map="auto", torch_dtype=torch.float16,
+    trust_remote_code=True
+)
+
+lora_config = LoraConfig(
+    <span id="pq-27-wrap"></span>
+    target_modules=<span id="pq-28-wrap"></span>,
+    lora_dropout=0.05, bias="none", task_type="CAUSAL_LM"
+)
+model = get_peft_model(model, lora_config)
+
+training_args = TrainingArguments(
+    output_dir="./lora-qwen2.5-7b",
+    <span id="pq-29-wrap"></span>,
+    num_train_epochs=3, learning_rate=2e-4,
+    <span id="pq-30-wrap"></span>,
+    logging_steps=10, save_strategy="epoch"
+)
+# ... trainer ...
+                    </code></pre>
+                    <button id="pq-lora-check" class="mt-4 bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg transition">检查 LoRA 答案</button>
+                    <div id="pq-lora-explanations" class="mt-6 space-y-4">
+                        <!-- LoRA 解析将动态加载在这里 -->
+                    </div>
+                </div>
+
+                <hr class="my-12 border-gray-300">
+
+                <h2 class="text-2xl font-semibold mb-6">第3课 - RAG/LoRA 专项模拟挑战</h2>
+                <p class="mb-6 text-gray-700">编程题做完了，来测试一下你对 RAG 和 LoRA 的理论知识是否也掌握了吧！</p>
+                <div id="mock-quiz-l3" class="space-y-8">
+                    <!-- 模拟题将动态加载在这里 -->
+                </div>
+
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // --- 数据存储 ---
+        const lesson3Data = {
+            programQuestions: {
+                rag: [
+                    { q: 21, options: ["A. self.embedder(text_batch, return_tensors=\"pt\", ...)", "B. self.tokenizer(text_batch, return_tensors=\"pt\", ...)", "C. self.tokenizer.encode(text_batch, return_tensors=\"pt\", ...)", "D. self.embedder(text_batch, return_tensors=\"pt\", ...)"], answer: "B", explanation: "第一步是将原始文本(text_batch)转换为模型能理解的输入ID。这个工作是由分词器(tokenizer)完成的。embedder(模型)是用来处理tokenizer输出的ID，而不是原始文本。" },
+                    { q: 22, options: ["A. self.embedder(**enc)", "B. self.embedder.forward(enc[\"input_ids\"])", "C. self.embedder(enc[\"input_ids\"])", "D. self.embedder.forward(enc)"], answer: "A", explanation: "enc是一个包含'input_ids'和'attention_mask'的字典。Transformer模型的前向传播(forward)需要这两个参数。使用 **enc 可以将字典解包，等同于调用 self.embedder(input_ids=..., attention_mask=...)，这是最标准、最完整的调用方式。" },
+                    { q: 23, options: ["A. last_hidden.mean(1)", "B. (last_hidden * attn_mask.unsqueeze(-1)).sum(1) / attn_mask.sum(1, keepdim=True)", "C. last_hidden[:, 0, :]", "D. (last_hidden * attn_mask).sum(1) / attn_mask.sum(1)"], answer: "B", explanation: "这是在进行“掩码平均池化”。A选项的简单平均会把填充(padding)词也算进去，导致结果不准。B选项通过乘以掩码(attn_mask)排除了填充词，然后再除以有效长度(attn_mask.sum)，得到正确的句向量。C选项只取[CLS]标记，不通用。" },
+                    { q: 24, options: ["A. retriever.index.search(query_vec, topk)", "B. retriever.search(query_vec, topk=topk)", "C. retriever.build_index(query_vec)", "D. retriever.generate(query_vec, topk=topk)"], answer: "B", explanation: "在Retriever类中，我们已经定义了 `search` 方法来执行检索。`build_index` 是用来建索引的，`generate` 不是检索器的方法。因此，直接调用 `retriever.search()` 即可。" },
+                    { q: 25, options: ["A. output_ids[0][-max_new_tokens:]", "B. output_ids[0][inputs[\"input_ids\"].shape[1]:]", "C. output_ids[:, -max_new_tokens:]", "D. output_ids[:, inputs[\"input_ids\"].shape[1]:]"], answer: "B", explanation: "`output_ids` 包含了完整的“输入提示+新生成的答案”。我们只想要“新生成的答案”。`inputs[\"input_ids\"].shape[1]` 正是“输入提示”的长度。通过从这个长度开始切片(slicing)，我们就能精确地提取出新生成的部分。" }
+                ],
+                lora: [
+                    { q: 26, options: ["A. AutoTokenizer.from_pretrained(model_name, return_tensors=\"pt\")", "B. AutoTokenizer.load(model_name)", "C. AutoTokenizer(model_name)", "D. AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)"], answer: "D", explanation: "在加载模型(AutoModelForCausalLM)时，我们设置了 `trust_remote_code=True`，这是因为像Qwen这样的模型可能包含自定义的Python代码。为了保持一致，加载分词器(Tokenizer)时也必须设置 `trust_remote_code=True`，以允许加载这些自定义代码。" },
+                    { q: 27, options: ["A. r=64, lora_alpha=32,", "B. r=8, lora_alpha=64,", "C. r=8, lora_alpha=16,", "D. r=32, lora_alpha=8,"], answer: "C", explanation: "题目要求是“资源受限(16GB)”和“尽量节省显存”。LoRA的 `r` (秩)越小，需要训练的参数就越少，显存占用也越低。`r=8` 是一个非常常用且显存友好的配置。`r=64` 或 `r=32` 对显存的压力会大得多。`lora_alpha` 通常设为 `r` 的2倍（即16）。" },
+                    { q: 28, options: ["A. [\"mlp\", \"norm\"]", "B. \"all_linear_layers\"", "C. [\"k_proj\", \"o_proj\"]", "D. [\"q_proj\", \"v_proj\"]"], answer: "D", explanation: "题目要求将LoRA插入到“注意力机制中关键的两个投影层”。在Transformer的注意力模块中，`q_proj` (查询投影) 和 `v_proj` (值投影) 通常被认为是效果最好、最关键的注入目标。A选项的mlp是前馈网络。" },
+                    { q: 29, options: ["A. per_device_train_batch_size=2, gradient_accumulation_steps=4,", "B. global_train_batch_size=8, gradient_accumulation_steps=4,", "C. global_train_batch_size=8, per_device_train_batch_size=1,", "D. per_device_train_batch_size=1, gradient_accumulation_steps=8,"], answer: "D", explanation: "题目要求全局batch_size为8，并且“最稳妥”（防止OOM）。D选项将单卡的batch_size设为1（`per_device_train_batch_size=1`），这是显存占用最低的设置。然后通过梯度累积8步（`gradient_accumulation_steps=8`）来达到 1 * 8 = 8 的全局batch_size。A选项的batch_size=2风险更高。B和C的参数名是错的。" },
+                    { q: 30, options: ["A. fp32=True,", "B. fp16=True,", "C. training_type=\"fp32\",", "D. training_type=\"bf16\","], answer: "B", explanation: "题目要求“启用半精度训练以降低显存占用”。在 `TrainingArguments` 中，`fp16=True` 是用来开启FP16（16位浮点数）半精度训练的标准参数，它可以将显存占用降低近一半。`fp32` 是全精度。" }
+                ]
+            },
+            mockQuizL3: [
+                { q: 1, question: "在RAG系统中，“Retriever”(检索器) 的核心作用是什么？", options: ["A. 总结最终的答案", "B. 将用户的提问翻译成英文", "C. 从知识库中找出与提问最相关的文档片段", "D. 训练大语言模型"], answer: "C", explanation: "RAG的第一步就是“检索”。Retriever负责将用户的问题（Query）向量化，然后去向量数据库中搜索最相似、最相关的文档（Context）。（例卷Q24）" },
+                { q: 2, question: "在RAG的代码中, `_text_to_vector` 这个函数同时用到了 `tokenizer` 和 `embedder` (模型)。它们的正确顺序是？", options: ["A. 先用 embedder，再用 tokenizer", "B. 先用 tokenizer，再用 embedder", "C. 只需要用 tokenizer", "D. 只需要用 embedder"], answer: "B", explanation: "顺序是固定的：必须先用 `tokenizer` 把原始文本（如“你好”）转换成机器能懂的数字ID（如[7_8_9]），然后再把这些ID喂给 `embedder`（嵌入模型）来计算出代表含义的向量。（例卷Q21, Q22）" },
+                { q: 3, question: "LoRA 这种高效微调方法，最大的优点是什么？", options: ["A. 它能让模型的推理速度变得飞快", "B. 它能彻底消除模型的所有偏见", "C. 它极大减少了需要训练的参数量，节省显存", "D. 它能让模型不需要GPU就能训练"], answer: "C", explanation: "LoRA的核心思想是“冻结”原始大模型（几十亿参数），只训练新加入的、非常小的“适配器”（几百万参数），从而极大降低了训练门槛和显存需求。" },
+                { q: 4, question: "在LoRA配置中, `r` (rank, 秩) 这个参数越小，意味着什么？", options: ["A. 训练速度越慢，但效果越好", "B. 新增的训练参数越少，显存占用越低", "C. 模型的推理速度越快", "D. 原始模型被“冻结”的部分越少"], answer: "B", explanation: "`r`（秩）直接控制了LoRA适配器矩阵的大小。`r` 越小（如 r=8），新增的参数量就越少，训练时占用的显存自然就越低。但 `r` 过小也可能导致模型学不到位，所以需要权衡。（例卷Q27）" },
+                { q: 5, question: "在 LoRA 训练代码中, `gradient_accumulation_steps = 8` 的作用是什么？", options: ["A. 让训练速度快8倍", "B. 用8倍的数据量来训练模型", "C. 在显存不足时，模拟一个更大的“全局批量大小”(Batch Size)", "D. 把模型的梯度裁剪8次"], answer: "C", explanation: "这是在显存不足时（比如单卡只能跑 batch_size=1）的“妥协”技巧。它会计算1步的梯度、暂存；再算1步、暂存...累积8步后，再统一更新一次模型。这样就模拟了 batch_size=8 的效果。（例卷Q29）" }
+            ]
+        };
+
+        // --- 编程题逻辑 ---
+        function createProgramSelect(questionData, id) {
+            const select = document.createElement('select');
+            select.id = `pq-${id}`;
+            select.className = 'code-select';
+            
+            const defaultOption = document.createElement('option');
+            defaultOption.value = "";
+            defaultOption.textContent = `[ ${id} ]`;
+            select.appendChild(defaultOption);
+            
+            questionData.options.forEach(opt => {
+                const [letter, text] = opt.split('. ');
+                const option = document.createElement('option');
+                option.value = letter;
+                option.textContent = `${letter}. ${text.substring(0, 30)}...`; // 缩短选项文本
+                option.title = `${letter}. ${text}`;
+                select.appendChild(option);
+            });
+            return select;
+        }
+
+        function renderProgramQuestions() {
+            // RAG
+            lesson3Data.programQuestions.rag.forEach(qData => {
+                const wrap = document.getElementById(`pq-${qData.q}-wrap`);
+                if(wrap) wrap.appendChild(createProgramSelect(qData, qData.q));
+            });
+            
+            // LoRA
+            lesson3Data.programQuestions.lora.forEach(qData => {
+                const wrap = document.getElementById(`pq-${qData.q}-wrap`);
+                if(wrap) wrap.appendChild(createProgramSelect(qData, qData.q));
+            });
+        }
+
+        function checkProgramAnswers(type) {
+            const data = lesson3Data.programQuestions[type];
+            const explanationsContainer = document.getElementById(`pq-${type}-explanations`);
+            explanationsContainer.innerHTML = '';
+            
+            data.forEach(qData => {
+                const select = document.getElementById(`pq-${qData.q}`);
+                let explanationHTML = '';
+
+                if (select && select.value === qData.answer) {
+                    select.classList.remove('incorrect');
+                    select.classList.add('correct');
+                    explanationHTML = `
+                        <div class="p-3 bg-green-50 border border-green-200 rounded-lg">
+                            <strong class="text-green-700">Q${qData.q}: 正确!</strong>
+                            <p class="text-sm text-gray-700 mt-1">${qData.explanation}</p>
+                        </div>
+                    `;
+                } else if (select) {
+                    select.classList.remove('correct');
+                    select.classList.add('incorrect');
+                    explanationHTML = `
+                        <div class="p-3 bg-red-50 border border-red-200 rounded-lg">
+                            <strong class="text-red-700">Q${qData.q}: 错误。</strong> (正确答案: ${qData.answer})
+                            <p class="text-sm text-gray-700 mt-1">${qData.explanation}</p>
+                        </div>
+                    `;
+                }
+                explanationsContainer.innerHTML += explanationHTML;
+            });
+        }
+
+        document.getElementById('pq-rag-check')?.addEventListener('click', () => checkProgramAnswers('rag'));
+        document.getElementById('pq-lora-check')?.addEventListener('click', () => checkProgramAnswers('lora'));
+
+
+        // --- 模拟题渲染逻辑 ---
+        function renderMockQuiz(quizData, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            quizData.forEach((data, index) => {
+                const quizBlock = document.createElement('div');
+                quizBlock.className = 'bg-white p-6 rounded-lg shadow';
+
+                let optionsHTML = '';
+                data.options.forEach(opt => {
+                    const [letter, text] = opt.split('. ');
+                    optionsHTML += `
+                        <label class="option-label" data-quiz="${containerId}-q${index}" data-answer="${letter}">
+                            <input type="radio" name="${containerId}-q${index}" value="${letter}" class="sr-only">
+                            <span class="font-semibold">${letter}.</span> ${text}
+                        </label>
+                    `;
+                });
+
+                quizBlock.innerHTML = `
+                    <h3 class="text-lg font-medium mb-4">${data.q}. ${data.question}</h3>
+                    <div class="options-container">${optionsHTML}</div>
+                    <div class="explanation-container mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hidden"></div>
+                `;
+                
+                container.appendChild(quizBlock);
+                addMockQuizListeners(quizBlock, data);
+            });
+        }
+
+        function addMockQuizListeners(quizBlock, data) {
+            const optionLabels = quizBlock.querySelectorAll('.option-label');
+            const explanationContainer = quizBlock.querySelector('.explanation-container');
+
+            optionLabels.forEach(label => {
+                label.addEventListener('click', () => {
+                    const selectedAnswer = label.getAttribute('data-answer');
+                    
+                    optionLabels.forEach(lbl => {
+                        lbl.classList.remove('correct', 'incorrect');
+                        lbl.style.pointerEvents = 'none'; // 答题后禁用
+                    });
+
+                    if (selectedAnswer === data.answer) {
+                        label.classList.add('correct');
+                    } else {
+                        label.classList.add('incorrect');
+                        const correctLabel = quizBlock.querySelector(`.option-label[data-answer="${data.answer}"]`);
+                        if (correctLabel) {
+                            correctLabel.classList.add('correct');
+                        }
+                    }
+                    
+                    explanationContainer.innerHTML = `<strong class="text-blue-700">【解析】</strong> ${data.explanation}`;
+                    explanationContainer.classList.remove('hidden');
+                });
+            });
+        }
+
+        // --- 初始化 ---
+        function initApp() {
+            renderProgramQuestions();
+            renderMockQuiz(lesson3Data.mockQuizL3, 'mock-quiz-l3');
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
+
+    </script>
+</body>
+</html>

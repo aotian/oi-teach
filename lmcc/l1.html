@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>第1课：LMCC 核心概念与总览</title>
+    <!-- Chosen Palette: Calm Harmony (Warm Neutrals: bg-gray-50, text-gray-800, accent-blue-600) -->
+    <!-- Application Structure Plan: Lesson 1 of 3. This page serves as the introduction, showing the exam overview (charts) and the core concepts glossary. It includes a new mock quiz focusing on foundational LLM concepts (Transformer, Pre-training, Prompting). -->
+    <!-- Visualization & Content Choices: Exam Structure (Charts) -> Inform -> Doughnut/Bar (Chart.js) -> Hover -> Justification: Visual overview. | Core Concepts (List) -> Inform -> HTML <details> -> Click -> Justification: Interactive glossary. | Mock Quiz 1 (List) -> Test Knowledge -> HTML Radio/Text -> Click -> Justification: Active recall of foundational concepts. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.7.1/dist/chart.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .nav-link { cursor: pointer; padding: 0.75rem 1rem; border-bottom: 3px solid transparent; transition: all 0.3s; }
+        .nav-link.active { border-bottom-color: #2563EB; color: #2563EB; font-weight: 600; }
+        .nav-link:not(.active):hover { background-color: #F3F4F6; }
+        .chart-container { position: relative; width: 100%; max-width: 450px; margin-left: auto; margin-right: auto; height: 300px; max-height: 400px; }
+        @media (min-width: 768px) { .chart-container { height: 350px; } }
+        .option-label { display: block; padding: 0.75rem 1rem; border: 1px solid #D1D5DB; border-radius: 0.5rem; cursor: pointer; transition: all 0.2s; margin-bottom: 0.5rem; }
+        .option-label:hover { background-color: #F9FAFB; }
+        .option-label.correct { background-color: #D1FAE5; border-color: #10B981; font-weight: 600; }
+        .option-label.incorrect { background-color: #FEE2E2; border-color: #EF4444; }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+
+    <div class="min-h-screen flex flex-col">
+        
+        <header class="bg-white shadow-sm sticky top-0 z-10">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+                <h1 class="text-3xl font-bold text-blue-700">LMCC 青少年组 - 交互式学习站</h1>
+            </div>
+            <nav class="border-b border-gray-200">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex space-x-4">
+                        <a href="./lesson1.html" class="nav-link active" data-page="lesson1">第1课：核心概念与总览</a>
+                        <a href="./lesson2.html" class="nav-link" data-page="lesson2">第2课：单选题挑战</a>
+                        <a href="./lesson3.html" class="nav-link" data-page="lesson3">第3课：编程题闯关</a>
+                    </div>
+                </div>
+            </nav>
+        </header>
+
+        <main class="flex-grow max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+            
+            <section id="lesson1" class="page active">
+                <h2 class="text-2xl font-semibold mb-4">欢迎来到第1课：核心概念与总览</h2>
+                <p class="mb-8 text-gray-700">
+                    在第一节课，我们将首先了解整个例卷的结构，然后深入学习考试所涉及的核心AI术语。
+                </p>
+                <ul class="list-disc list-inside mb-8 space-y-2 text-gray-700">
+                    <li>通过仪表盘直观了解考试的<strong class="text-blue-600">分数分布</strong>和<strong class="text-blue-600">考点</strong>。</li>
+                    <li>随时查阅<strong class="text-blue-600">核心概念</strong>，为后续的挑战打好基础。</li>
+                </ul>
+                <div class="grid md:grid-cols-2 gap-8 mb-12">
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold text-center mb-4">考试分数结构</h3>
+                        <p class="text-center text-sm text-gray-600 mb-4">例卷总分100分，分为两大模块。单选题占比更重。</p>
+                        <div class="chart-container">
+                            <canvas id="pointsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-lg shadow">
+                        <h3 class="text-xl font-semibold text-center mb-4">编程题考点分布</h3>
+                        <p class="text-center text-sm text-gray-600 mb-4">编程题共10题，均匀考察两大前沿技术。</p>
+                        <div class="chart-container">
+                            <canvas id="programChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+
+                <hr class="my-12 border-gray-300">
+
+                <h2 class="text-2xl font-semibold mb-6">第1课 - 基础概念模拟挑战</h2>
+                <p class="mb-6 text-gray-700">让我们来测试一下刚学过的基础概念！</p>
+                <div id="mock-quiz-l1" class="space-y-8">
+                    <!-- 模拟题将动态加载在这里 -->
+                </div>
+
+                <hr class="my-12 border-gray-300">
+
+                <h2 class="text-2xl font-semibold mb-2">核心概念库</h2>
+                <p class="mb-6 text-gray-700">点击查看例卷中涉及的关键AI术语的简单解释。</p>
+                <div id="core-concepts-container" class="space-y-4">
+                    <!-- 概念将动态加载在这里 -->
+                </div>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        // --- 数据存储 ---
+        const lesson1Data = {
+            coreConcepts: [
+                { term: "掩码语言模型 (MLM)", definition: "一种预训练方法 (如BERT)，通过随机遮住(MASK)句子中的词，让模型根据上下文预测被遮住的词，从而学习双向上下文理解能力。", q: 1 },
+                { term: "提示词工程 (Prompt Engineering)", definition: "设计和优化给AI的指令(Prompt)的艺术。一个好的提示词(如包含角色、约束、风格)能极大地提升AI的输出质量。", q: 2 },
+                { term: "自注意力机制 (Self-Attention)", definition: "Transformer架构的核心。它允许模型在处理一个词时，动态计算序列中所有其他词对它的重要性，从而捕捉长距离依赖。", q: 3 },
+                { term: "指令微调 (Instruction Tuning)", definition: "在预训练后，使用“(指令, 期望答案)”这样的配对数据对模型进行“监督训练”，目的是让模型学会理解并遵循人类的指令。", q: 4 },
+                { term: "人类对齐 (Human Alignment)", definition: "训练AI的过程，使其行为和输出符合人类的价值观、意图和偏好，确保AI是安全、有益、诚实的。", q: 9 },
+                { term: "思维链 (Chain of Thought, CoT)", definition: "一种提示技巧，引导模型在给出最终答案前，先一步步生成详细的思考过程。这能提高模型在复杂推理任务上的准确性和可解释性。", q: 10 },
+                { term: "Pass@K", definition: "一种用于评估代码生成AI的指标。它衡量的是：为每个问题生成K个代码答案，这K个答案中至少有1个能通过测试的概率。", q: 12 },
+                { term: "困惑度 (Perplexity, PPL)", definition: "衡量语言模型性能的指标，反映了模型对一句测试文本的“不确定性”。困惑度越低，说明模型预测越准，性能越好。", q: 19 },
+                { term: "检索增强生成 (RAG)", definition: "一种AI技术，在AI回答问题前，先从外部知识库中“检索(Retrieve)”相关资料，然后将“问题+资料”一起交给AI“生成(Generate)”答案。相当于给AI开卷考试。", q: 21 },
+                { term: "参数高效微调 (PEFT) / LoRA", definition: "一种微调大模型的方法。它冻结(Freeze)模型的大部分原始参数，只训练插入到模型中的一小部分“适配器”(Adapter)参数(如LoRA)。这能极大地降低训练所需的显存和计算资源。", q: 26 }
+            ],
+            mockQuizL1: [
+                { q: 1, question: "大语言模型的基础架构 Transformer 主要依赖什么来理解上下文？", options: ["A. 卷积神经网络 (CNN)", "B. 循环神经网络 (RNN)", "C. 自注意力机制 (Self-Attention)", "D. 遗传算法"], answer: "C", explanation: "自注意力机制是Transformer的核心，它让模型能同时关注句子中的所有词，理解它们之间的关系，尤其是长距离依赖关系。" },
+                { q: 2, question: "“预训练”(Pre-training) 阶段的主要目标是什么？", options: ["A. 让模型学会回答特定问题", "B. 在海量的无标签文本上学习通用的语言知识", "C. 修复模型中的所有偏见", "D. 让模型学会画画"], answer: "B", explanation: "预训练就像“上小学”，模型通过阅读海量的书籍和网页（无标签文本）来学习语言本身是怎么运作的，获得通用的世界知识。" },
+                { q: 3, question: "当我们要求AI“扮演一个海盗船长”时，我们正在使用的是什么技术？", options: ["A. 提示词工程 (Prompt Engineering)", "B. 模型对齐 (Alignment)", "C. 束搜索 (Beam Search)", "D. 掩码语言模型 (MLM)"], answer: "A", explanation: "提示词工程就是通过设计清晰的指令（Prompt）来引导AI。“扮演一个海盗船长”就是一种“角色设定”的提示技巧。" },
+                { q: 4, question: "“人类对齐”(Human Alignment) 为什么很重要？", options: ["A. 它能让模型运行得更快", "B. 它能让模型写的代码没有Bug", "C. 它能确保模型的行为符合人类价值观，做到安全、有帮助", "D. 它能让模型的参数量变少"], answer: "C", explanation: "“对齐”就像给AI上“品德课”，确保它在变聪明的同时，也是一个“好AI”，乐于助人、诚实，并且不会产生有害的输出。" },
+                { q: 5, question: "GPT系列的生成模型（如GPT-3）主要使用哪种架构？", options: ["A. 仅编码器 (Encoder-only)", "B. 仅解码器 (Decoder-only)", "C. 编码器-解码器 (Encoder-Decoder)", "D. 卷积网络 (CNN)"], answer: "B", explanation: "GPT模型的核心任务是“预测下一个词”来进行生成，这种从左到右的生成任务最适合使用“仅解码器”架构。而BERT是“仅编码器”架构，擅长理解和填空。" }
+            ]
+        };
+
+        // --- 状态 ---
+        let chartInstances = {};
+
+        // --- 首页看板逻辑 ---
+        function initHomeCharts() {
+            if (!chartInstances.pointsChart) {
+                const ctxPoints = document.getElementById('pointsChart').getContext('2d');
+                chartInstances.pointsChart = new Chart(ctxPoints, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['单选题', '编程题'],
+                        datasets: [{
+                            label: '分数占比',
+                            data: [60, 40],
+                            backgroundColor: ['#3B82F6', '#10B981'],
+                            hoverOffset: 4
+                        }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'top' }, tooltip: { callbacks: { label: (context) => `${context.label}: ${context.raw} 分` } } } }
+                });
+            }
+            if (!chartInstances.programChart) {
+                const ctxProgram = document.getElementById('programChart').getContext('2d');
+                chartInstances.programChart = new Chart(ctxProgram, {
+                    type: 'bar',
+                    data: {
+                        labels: ['检索增强生成 (RAG)', '高效微调 (LoRA)'],
+                        datasets: [{ label: '题目数量', data: [5, 5], backgroundColor: ['#F59E0B', '#EC4899'], borderRadius: 4 }]
+                    },
+                    options: { responsive: true, maintainAspectRatio: false, indexAxis: 'y', plugins: { legend: { display: false }, tooltip: { callbacks: { label: (context) => `${context.label}: ${context.raw} 题` } } }, scales: { x: { beginAtZero: true, max: 6 } } }
+                });
+            }
+        }
+
+        // --- 核心概念逻辑 ---
+        function renderCoreConcepts() {
+            const container = document.getElementById('core-concepts-container');
+            container.innerHTML = '';
+            lesson1Data.coreConcepts.forEach(concept => {
+                const div = document.createElement('div');
+                div.className = 'bg-white p-5 rounded-lg shadow';
+                div.innerHTML = `
+                    <details>
+                        <summary class="text-lg font-semibold text-blue-700 cursor-pointer hover:underline">
+                            ${concept.term} 
+                            <span class="text-sm font-normal text-gray-500">(例卷相关: Q${concept.q})</span>
+                        </summary>
+                        <p class="mt-2 text-gray-700">${concept.definition}</p>
+                    </details>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // --- 模拟题渲染逻辑 ---
+        function renderMockQuiz(quizData, containerId) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+            
+            quizData.forEach((data, index) => {
+                const quizBlock = document.createElement('div');
+                quizBlock.className = 'bg-white p-6 rounded-lg shadow';
+
+                let optionsHTML = '';
+                data.options.forEach(opt => {
+                    const [letter, text] = opt.split('. ');
+                    optionsHTML += `
+                        <label class="option-label" data-quiz="${containerId}-q${index}" data-answer="${letter}">
+                            <input type="radio" name="${containerId}-q${index}" value="${letter}" class="sr-only">
+                            <span class="font-semibold">${letter}.</span> ${text}
+                        </label>
+                    `;
+                });
+
+                quizBlock.innerHTML = `
+                    <h3 class="text-lg font-medium mb-4">${data.q}. ${data.question}</h3>
+                    <div class="options-container">${optionsHTML}</div>
+                    <div class="explanation-container mt-4 p-4 bg-gray-50 rounded-lg border border-gray-200 hidden"></div>
+                `;
+                
+                container.appendChild(quizBlock);
+                addMockQuizListeners(quizBlock, data);
+            });
+        }
+
+        function addMockQuizListeners(quizBlock, data) {
+            const optionLabels = quizBlock.querySelectorAll('.option-label');
+            const explanationContainer = quizBlock.querySelector('.explanation-container');
+
+            optionLabels.forEach(label => {
+                label.addEventListener('click', () => {
+                    const selectedAnswer = label.getAttribute('data-answer');
+                    
+                    optionLabels.forEach(lbl => {
+                        lbl.classList.remove('correct', 'incorrect');
+                        lbl.style.pointerEvents = 'none'; // 答题后禁用
+                    });
+
+                    if (selectedAnswer === data.answer) {
+                        label.classList.add('correct');
+                    } else {
+                        label.classList.add('incorrect');
+                        const correctLabel = quizBlock.querySelector(`.option-label[data-answer="${data.answer}"]`);
+                        if (correctLabel) {
+                            correctLabel.classList.add('correct');
+                        }
+                    }
+                    
+                    explanationContainer.innerHTML = `<strong class="text-blue-700">【解析】</strong> ${data.explanation}`;
+                    explanationContainer.classList.remove('hidden');
+                });
+            });
+        }
+
+        // --- 初始化 ---
+        function initApp() {
+            initHomeCharts();
+            renderCoreConcepts();
+            renderMockQuiz(lesson1Data.mockQuizL1, 'mock-quiz-l1');
+        }
+
+        document.addEventListener('DOMContentLoaded', initApp);
+    </script>
+</body>
+</html>
