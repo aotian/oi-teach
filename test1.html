@@ -1,0 +1,292 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale-1.0">
+    <title>CSP-S 备考中心 (Supabase 测试)</title>
+    
+    <!-- 1. 引入 Supabase 客户端 -->
+    <!-- 确保 client.js 和这个 html 文件在同一个文件夹下 -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- <script src="./client.js"></script>  <-- 修复：移除了对 client.js 的依赖 -->
+
+    <style>
+        /* --- 基础和布局样式 --- */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #f4f7f9;
+            color: #333;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 900px;
+            margin: 20px auto;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+        h1 {
+            text-align: center;
+            color: #2c3e50;
+            border-bottom: 2px solid #3498db;
+            padding-bottom: 10px;
+            margin-bottom: 30px;
+        }
+        h2 {
+            color: #34495e;
+            border-left: 5px solid #3498db;
+            padding-left: 15px;
+            margin-top: 40px;
+        }
+
+        /* --- 认证与权限面板样式 --- */
+        .auth-panel {
+            background: #f0f9ff;
+            border: 1px solid #3b82f6;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        .auth-panel button {
+            padding: 0.25rem 0.75rem;
+            background: #ef4444;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-left: 1rem;
+        }
+        .auth-panel a {
+            color: #0ea5e9;
+            font-weight: bold;
+        }
+        .admin-panel {
+            background: #fef2f2;
+            border: 1px solid #ef4444;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+        .paid-panel {
+            background: #f0fdf4;
+            border: 1px solid #22c55e;
+            padding: 1rem;
+            border-radius: 8px;
+            margin-bottom: 1.5rem;
+        }
+
+        /* --- 知识点二级菜单样式 --- */
+        .knowledge-menu { list-style-type: none; padding: 0; }
+        .category {
+            background-color: #ecf0f1; padding: 12px 20px; border-radius: 5px; margin-bottom: 8px;
+            cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+            font-weight: bold; font-size: 1.1em; transition: background-color 0.3s;
+        }
+        .category:hover { background-color: #dce4e7; }
+        .category::after { content: '+'; font-size: 1.4em; color: #3498db; transition: transform 0.3s ease; }
+        .category.active::after { content: '−'; transform: rotate(180deg); }
+        .subcategory-list {
+            list-style-type: none; padding-left: 20px; max-height: 0;
+            overflow: hidden; transition: max-height 0.4s ease-out;
+        }
+        .subcategory-list li { margin: 10px 0; }
+        .subcategory-list a {
+            display: block; padding: 8px 15px; color: #2980b9; text-decoration: none;
+            border-radius: 5px; border-left: 3px solid transparent; transition: all 0.3s;
+        }
+        .subcategory-list a:hover { background-color: #f0f8ff; border-left-color: #3498db; }
+
+        /* --- 模拟试卷列表样式 --- */
+        .quiz-list { list-style-type: none; padding: 0; }
+        .quiz-list li { margin: 10px 0; }
+        .quiz-list a {
+            display: block; padding: 15px; background-color: #f0f8ff; border-radius: 8px;
+            text-decoration: none; color: #0056b3; font-size: 18px; transition: all 0.2s;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .quiz-list a:hover { background-color: #e0f0ff; transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        
+        <!-- ==================== 2. 认证状态面板 ==================== -->
+        <div id="auth-section">
+            <!-- 登录后显示 -->
+            <div id="user-info" class="auth-panel" style="display:none;">
+                <p>你好, <strong id="user-email"></strong>! 
+                   (你的角色: <strong id="user-role" style="color: #c026d3;"></strong>)
+                   <button id="logout-btn">登出</button>
+                </p>
+            </div>
+            <!-- 未登录显示 -->
+            <div id="login-prompt" class="auth-panel" style="display:none;">
+                <p>你尚未登录。 <a href="/login.html">点击这里登录或注册</a></p>
+            </div>
+        </div>
+
+        <h1>CSP-S 备考中心</h1>
+
+        <!-- ==================== 3. 权限专属内容 ==================== -->
+        
+        <!-- 管理员专属内容，默认隐藏 -->
+        <div id="admin-panel" class="admin-panel" style="display:none;">
+            <h3>[管理员面板]</h3>
+            <p>你好，管理员！这里是只有你能看到的管理入口。</p>
+        </div>
+
+        <!-- 付费用户专属内容，默认隐藏 -->
+        <div id="paid-content" class="paid-panel" style="display:none;">
+            <h3>[付费内容]</h3>
+            <p>感谢你的支持！这里是付费用户和管理员才能看到的专属内容。</p>
+        </div>
+
+
+        <!-- ==================== 你原有的网站内容 ==================== -->
+        <section id="knowledge-points">
+            <h2>知识点梳理</h2>
+            <ul class="knowledge-menu">
+                <li>
+                    <div class="category">树论 (Tree)</div>
+                    <ul class="subcategory-list">
+                        <li><a href="interactive-tree-guide.html">树论 - 交互式学习指南</a></li>
+                        <li><a href="#">树的基础与遍历</a></li>
+                        <li><a href="#">最近公共祖先 (LCA)</a></li>
+                        <li><a href="#">树上DP与树的重心</a></li>
+                    </ul>
+                </li>
+                <li>
+                    <div class="category">图论 (Graph)</div>
+                    <ul class="subcategory-list">
+                        <li><a href="interactive-graph-theory-guide.html">图论 - 交互式学习指南</a></li>
+                        <li><a href="#">DFS 与 BFS 遍历</a></li>
+                        <li><a href="#">最小生成树 (MST)</a></li>
+                        <li><a href="#">最短路径 (Dijkstra)</a></li>
+                    </ul>
+                </li>
+            </ul>
+        </section>
+
+        <section id="quiz-section">
+            <h2>模拟试卷练习</h2>
+            <ul class="quiz-list">
+                <!-- 链接到我们创建的受保护页面 -->
+                <li><a href="test1.html">2025年第一套模拟试卷 (需要登录)</a></li>
+                <!-- 链接到你之前上传的那个文件 -->
+                <li><a href="2025 csp-s 模拟试卷.html">童澄2025CSP-S初赛模拟卷 (无需登录)</a></li>
+            </ul>
+        </section>
+    </div>
+
+    <!-- ==================== 4. 菜单折叠脚本 ==================== -->
+    <script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const categories = document.querySelectorAll('.category');
+        categories.forEach(category => {
+            category.addEventListener('click', function () {
+                this.classList.toggle('active');
+                const subcategoryList = this.nextElementSibling;
+                if (subcategoryList.style.maxHeight) {
+                    subcategoryList.style.maxHeight = null;
+                } else {
+                    subcategoryList.style.maxHeight = subcategoryList.scrollHeight + "px";
+                }
+            });
+        });
+    });
+    </script>
+
+    <!-- ==================== 5. Supabase 认证与权限脚本 ==================== -->
+    <script>
+        // !!! --- 修复：Supabase 客户端初始化 --- !!!
+        // 请在这里填入你自己的 Supabase 项目 URL 和 anon key
+        const SUPABASE_URL = 'https://cjsipcanyugnvrikcinx.supabase.co'; 
+        const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNqc2lwY2FueXVnbnZyaWtjaW54Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjE3NDkxNTIsImV4cCI6MjA3NzMyNTE1Mn0.5gIeW0BHpVUytUwY_8xeRybUMlkPHMau9ursezkHeJM'; 
+
+        // 'supabase' 是 CDN 提供的全局对象
+        // 我们创建的客户端实例叫 'supabaseClient'
+        // 修复了错误：使用 'supabase.createClient' 而不是 'supabase'
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+        // !!! --- 修复结束 --- !!!
+
+        // DOM 元素引用
+        const userInfo = document.getElementById('user-info');
+        const userEmail = document.getElementById('user-email');
+        const userRole = document.getElementById('user-role');
+        const logoutBtn = document.getElementById('logout-btn');
+        const loginPrompt = document.getElementById('login-prompt');
+        const adminPanel = document.getElementById('admin-panel');
+        const paidContent = document.getElementById('paid-content');
+
+        /**
+         * 检查用户登录状态并获取权限
+         */
+        async function checkUserAndRole() {
+            // 1. 获取当前登录的用户信息
+            // !!! --- 修复：使用 'supabaseClient' --- !!!
+            const { data: { user } } = await supabaseClient.auth.getUser();
+
+            if (user) {
+                // --- 用户已登录 ---
+                loginPrompt.style.display = 'none';
+                userInfo.style.display = 'block';
+                userEmail.textContent = user.email;
+
+                // 2. 去 'profiles' 表查询用户的角色
+                // !!! --- 修复：使用 'supabaseClient' --- !!!
+                const { data: profile, error } = await supabaseClient
+                    .from('profiles')
+                    .select('role') // 只查询 role 这一列
+                    .eq('id', user.id) // 条件是 id 等于当前用户的 id
+                    .single(); // 我们知道只可能有一条记录
+
+                if (error) {
+                    console.error('获取用户角色失败:', error);
+                    return;
+                }
+
+                if (profile) {
+                    const role = profile.role || 'free_user';
+                    userRole.textContent = role; // 显示角色
+                    
+                    // 3. 根据角色显示/隐藏元素
+                    if (role === 'admin') {
+                        adminPanel.style.display = 'block';
+                        paidContent.style.display = 'block'; // 管理员也能看付费内容
+                    } else if (role === 'paid_user') {
+                        paidContent.style.display = 'block';
+                    }
+                    // 'free_user' 什么额外内容都看不到
+                }
+            } else {
+                // --- 用户未登录 ---
+                loginPrompt.style.display = 'block';
+                userInfo.style.display = 'none';
+            }
+        }
+
+        /**
+         * 处理登出
+         */
+        logoutBtn.addEventListener('click', async () => {
+            // !!! --- 修复：使用 'supabaseClient' --- !!!
+            const { error } = await supabaseClient.auth.signOut();
+            if (error) {
+                alert('登出失败: ' + error.message);
+            } else {
+                // 登出成功，刷新页面以清除所有状态
+                window.location.reload();
+            }
+        });
+
+        // 页面加载时立即执行检查
+        checkUserAndRole();
+    </script>
+
+</body>
+</html>
+

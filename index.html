@@ -1,209 +1,167 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>2025 童澄 CSP-J/S 复赛集训</title>
-    <style>
-        /* --- 基础和布局样式 --- */
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-            background-color: #f4f7f9;
-            color: #333;
-            line-height: 1.6;
-            margin: 0;
-            padding: 20px;
-        }
-        .container {
-            max-width: 900px;
-            margin: 20px auto;
-            padding: 20px;
-            background-color: #ffffff;
-            border-radius: 10px;
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-        }
-        h1 {
-            text-align: center;
-            color: #2c3e50;
-            border-bottom: 2px solid #3498db;
-            padding-bottom: 10px;
-            margin-bottom: 30px;
-        }
-        h2 {
-            color: #34495e;
-            border-left: 5px solid #3498db;
-            padding-left: 15px;
-            margin-top: 40px;
-        }
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-        /* --- 知识点二级菜单样式 --- */
-        .knowledge-menu {
-            list-style-type: none;
-            padding: 0;
-        }
-        .category {
-            background-color: #ecf0f1;
-            padding: 12px 20px;
-            border-radius: 5px;
-            margin-bottom: 8px;
-            cursor: pointer;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            font-weight: bold;
-            font-size: 1.1em;
-            transition: background-color 0.3s;
-        }
-        .category:hover {
-            background-color: #dce4e7;
-        }
-        .category::after {
-            content: '+'; /* 初始为加号 */
-            font-size: 1.4em;
-            color: #3498db;
-            transition: transform 0.3s ease;
-        }
-        .category.active::after {
-            content: '−'; /* 激活时变为减号 */
-            transform: rotate(180deg);
-        }
-        .subcategory-list {
-            list-style-type: none;
-            padding-left: 20px;
-            max-height: 0; /* 默认隐藏 */
-            overflow: hidden;
-            transition: max-height 0.4s ease-out; /* 平滑过渡动画 */
-        }
-        .subcategory-list li {
-            margin: 10px 0;
-        }
-        .subcategory-list a {
-            display: block;
-            padding: 8px 15px;
-            color: #2980b9;
-            text-decoration: none;
-            border-radius: 5px;
-            border-left: 3px solid transparent;
-            transition: all 0.3s;
-        }
-        .subcategory-list a:hover {
-            background-color: #f0f8ff;
-            border-left-color: #3498db;
-        }
+  <!-- 整页对登录用户免费；局部收费用拦截脚本控制 -->
+  <meta name="required-role" content="free_user" />
+  <script type="module" src="common.js"></script>
 
-        /* --- 模拟试卷列表样式 --- */
-        .quiz-list {
-            list-style-type: none;
-            padding: 0;
-        }
-        .quiz-list li {
-            margin: 10px 0;
-        }
-        .quiz-list a {
-            display: block;
-            padding: 15px;
-            background-color: #f0f8ff;
-            border-radius: 8px;
-            text-decoration: none;
-            color: #0056b3;
-            font-size: 18px;
-            transition: all 0.2s;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-        }
-        .quiz-list a:hover {
-            background-color: #e0f0ff;
-            transform: translateY(-2px);
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-        }
-    </style>
+  <title>2025 童澄 CSP-J/S 备考中心</title>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+  <style>
+    body { font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,'Helvetica Neue',Arial,'PingFang SC','Hiragino Sans GB','Microsoft YaHei',sans-serif;
+           background:#fff;color:#333;line-height:1.6;margin:0;padding:0;display:none;}
+    .container{max-width:900px;margin:20px auto;padding:20px;background:#fff}
+    h1{color:#2c3e50;border-bottom:2px solid #3498db;padding-bottom:10px;margin-bottom:30px;font-size:1.8em}
+    h2{color:#34495e;border-left:5px solid #3498db;padding-left:15px;margin-top:40px;font-size:1.5em}
+
+    /* 知识点目录 */
+    .knowledge-menu{list-style:none;padding:0;border:1px solid #eef2f5;border-radius:5px;overflow:hidden}
+    .category{background:#f9fbfd;padding:15px 20px;border-bottom:1px solid #eef2f5;cursor:pointer;display:flex;justify-content:space-between;align-items:center;font-weight:500}
+    .category:hover{background:#f0f5fa}
+    .category::after{content:'+';color:#3498db;font-size:1.4em}
+    .category.active::after{content:'−'}
+    .subcategory-list{list-style:none;padding-left:0;max-height:0;overflow:hidden;transition:max-height .35s ease;background:#fff}
+    .subcategory-list a{display:block;padding:12px 20px 12px 40px;color:#2980b9;text-decoration:none;border-bottom:1px solid #f0f0f0;transition:background .2s}
+    .subcategory-list a:hover{background:#f7faff}
+    .badge{display:inline-block;margin-left:8px;padding:1px 6px;border-radius:9px;font-size:12px;background:#ffe9d5;color:#b65c00;vertical-align:middle}
+    .badge.free{background:#e6fffa;color:#0f766e}
+
+    /* 训练与试卷 */
+    .quiz-list{list-style:none;padding:0}
+    .quiz-list a{display:block;padding:15px 20px;background:#f8fafd;border:1px solid #eef2f5;border-radius:5px;text-decoration:none;color:#2c5a8a;margin:8px 0}
+    .quiz-list a:hover{background:#f0f5fa}
+
+    /* 用户区域 */
+    #logout-button{padding:8px 15px;background:#e74c3c;color:#fff;border:0;border-radius:5px;cursor:pointer}
+    #logout-button:hover{background:#c0392b}
+    #user-session-info{margin-top:40px;padding-top:20px;border-top:1px solid #eef2f5;display:flex;justify-content:space-between;align-items:center;font-size:.9em;color:#555}
+  </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>2025 童澄未来 CSP-J/S 备考中心</h1>
+  <!-- 登录守卫：首页允许 free/paid/admin 都访问 -->
+  <script type="module">
+    import { protectPage } from './auth.js';
+    (async () => {
+      await protectPage(['free_user','paid_user','admin']);
+      document.body.style.display = 'block';
+    })().catch(() => location.href = `/login.html?redirect=${encodeURIComponent(location.pathname)}`);
+  </script>
 
-        <section id="knowledge-points">
-            <h2>知识点梳理</h2>
-            <ul class="knowledge-menu">
-                <li>
-                    <div class="category">数据结构</div>
-                    <ul class="subcategory-list">
-                        <li><a href="knowledge/stack.html">栈</a></li>
-                        <li><a href="knowledge/tree.html">树</a></li>
-                        <li><a href="knowledge/graph.html">图</a></li>
-                       
-                    </ul>
-                </li>
-                <li>
-                    <div class="category">核心算法</div>
-                    <ul class="subcategory-list">
-                        <li><a href="knowledge/quicksort.html">快速排序</a></li>
-                        <li><a href="knowledge/mergesort.html">归并排序</a></li>
-                        <li><a href="knowledge/Recursion.html">递归</a></li>
-                        <li><a href="knowledge/binary.html">二分</a></li>
-                        <li><a href="knowledge/bfs.html">bfs</a></li>
-                        <li><a href="knowledge/dfs.html">dfs</a></li>
-                        <li><a href="knowledge/LCA.html">倍增</a></li>
-                        <li><a href="knowledge/centroid.html">树的重心</a></li>
-                        <li><a href="knowledge/LIS.html">LIS</a></li>
-                        <li><a href="knowledge/KMP.html">KMP</a></li>
-                        <li><a href="#">动态规划 (DP)</a></li>
-                        <li><a href="knowledge/dijkstral.html">Dijkstra</a></li>
-                        <li><a href="knowledge/kruskal.html">最小生成树MST</a></li>
-                        <li><a href="knowledge/top.html">拓扑排序</a></li>
-                    </ul>
-                </li>
-                <li>
-                    <div class="category">C++语言与STL</div>
-                    <ul class="subcategory-list">
-                        <li><a href="knowledge/vector.html">常用容器 (vector, map, set)</a></li>
-                        <li><a href="#">算法库 (sort, lower_bound)</a></li>
-                        <li><a href="#">输入输出优化</a></li>
-                    </ul>
-                </li>
-                </ul>
-        </section>
+  <div class="container">
+    <h1>2025 童澄未来 CSP-J/S 备考中心</h1>
 
-        <section id="quiz-section">
-            <h2>2025国庆复赛集训</h2>
-            <ul class="quiz-list">
-                <li><a href="csp2/day1.html">day1</a></li>
-                <li><a href="csp2/day2.html">day2</a></li>
-                <li><a href="csp2/day3.html">day3</a></li>
-                <li><a href="csp2/day4.html">day4</a></li>
-                <li><a href="csp2/day5.html">day5</a></li>
-                <li><a href="csp2/linux.html">CSP复赛系统备考指南</a></li>
-                <li><a href="csp2/baoli.html">备考之暴力</a></li>
+    <!-- 知识点目录：目录免费可见；进入页面由每页自身控制收费 -->
+    <section id="knowledge-points">
+      <h2>知识点梳理</h2>
+      <ul class="knowledge-menu">
+        <li>
+          <div class="category">数据结构</div>
+          <ul class="subcategory-list">
+            <li><a href="knowledge/stack.html">栈 <span class="badge free">首节免费</span></a></li>
+            <li><a href="knowledge/tree.html">树 <span class="badge">付费</span></a></li>
+            <li><a href="knowledge/graph.html">图 <span class="badge">付费</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <div class="category">核心算法</div>
+          <ul class="subcategory-list">
+            <li><a href="knowledge/Recursion.html">递归 <span class="badge free">首节免费</span></a></li>
+            <li><a href="knowledge/binary.html">二分 <span class="badge">付费</span></a></li>
+            <li><a href="knowledge/bfs.html">BFS <span class="badge">付费</span></a></li>
+            <li><a href="knowledge/LCA.html">倍增 <span class="badge">付费</span></a></li>
+            <li><a href="knowledge/centroid.html">树的重心 <span class="badge">付费</span></a></li>
+            <li><a href="knowledge/LIS.html">LIS <span class="badge">付费</span></a></li>
+            <li><a href="knowledge/dijkstral.html">Dijkstra <span class="badge">付费</span></a></li>
+            <li><a href="knowledge/kruskal.html">最小生成树 MST <span class="badge">付费</span></a></li>
+            <li><a href="knowledge/top.html">拓扑排序 <span class="badge">付费</span></a></li>
+          </ul>
+        </li>
+        <li>
+          <div class="category">C++语言与STL</div>
+          <ul class="subcategory-list">
+            <li><a href="knowledge/vector.html">容器 (vector/map/set) <span class="badge free">首节免费</span></a></li>
+            <li><a href="#">算法库 (sort/lower_bound) <span class="badge">付费</span></a></li>
+            <li><a href="#">输入输出优化 <span class="badge">付费</span></a></li>
+          </ul>
+        </li>
+      </ul>
+    </section>
 
-            </ul>
-        </section>
-    </div>
+    <section id="quiz-section">
+      <h2>2025 国庆复赛集训</h2>
+      <ul class="quiz-list">
+        <li><a href="csp2/day1.html">day1 <span class="badge free">首节免费</span></a></li>
+        <li><a href="csp2/day2.html">day2 <span class="badge">付费</span></a></li>
+        <li><a href="csp2/day3.html">day3 <span class="badge">付费</span></a></li>
+        <li><a href="csp2/day4.html">day4 <span class="badge">付费</span></a></li>
+        <li><a href="csp2/day5.html">day5 <span class="badge">付费</span></a></li>
+        <li><a href="csp2/linux.html">CSP复赛系统备考指南 <span class="badge">付费</span></a></li>
+      </ul>
+    </section>
 
-    <script>
-    // 这段 JavaScript 代码负责实现二级菜单的点击展开/收起功能
+    <section id="user-session-info">
+      <span id="user-info-display">正在加载用户信息...</span>
+      <button id="logout-button">安全登出</button>
+    </section>
+  </div>
+
+  <!-- 目录展开 -->
+  <script>
     document.addEventListener('DOMContentLoaded', function () {
-        const categories = document.querySelectorAll('.category');
-
-        categories.forEach(category => {
-            category.addEventListener('click', function () {
-                // 切换自身的 active class，用于改变 +/- 图标
-                this.classList.toggle('active');
-
-                // 获取下一个兄弟元素，也就是子菜单 ul
-                const subcategoryList = this.nextElementSibling;
-
-                // 判断子菜单当前是否是展开状态
-                if (subcategoryList.style.maxHeight) {
-                    // 如果是展开的，则将其 maxHeight 设置为 null 来收起
-                    subcategoryList.style.maxHeight = null;
-                } else {
-                    // 如果是收起的，则将其 maxHeight 设置为内容的实际高度来展开
-                    subcategoryList.style.maxHeight = subcategoryList.scrollHeight + "px";
-                }
-            });
+      document.querySelectorAll('.category').forEach(c => {
+        c.addEventListener('click', function () {
+          this.classList.toggle('active');
+          const ul = this.nextElementSibling;
+          ul.style.maxHeight = ul.style.maxHeight ? null : (ul.scrollHeight + 'px');
         });
+      });
     });
-    </script>
+  </script>
+
+  <!-- 付费链接拦截（未付费→弹窗→跳转 upgrade.html） -->
+  <script type="module">
+    import { getProfile } from './auth.js';
+
+    const profile = await getProfile();
+    const role = profile?.profile?.role || 'free_user';
+
+    // 给每个“列表中的第一个链接”保留免费，其余一律标记为付费
+    function markPaidLinks(listSelector) {
+      document.querySelectorAll(listSelector).forEach(ul => {
+        const links = ul.querySelectorAll('a');
+        links.forEach((a, idx) => { if (idx > 0) a.dataset.linkRequiredRole = 'paid_user'; });
+      });
+    }
+    markPaidLinks('.subcategory-list');  // 知识点子列表
+    markPaidLinks('.quiz-list');        // 训练/试卷列表
+
+    // 统一拦截
+    document.querySelectorAll('a[data-link-required-role]').forEach(a => {
+      a.addEventListener('click', e => {
+        if (!(role === 'paid_user' || role === 'admin')) {
+          e.preventDefault();
+          const go = window.confirm('此内容为付费专属，请升级您的账户。是否前往升级？');
+          if (go) window.location.href = 'upgrade.html';
+        }
+      });
+    });
+
+    // 顶部用户信息
+    const userInfoEl = document.getElementById('user-info-display');
+    const email = profile?.user?.email || '用户';
+    userInfoEl.textContent = `欢迎, ${email} (身份: ${role})`;
+
+    // 登出
+    import { signOut } from './auth.js';
+    document.getElementById('logout-button').addEventListener('click', () => {
+      if (confirm('确定要登出吗？')) signOut();
+    });
+  </script>
 
 </body>
 </html>
