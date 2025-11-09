@@ -3,88 +3,126 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>订单审核后台</title>
+<title>人工订单审核后台（增强）</title>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
-body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f7fafc;padding:20px}
-h1{margin-bottom:12px}
-.order{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:12px;display:grid;grid-template-columns:160px 1fr;gap:14px}
-.order img{max-width:100%;border-radius:8px;border:1px solid #e2e8f0}
-.btn{display:inline-flex;align-items:center;justify-content:center;background:#2b6cb0;color:#fff;font-size:14px;border:none;border-radius:8px;padding:8px 12px;margin-right:8px;cursor:pointer}
-.btn.red{background:#c53030}
-.badge{font-size:12px;padding:2px 6px;border-radius:5px;margin-left:8px}
-.badge.pending{background:#fff3cd;border:1px solid #ffeeba;color:#856404}
-.badge.approved{background:#e6fffa;border:1px solid #38b2ac;color:#0f766e}
-.badge.rejected{background:#ffe6e6;border:1px solid #fc8181;color:#822727}
-.small{font-size:13px;color:#4a5568;margin-top:4px}
+  body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f7fafc;padding:20px;margin:0}
+  h1{margin:0 0 12px 0}
+  #list{margin-top:10px}
+  .order{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:12px;display:grid;grid-template-columns:160px 1fr;gap:14px}
+  .order img{max-width:100%;border-radius:8px;border:1px solid #e2e8f0}
+  .btn{display:inline-flex;align-items:center;justify-content:center;background:#2563eb;color:#fff;font-size:14px;border:none;border-radius:8px;padding:8px 12px;margin-right:8px;cursor:pointer}
+  .btn.red{background:#c53030}
+  .row{margin:6px 0}
+  .small{font-size:13px;color:#4a5568;margin-top:2px}
+  fieldset{border:1px dashed #e2e8f0;border-radius:10px;padding:10px;margin-top:8px}
+  legend{font-size:12px;color:#4a5568}
+  .badge{font-size:12px;padding:2px 6px;border-radius:5px;margin-left:8px}
+  .badge.pending{background:#fff3cd;border:1px solid #ffeeba;color:#856404}
+  .badge.approved{background:#e6fffa;border:1px solid #38b2ac;color:#0f766e}
+  .badge.rejected{background:#ffe6e6;border:1px solid #fc8181;color:#822727}
+  .badge.revoked{background:#fee2e2;border:1px solid #fecaca;color:#991b1b}
 </style>
 </head>
 <body>
-
-<h1>人工订单审核后台 <span id="me"></span></h1>
-<div id="list"></div>
+<h1>人工订单审核后台（增强）</h1>
+<div id="list">加载中…</div>
 
 <script type="module">
 import supabaseClient from './client.js';
 import { protectPage } from './auth.js';
-
 await protectPage(['admin']);
 
-document.getElementById('me').textContent = '(仅管理员可见)';
-
 const list = document.getElementById('list');
-
-function parsePlanMemo(m){
-  if(!m) return '';
-  const m2 = m.toLowerCase();
-  if(m2.includes('year')) return '年 ¥299';
-  if(m2.includes('quarter')) return '季 ¥79';
-  if(m2.includes('month')) return '月 ¥29';
-  return '(未识别)';
-}
+const fmt = d => new Date(d).toLocaleString();
 
 async function refresh(){
-  list.innerHTML = '加载中...';
+  list.textContent = '加载中…';
   const { data, error } = await supabaseClient.from('orders').select('*').order('created_at',{ascending:false});
-  if(error) return list.innerHTML='加载失败:'+error.message;
-
-  list.innerHTML='';
+  if(error){ list.textContent = '读取失败：'+error.message; return; }
+  list.innerHTML = '';
   for(const o of data){
-    const plan = parsePlanMemo(o.memo);
-    list.innerHTML += `
-    <div class="order">
-      <div><img src="${o.image_url}" /></div>
-      <div>
-        <b>${o.email||'(无邮箱)'}</b>
-        <span class="badge ${o.status}">${o.status}</span><br/>
-        <div class="small">套餐：${plan}</div>
-        <div class="small">备注：${o.memo||''}</div>
-        <div class="small">提交时间：${new Date(o.created_at).toLocaleString()}</div>
-        <br>
-        <button class="btn" onclick="approve('${o.user_id}')">通过并升级</button>
-        <button class="btn red" onclick="reject('${o.id}')">拒绝</button>
-      </div>
-    </div>`;
+    const item = document.createElement('div');
+    item.className = 'order';
+    item.innerHTML =
+      '<div>' +
+        (o.image_url ? '<img src="' + o.image_url + '" alt="proof"/>' : '<div class="small">（无截图）</div>') +
+      '</div>' +
+      '<div>' +
+        '<div class="row"><b>' + (o.email || '(无邮箱)') + '</b>' +
+          '<span class="badge ' + o.status + '">' + o.status + '</span>' +
+        '</div>' +
+        '<div class="small">订单ID：' + o.id + ' · 提交：' + fmt(o.created_at) + '</div>' +
+        '<div class="small">备注：' + (o.memo || '') + '</div>' +
+        '<fieldset>' +
+          '<legend>开通 / 续期设置</legend>' +
+          '<label><input type="radio" name="d' + o.id + '" value="30" checked> 30天</label>' +
+          '<label><input type="radio" name="d' + o.id + '" value="90"> 90天</label>' +
+          '<label><input type="radio" name="d' + o.id + '" value="365"> 365天</label>' +
+          '<label><input type="radio" name="d' + o.id + '" value="custom"> 指定到期：</label>' +
+          '<input type="date" id="date-' + o.id + '" />' +
+        '</fieldset>' +
+        '<div class="row">' +
+          '<button class="btn" id="approve-' + o.id + '">通过并设置到期</button>' +
+          '<button class="btn red" id="revoke-' + o.id + '">撤销会员资格</button>' +
+          '<button class="btn" id="reject-' + o.id + '" style="background:#6b7280">拒绝</button>' +
+        '</div>' +
+      '</div>';
+    list.appendChild(item);
+
+    document.getElementById('approve-'+o.id).onclick = async () => {
+      try {
+        let expiresAt = null;
+        const radios = document.querySelectorAll('input[name="d'+o.id+'"]');
+        let val = '30';
+        radios.forEach(r => { if(r.checked) val = r.value; });
+        if(val === 'custom'){
+          const v = document.getElementById('date-'+o.id).value;
+          if(!v) return alert('请选择自定义日期');
+          expiresAt = new Date(v+'T23:59:59');
+        }else{
+          const days = parseInt(val,10);
+          expiresAt = new Date(Date.now() + days*86400000);
+        }
+
+        const { error:e1 } = await supabaseClient
+          .from('profiles')
+          .update({ role: 'paid_user', membership_expires_at: expiresAt.toISOString() })
+          .eq('id', o.user_id);
+        if(e1) throw e1;
+
+        const { error:e2 } = await supabaseClient.from('orders').update({ status: 'approved' }).eq('id', o.id);
+        if(e2) throw e2;
+
+        alert('已开通/续期成功'); refresh();
+      } catch (err) {
+        alert('失败：'+ (err.message||err));
+      }
+    };
+
+    document.getElementById('revoke-'+o.id).onclick = async () => {
+      if(!confirm('确定撤销该用户的会员资格？')) return;
+      try {
+        const { error:e1 } = await supabaseClient
+          .from('profiles')
+          .update({ role: 'free_user', membership_expires_at: null })
+          .eq('id', o.user_id);
+        if(e1) throw e1;
+
+        await supabaseClient.from('orders').update({ status: 'revoked' }).eq('user_id', o.user_id).neq('status','rejected');
+
+        alert('已撤销会员资格'); refresh();
+      } catch (err) {
+        alert('失败：'+ (err.message||err));
+      }
+    };
+
+    document.getElementById('reject-'+o.id).onclick = async () => {
+      await supabaseClient.from('orders').update({ status:'rejected' }).eq('id', o.id);
+      refresh();
+    };
   }
 }
-
-window.approve = async(user_id)=>{
-  // 把 user role 设置为 paid_user
-  const { error:e1 } = await supabaseClient.from('profiles').update({role:'paid_user'}).eq('id',user_id);
-  if(e1) return alert('更新用户失败:'+e1.message);
-
-  // 把所有订单都标记 approved
-  await supabaseClient.from('orders').update({status:'approved'}).eq('user_id',user_id);
-
-  alert('已开通此用户付费会员');
-  refresh();
-};
-
-window.reject = async(id)=>{
-  await supabaseClient.from('orders').update({status:'rejected'}).eq('id',id);
-  refresh();
-};
-
 refresh();
 </script>
 </body>
