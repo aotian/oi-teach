@@ -85,85 +85,100 @@
 <script type="module">
   import supabase from './client.js';
 
-  const $ = (id)=>document.getElementById(id);
-  const tip = (t,color='#64748b')=>{
-    const el = $('pay-tip'); el.textContent = t; el.style.color = color;
+  const $  = s=>document.querySelector(s);
+  const tip= (t,c='#64748b')=>{ const el=$('#pay-tip'); if(el){ el.textContent=t; el.style.color=c; } };
+
+  // 如果你有套餐切换按钮，确保有 data-plan / data-price；没有也没关系，下面给默认值
+  let currentPlan='monthly', currentPrice=29;
+  const planRow = document.getElementById('plan-row');
+  if(planRow){
+    planRow.addEventListener('click', (e)=>{
+      const btn = e.target.closest('.plan-btn'); if(!btn) return;
+      [...planRow.children].forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      currentPlan = btn.dataset.plan;
+      currentPrice = Number(btn.dataset.price||0);
+    });
   }
 
-  // 预览图片
-  const fileInput = $('pay-file');
-  fileInput.addEventListener('change', ()=>{
-    const box = $('pay-preview'); box.innerHTML = '';
-    const f = fileInput.files?.[0];
-    if (!f) return;
-    const img = document.createElement('img');
-    img.src = URL.createObjectURL(f);
-    img.style.maxWidth = '160px';
-    img.style.border = '1px solid #eee';
-    img.style.borderRadius = '8px';
-    img.style.padding = '4px';
-    box.appendChild(img);
-  });
-
-  // 获取当前套餐与价格
-  function getPlanAndPrice(){
-    const v = [...document.querySelectorAll('input[name="plan"]')]
-      .find(r=>r.checked)?.value || 'monthly';
-    const price = v==='monthly' ? 29 : v==='quarterly' ? 79 : 299;
-    return { plan:v, price };
+  const fileInput = $('#pay-file');
+  if(fileInput){
+    fileInput.addEventListener('change', ()=>{
+      const prev = $('#pay-preview'); if(!prev) return;
+      prev.innerHTML='';
+      const f=fileInput.files?.[0]; if(!f) return;
+      const img=new Image(); img.src=URL.createObjectURL(f); img.className='thumb';
+      prev.appendChild(img);
+    });
   }
 
-  // 提交订单
-  $('pay-submit').addEventListener('click', async ()=>{
+  // 计算 SHA-256
+  async function sha256File(file){
+    const buf = await file.arrayBuffer();
+    const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+    const hashArr = Array.from(new Uint8Array(hashBuf));
+    return hashArr.map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  $('#pay-submit')?.addEventListener('click', async ()=>{
     tip('');
-    // 登录校验
     const { data:auth } = await supabase.auth.getUser();
     const user = auth?.user;
-    if (!user) {
-      location.href = 'login.html?redirect=' + encodeURIComponent(location.pathname);
-      return;
+    if(!user){ location.href='login.html?redirect='+encodeURIComponent(location.pathname); return; }
+
+    const f = fileInput?.files?.[0];
+    if(!f){ tip('请先选择支付截图再提交。','#dc2626'); return; }
+    const memo = ($('#pay-memo')?.value?.trim() || `plan=${currentPlan}, price=¥${currentPrice}`);
+
+    // 计算图片哈希
+    const hash = await sha256File(f);
+
+    // 1) 同图是否已提交（全库）
+    const { data:dupImg } = await supabase.from('orders')
+      .select('id,status,created_at,email')
+      .eq('image_hash', hash).limit(1);
+    if(dupImg && dupImg.length){
+      tip('该截图已被提交过，请勿重复上传。','#dc2626'); return;
     }
 
-    const f = fileInput.files?.[0];
-    if (!f) { tip('请先选择支付截图再提交。', '#dc2626'); return; }
+    // 2) 同人短时间重复（10 分钟内，有 pending/approved 的直接拦）
+    const tenMinAgo = new Date(Date.now() - 10*60*1000).toISOString();
+    const { data:dupUser } = await supabase.from('orders')
+      .select('id,status,created_at')
+      .gte('created_at', tenMinAgo)
+      .eq('user_id', user.id)
+      .in('status',['pending','approved']).limit(1);
+    if(dupUser && dupUser.length){
+      tip('你最近已提交过订单，请耐心等待审核。','#dc2626'); return;
+    }
 
-    const { plan, price } = getPlanAndPrice();
-    const memo = $('pay-memo').value?.trim() || `plan=${plan}, price=¥${price}`;
+    // 上传
+    $('#pay-submit').disabled=true; tip('正在上传截图…');
+    const bucket='payproof';
+    const ext=(f.name.split('.').pop()||'jpg').toLowerCase();
+    const path=`${user.id}/${Date.now()}_${Math.random().toString(16).slice(2)}.${ext}`;
+    const { error:upErr } = await supabase.storage.from(bucket)
+      .upload(path, f, { cacheControl:'3600', upsert:false, contentType:f.type||'image/jpeg' });
+    if(upErr){ $('#pay-submit').disabled=false; tip('上传失败：'+upErr.message,'#dc2626'); return; }
 
-    // 1) 上传到 Storage: payproof bucket 下的 user_id/ 时间戳_随机名
-    tip('正在上传截图…');
-    const bucket = 'payproof'; // 你控制台里创建的 public bucket 名称
-    const filename = `${Date.now()}_${Math.random().toString(16).slice(2)}.${(f.name.split('.').pop()||'jpg')}`;
-    const path = `${user.id}/${filename}`;
+    const { data:urlData } = await supabase.storage.from(bucket).getPublicUrl(path);
+    const imageUrl = urlData?.publicUrl || null;
 
-    const { error:uploadErr } = await supabase.storage.from(bucket).upload(path, f, {
-      cacheControl: '3600',
-      upsert: false,
-      contentType: f.type || 'image/jpeg'
-    });
-    if (uploadErr){ tip('上传失败：'+uploadErr.message, '#dc2626'); return; }
-
-    // 2) 获取公开 URL（若 bucket 是 public）
-    const { data:pub } = supabase.storage.from(bucket).getPublicUrl(path);
-    const imageUrl = pub?.publicUrl || null;
-
-    // 3) 写入 orders 表（status=pending）
     tip('正在创建订单…');
     const { error:insErr } = await supabase.from('orders').insert([{
-      user_id: user.id,
-      email: user.email,
-      image_url: imageUrl,
-      memo,
-      status: 'pending'
+      user_id:user.id, email:user.email, image_url:imageUrl,
+      image_hash:hash, memo, status:'pending', source:'upgrade'
     }]);
-    if (insErr){ tip('创建订单失败：'+insErr.message, '#dc2626'); return; }
+    $('#pay-submit').disabled=false;
+    if(insErr){ tip('创建订单失败：'+insErr.message,'#dc2626'); return; }
 
-    tip('已提交，10 分钟内完成人工审核。', '#16a34a');
-    fileInput.value = '';
-    $('pay-preview').innerHTML = '';
-    $('pay-memo').value = '';
+    tip('已提交，10 分钟内完成人工审核。','#16a34a');
+    if(fileInput){ fileInput.value=''; }
+    const prev = $('#pay-preview'); if(prev) prev.innerHTML='';
+    const memoInput = $('#pay-memo'); if(memoInput) memoInput.value='';
   });
 </script>
+
 
       <div class="card">
         <h3>扫码支付 / 联系客服</h3>

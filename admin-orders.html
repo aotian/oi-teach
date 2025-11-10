@@ -1,129 +1,244 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>人工订单审核后台（增强）</title>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<style>
-  body{font-family:"PingFang SC","Microsoft YaHei",sans-serif;background:#f7fafc;padding:20px;margin:0}
-  h1{margin:0 0 12px 0}
-  #list{margin-top:10px}
-  .order{background:#fff;border:1px solid #e2e8f0;border-radius:12px;padding:16px;margin-bottom:12px;display:grid;grid-template-columns:160px 1fr;gap:14px}
-  .order img{max-width:100%;border-radius:8px;border:1px solid #e2e8f0}
-  .btn{display:inline-flex;align-items:center;justify-content:center;background:#2563eb;color:#fff;font-size:14px;border:none;border-radius:8px;padding:8px 12px;margin-right:8px;cursor:pointer}
-  .btn.red{background:#c53030}
-  .row{margin:6px 0}
-  .small{font-size:13px;color:#4a5568;margin-top:2px}
-  fieldset{border:1px dashed #e2e8f0;border-radius:10px;padding:10px;margin-top:8px}
-  legend{font-size:12px;color:#4a5568}
-  .badge{font-size:12px;padding:2px 6px;border-radius:5px;margin-left:8px}
-  .badge.pending{background:#fff3cd;border:1px solid #ffeeba;color:#856404}
-  .badge.approved{background:#e6fffa;border:1px solid #38b2ac;color:#0f766e}
-  .badge.rejected{background:#ffe6e6;border:1px solid #fc8181;color:#822727}
-  .badge.revoked{background:#fee2e2;border:1px solid #fecaca;color:#991b1b}
-</style>
+  <meta charset="utf-8" />
+  <title>人工订单审核后台（增强）</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    :root{ --brand:#f97316 }
+    body{ background:#fff7ed }
+    .card{ background:#fff;border:1px solid #ffe4cc;border-radius:14px;padding:14px }
+    .pill{border-radius:999px;padding:2px 8px;font-size:12px}
+    .pill-pending{background:#fef9c3;color:#854d0e}
+    .pill-approved{background:#dcfce7;color:#166534}
+    .pill-rejected{background:#fee2e2;color:#991b1b}
+    .btn{background:var(--brand);color:#fff;border:0;border-radius:10px;padding:8px 12px}
+    .btn.gray{background:#6b7280}
+    .btn.red{background:#dc2626}
+    .radio-row label{margin-right:14px}
+    .dup{outline:2px solid #f97316}
+  </style>
 </head>
 <body>
-<h1>人工订单审核后台（增强）</h1>
-<div id="list">加载中…</div>
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <div class="flex items-center justify-between mb-4">
+      <h1 class="text-2xl font-extrabold text-orange-900">人工订单审核后台（增强）</h1>
+      <a class="text-orange-700 underline" href="./index.html">返回首页</a>
+    </div>
 
-<script type="module">
-import supabaseClient from './client.js';
-import { protectPage } from './auth.js';
-await protectPage(['admin']);
+    <!-- 过滤区 -->
+    <div class="mb-4 flex items-center gap-2">
+      <button class="btn gray" data-filter="pending">待审核</button>
+      <button class="btn gray" data-filter="approved">已通过</button>
+      <button class="btn gray" data-filter="rejected">已拒绝</button>
+      <button class="btn gray" data-filter="all">全部</button>
+      <input id="kw" class="ml-3 px-3 py-2 rounded border" placeholder="按邮箱搜索..." />
+      <button id="btn-refresh" class="btn gray">刷新</button>
+    </div>
 
-const list = document.getElementById('list');
-const fmt = d => new Date(d).toLocaleString();
+    <!-- 列表 -->
+    <div id="list" class="space-y-4">
+      <div class="text-slate-500">加载中...</div>
+    </div>
+  </div>
 
-async function refresh(){
-  list.textContent = '加载中…';
-  const { data, error } = await supabaseClient.from('orders').select('*').order('created_at',{ascending:false});
-  if(error){ list.textContent = '读取失败：'+error.message; return; }
-  list.innerHTML = '';
-  for(const o of data){
-    const item = document.createElement('div');
-    item.className = 'order';
-    item.innerHTML =
-      '<div>' +
-        (o.image_url ? '<img src="' + o.image_url + '" alt="proof"/>' : '<div class="small">（无截图）</div>') +
-      '</div>' +
-      '<div>' +
-        '<div class="row"><b>' + (o.email || '(无邮箱)') + '</b>' +
-          '<span class="badge ' + o.status + '">' + o.status + '</span>' +
-        '</div>' +
-        '<div class="small">订单ID：' + o.id + ' · 提交：' + fmt(o.created_at) + '</div>' +
-        '<div class="small">备注：' + (o.memo || '') + '</div>' +
-        '<fieldset>' +
-          '<legend>开通 / 续期设置</legend>' +
-          '<label><input type="radio" name="d' + o.id + '" value="30" checked> 30天</label>' +
-          '<label><input type="radio" name="d' + o.id + '" value="90"> 90天</label>' +
-          '<label><input type="radio" name="d' + o.id + '" value="365"> 365天</label>' +
-          '<label><input type="radio" name="d' + o.id + '" value="custom"> 指定到期：</label>' +
-          '<input type="date" id="date-' + o.id + '" />' +
-        '</fieldset>' +
-        '<div class="row">' +
-          '<button class="btn" id="approve-' + o.id + '">通过并设置到期</button>' +
-          '<button class="btn red" id="revoke-' + o.id + '">撤销会员资格</button>' +
-          '<button class="btn" id="reject-' + o.id + '" style="background:#6b7280">拒绝</button>' +
-        '</div>' +
-      '</div>';
-    list.appendChild(item);
+  <!-- 业务逻辑（ESM） -->
+  <script type="module">
+    import supabase from './client.js';
 
-    document.getElementById('approve-'+o.id).onclick = async () => {
-      try {
-        let expiresAt = null;
-        const radios = document.querySelectorAll('input[name="d'+o.id+'"]');
-        let val = '30';
-        radios.forEach(r => { if(r.checked) val = r.value; });
-        if(val === 'custom'){
-          const v = document.getElementById('date-'+o.id).value;
-          if(!v) return alert('请选择自定义日期');
-          expiresAt = new Date(v+'T23:59:59');
-        }else{
-          const days = parseInt(val,10);
-          expiresAt = new Date(Date.now() + days*86400000);
-        }
-
-        const { error:e1 } = await supabaseClient
-          .from('profiles')
-          .update({ role: 'paid_user', membership_expires_at: expiresAt.toISOString() })
-          .eq('id', o.user_id);
-        if(e1) throw e1;
-
-        const { error:e2 } = await supabaseClient.from('orders').update({ status: 'approved' }).eq('id', o.id);
-        if(e2) throw e2;
-
-        alert('已开通/续期成功'); refresh();
-      } catch (err) {
-        alert('失败：'+ (err.message||err));
+    // ========= 权限：只允许 admin =========
+    async function ensureAdmin(){
+      const { data:auth } = await supabase.auth.getUser();
+      const user = auth?.user;
+      if(!user){ location.href = './login.html?redirect=' + encodeURIComponent(location.pathname); return null; }
+      const { data: prof, error } = await supabase.from('profiles')
+        .select('role').eq('id', user.id).maybeSingle();
+      if(error || !prof || prof.role!=='admin'){
+        alert('仅管理员可访问');
+        location.href = './index.html';
+        return null;
       }
-    };
+      return user;
+    }
 
-    document.getElementById('revoke-'+o.id).onclick = async () => {
-      if(!confirm('确定撤销该用户的会员资格？')) return;
-      try {
-        const { error:e1 } = await supabaseClient
-          .from('profiles')
-          .update({ role: 'free_user', membership_expires_at: null })
-          .eq('id', o.user_id);
-        if(e1) throw e1;
+    // ========= 数据 =========
+    let FILTER = 'pending';
+    let CACHE = [];
 
-        await supabaseClient.from('orders').update({ status: 'revoked' }).eq('user_id', o.user_id).neq('status','rejected');
+    // 加载订单（带简单去重提示）
+    async function loadOrders(){
+      const kw = document.getElementById('kw').value.trim();
+      let query = supabase.from('orders')
+        .select('id,user_id,email,image_url,memo,status,created_at', { count:'exact' })
+        .order('created_at', { ascending:false });
 
-        alert('已撤销会员资格'); refresh();
-      } catch (err) {
-        alert('失败：'+ (err.message||err));
+      if(FILTER!=='all') query = query.eq('status', FILTER);
+      if(kw) query = query.ilike('email', `%${kw}%`);
+
+      const { data, error } = await query;
+      if(error){ renderError(error.message); return; }
+      CACHE = data || [];
+      renderList();
+    }
+
+    // ========= 渲染 =========
+    const $list = document.getElementById('list');
+
+    function renderError(msg){
+      $list.innerHTML = `<div class="text-red-600">加载失败：${msg}</div>`;
+    }
+
+    function badge(status){
+      const map = {
+        pending: 'pill pill-pending',
+        approved:'pill pill-approved',
+        rejected:'pill pill-rejected'
+      };
+      return `<span class="${map[status]||'pill'}">${status}</span>`;
+    }
+
+    function renderList(){
+      if(!CACHE.length){
+        $list.innerHTML = `<div class="text-slate-500">没有数据</div>`;
+        return;
       }
-    };
 
-    document.getElementById('reject-'+o.id).onclick = async () => {
-      await supabaseClient.from('orders').update({ status:'rejected' }).eq('id', o.id);
-      refresh();
-    };
-  }
-}
-refresh();
-</script>
+      // 简单重复提交标记（同一 user_id 多条）
+      const dupUser = new Set();
+      const seen = new Set();
+      for(const r of CACHE){
+        const k = r.user_id||r.email;
+        if(seen.has(k)) dupUser.add(k);
+        else seen.add(k);
+      }
+
+      $list.innerHTML = CACHE.map(rec => {
+        const dup = dupUser.has(rec.user_id||rec.email) ? 'dup' : '';
+        const date = new Date(rec.created_at).toLocaleString();
+        return `
+          <div class="card ${dup}">
+            <div class="flex gap-4">
+              <img src="${rec.image_url}" class="w-40 h-40 object-contain border rounded" alt="凭证"/>
+              <div class="flex-1">
+                <div class="flex items-center gap-2 mb-1">
+                  <div class="font-bold">${rec.email||'(无邮箱)'}</div>
+                  ${badge(rec.status)}
+                  ${dup ? '<span class="pill pill-pending">重复提交</span>' : ''}
+                </div>
+                <div class="text-sm text-slate-600 mb-2">
+                  订单ID：${rec.id} · 提交：${date}<br/>
+                  备注：${rec.memo||'-'}
+                </div>
+
+                <!-- 审核面板 -->
+                <div class="card">
+                  <div class="text-sm font-bold text-orange-800 mb-2">开通 / 续期设置</div>
+                  <div class="radio-row text-sm mb-2">
+                    <label><input type="radio" name="d-${rec.id}" value="30"> 30天</label>
+                    <label><input type="radio" name="d-${rec.id}" value="90"> 90天</label>
+                    <label><input type="radio" name="d-${rec.id}" value="365" checked> 365天</label>
+                    <label class="ml-2">指定到期：
+                      <input type="date" id="date-${rec.id}" class="border rounded px-2 py-1 text-sm">
+                    </label>
+                  </div>
+                  <div class="flex gap-2">
+                    <button class="btn" data-act="approve" data-id="${rec.id}" data-user="${rec.user_id}">通过并设置到期</button>
+                    <button class="btn red" data-act="revoke" data-id="${rec.id}" data-user="${rec.user_id}">撤销会员资格</button>
+                    <button class="btn gray" data-act="reject" data-id="${rec.id}">拒绝</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    // ========= 动作：通过/撤销/拒绝 =========
+    function getExpiryFromUI(orderId){
+      const d = document.getElementById(`date-${orderId}`).value;
+      if(d){ return new Date(d+'T23:59:59'); }
+      const radios = [...document.querySelectorAll(`input[name="d-${orderId}"]`)];
+      const picked = radios.find(r=>r.checked);
+      const days = parseInt(picked?.value||'365',10);
+      const now = new Date();
+      now.setDate(now.getDate()+days);
+      now.setHours(23,59,59,0);
+      return now;
+    }
+
+    async function approveOrder(orderId, userId){
+      const expires = getExpiryFromUI(orderId).toISOString();
+
+      // 1) 更新 profiles（角色 + 到期）
+      const { error: e1 } = await supabase
+        .from('profiles')
+        .update({ role:'paid_user', membership_expires_at: expires })
+        .eq('id', userId);
+
+      if(e1){ alert('更新会员失败：'+e1.message); return; }
+
+      // 2) 更新订单状态
+      const { error: e2 } = await supabase
+        .from('orders')
+        .update({ status:'approved' })
+        .eq('id', orderId);
+
+      if(e2){ alert('更新订单失败：'+e2.message); return; }
+
+      await loadOrders();
+    }
+
+    async function revokeUser(userId, orderId){
+      const { error: e1 } = await supabase
+        .from('profiles')
+        .update({ role:'free_user', membership_expires_at: null })
+        .eq('id', userId);
+      if(e1){ alert('撤销失败：'+e1.message); return; }
+
+      // 可选：把当前订单标记为 revoked（若你保留此状态）
+      await supabase.from('orders').update({ status:'rejected' }).eq('id', orderId);
+      await loadOrders();
+    }
+
+    async function rejectOrder(orderId){
+      const { error } = await supabase
+        .from('orders')
+        .update({ status:'rejected' })
+        .eq('id', orderId);
+      if(error){ alert('拒绝失败：'+error.message); return; }
+      await loadOrders();
+    }
+
+    // ========= 事件 =========
+    document.addEventListener('click', async (e)=>{
+      const btn = e.target.closest('button');
+      if(!btn) return;
+      if(btn.dataset.filter){
+        FILTER = btn.dataset.filter;
+        await loadOrders();
+        return;
+      }
+      if(btn.id === 'btn-refresh'){ await loadOrders(); return; }
+
+      const act = btn.dataset.act;
+      if(!act) return;
+      const orderId = btn.dataset.id;
+      const userId  = btn.dataset.user;
+
+      if(act==='approve')  await approveOrder(orderId, userId);
+      if(act==='revoke')   await revokeUser(userId, orderId);
+      if(act==='reject')   await rejectOrder(orderId);
+    });
+
+    document.getElementById('kw').addEventListener('keydown', (e)=>{
+      if(e.key==='Enter') loadOrders();
+    });
+
+    // ========= 启动 =========
+    const me = await ensureAdmin();
+    if(me){ await loadOrders(); }
+  </script>
 </body>
 </html>
