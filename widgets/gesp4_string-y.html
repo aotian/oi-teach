@@ -32,14 +32,13 @@
     </style>
 </head>
 
-<!-- 重点：背景改成透明，方便融入父页面 -->
 <body class="bg-transparent text-gray-800 font-sans">
     <div id="root"></div>
 
     <script type="text/babel">
         const { useState, useEffect, useRef } = React;
 
-        // --- 图标组件 ---
+        /* ---------- 图标组件 ---------- */
         const IconBase = ({ d, size = 20, className = "" }) => (
             <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size}
                  viewBox="0 0 24 24" fill="none" stroke="currentColor"
@@ -60,46 +59,307 @@
         const Search = (p) => <IconBase {...p} d={<><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></>} />;
         const Terminal = (p) => <IconBase {...p} d={<><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></>} />;
 
-        // --- 核心数据（原样保留，这里略） ---
-        const sectionsData = [/* ... 这里保持你原来的 sectionsData 内容不动 ... */];
-        // 为节省篇幅，这里就不重复贴，你直接把自己原来的 sectionsData 整段搬回去即可
+        /* ---------- sectionsData（保留你原来的数据） ---------- */
+        const sectionsData = [
+            {
+                id: "intro",
+                name: "预备篇：String 核心考点",
+                desc: "GESP 4级必备的字符串函数与模板",
+                isTheory: true,
+                problems: [
+                    {
+                        id: "INTRO-1",
+                        title: "string 基础与常用函数",
+                        tags: ["定义", "长度", "拼接"],
+                        difficulty: "★",
+                        desc: "C++ string 类型比 char 数组更安全、更方便。以下是考试必须掌握的成员函数。",
+                        content: [
+                            { 
+                                type: "table", 
+                                title: "常用操作速查表",
+                                headers: ["操作/函数", "示例", "说明"],
+                                rows: [
+                                    ["定义与赋值", `string s = "Hello";`, "直接赋值，无需关心长度"],
+                                    ["获取长度", "s.length() 或 s.size()", "返回字符个数 (不含结束符)"], 
+                                    ["访问字符", `s[i]`, "像数组一样访问，下标从0开始"],
+                                    ["拼接", `s + t`, "返回一个新的字符串"],
+                                    ["子串", "s.substr(pos, len)", "从 pos 开始、长度为 len 的子串"],
+                                    ["查找", "s.find(x)", "在 s 中查找 x 第一次出现的位置"],
+                                    ["插入/删除", "insert / erase", "在指定位置插入或删除"]
+                                ]
+                            }
+                        ]
+                    }
+                ]
+            },
+            {
+                id: "basic",
+                name: "基础篇：字符与遍历",
+                desc: "掌握字符编码转换与基础字符串遍历",
+                problems: [
+                    {
+                        id: "BASIC-1",
+                        title: "统计小写字母个数",
+                        tags: ["遍历", "计数"],
+                        difficulty: "★",
+                        desc: "输入一个只包含字母的字符串，统计其中小写字母的数量。",
+                        logic: [
+                            { title: "逐字符遍历", text: "用 for 循环从 0 到 s.length()-1，依次访问 s[i]。" },
+                            { title: "判断是否小写", text: "如果 'a' <= s[i] <= 'z'，说明是小写字母，计数器加 1。" }
+                        ],
+                        pseudo: `cnt = 0
+for i = 0 .. len-1:
+    if 'a' <= s[i] <= 'z':
+        cnt++`,
+                        code: `#include <iostream>
+#include <string>
+using namespace std;
+int main() {
+    string s; cin >> s;
+    int cnt = 0;
+    for (int i = 0; i < (int)s.length(); i++) {
+        if (s[i] >= 'a' && s[i] <= 'z') cnt++;
+    }
+    cout << cnt << endl;
+    return 0;
+}`,
+                        visualType: "UPPERCASE_DEMO"
+                    },
+                    {
+                        id: "BASIC-2",
+                        title: "大小写互换",
+                        tags: ["ASCII", "转换"],
+                        difficulty: "★☆",
+                        desc: "把字符串中的小写字母变成大写，大写变成小写，其它字符不变。",
+                        logic: [
+                            { title: "掌握 ASCII 差值", text: "大写 A~Z 与小写 a~z 相差 32，利用这一点可以快速转换。" }
+                        ],
+                        pseudo: `for i = 0 .. len-1:
+    if 'a' <= s[i] <= 'z': s[i] -= 32
+    else if 'A' <= s[i] <= 'Z': s[i] += 32`,
+                        code: `#include <iostream>
+#include <string>
+using namespace std;
+int main() {
+    string s; 
+    getline(cin, s);
+    for (int i = 0; i < (int)s.size(); i++) {
+        if (s[i] >= 'a' && s[i] <= 'z') s[i] -= 32;
+        else if (s[i] >= 'A' && s[i] <= 'Z') s[i] += 32;
+    }
+    cout << s << endl;
+    return 0;
+}`,
+                        visualType: "SPLIT_DEMO"
+                    }
+                ]
+            },
+            {
+                id: "exam",
+                name: "考场真题篇",
+                desc: "模拟 GESP 四级考场原题",
+                problems: [
+                    {
+                        id: "EXAM-1",
+                        title: "16 进制字符串转 10 进制",
+                        tags: ["进制转换", "字符串遍历"],
+                        difficulty: "★★☆",
+                        desc: "给定一个只包含 0~9 和大写 A~F 的字符串，表示一个十六进制数，将其转换成十进制输出。",
+                        logic: [
+                            { title: "从左到右扫描", text: "用一个 long long 类型的 ans，从左到右依次处理每一位。" }
+                        ],
+                        pseudo: `ans = 0
+for i = 0 .. len-1:
+    ans = ans * 16 + 当前位的数值`,
+                        code: `#include <iostream>
+#include <string>
+using namespace std;
+int main() {
+    string s; cin >> s;
+    long long ans = 0;
+    for (int i = 0; i < (int)s.size(); i++) {
+        int v;
+        if (s[i] >= '0' && s[i] <= '9') v = s[i] - '0';
+        else v = s[i] - 'A' + 10;
+        ans = ans * 16 + v;
+    }
+    cout << ans << endl;
+    return 0;
+}`,
+                        visualType: "HEX_DEMO"
+                    }
+                ]
+            }
+        ];
 
-        // --- Controls, UppercaseVisualizer, SplitVisualizer, HexVisualizer,
-        //     FindVisualizer, ReverseSwapVisualizer, IsbnVisualizer ---
-        // （这些子组件也全部保持你现在文件里的版本不动，直接原样复制即可）
-        // ............................
+        /* ---------- 可视化小组件（原样保留） ---------- */
+        const Controls = ({ onNext, onReset, step, maxStep }) => (
+            <div className="flex items-center justify-between mt-4">
+                <div className="flex items-center gap-2 text-xs text-gray-500">
+                    <RotateCcw size={14} /> <span>当前步骤：{step} / {maxStep}</span>
+                </div>
+                <div className="flex gap-2">
+                    <button
+                        onClick={onReset}
+                        className="px-3 py-1 text-xs rounded-full bg-gray-100 text-gray-600 hover:bg-gray-200"
+                    >
+                        重置
+                    </button>
+                    <button
+                        onClick={onNext}
+                        className="px-3 py-1 text-xs rounded-full bg-orange-500 text-white hover:bg-orange-600 flex items-center gap-1"
+                    >
+                        下一步 <ChevronRight size={14} />
+                    </button>
+                </div>
+            </div>
+        );
 
-        // --- 主 Visualizer 组件 (分发器) ---
+        const UppercaseVisualizer = () => {
+            const initStr = "Hello";
+            const [chars, setChars] = useState(initStr.split(""));
+            const [idx, setIdx] = useState(0);
+            
+            const handleNext = () => {
+                if (idx >= chars.length) return;
+                const newChars = [...chars];
+                if (newChars[idx] >= 'a' && newChars[idx] <= 'z') {
+                    newChars[idx] = newChars[idx].toUpperCase();
+                }
+                setChars(newChars);
+                setIdx(prev => prev + 1);
+            };
+            const handleReset = () => { setChars(initStr.split("")); setIdx(0); };
+
+            return (
+                <div className="bg-white p-6 rounded-xl border border-orange-200 shadow-sm">
+                    <h4 className="font-bold text-gray-700 mb-4 flex items-center gap-2">
+                        <Cpu size={18}/> 算法演示板
+                    </h4>
+                    <div className="flex justify-center gap-2 mb-8">
+                        {chars.map((c, i) => (
+                            <div
+                                key={i}
+                                className={
+                                    "w-10 h-10 rounded-lg flex items-center justify-center text-lg font-bold " +
+                                    (i === idx
+                                        ? "bg-orange-500 text-white"
+                                        : "bg-orange-50 text-orange-700")
+                                }
+                            >
+                                {c}
+                            </div>
+                        ))}
+                    </div>
+                    <Controls onNext={handleNext} onReset={handleReset} step={idx} maxStep={chars.length} />
+                </div>
+            );
+        };
+
+        const SplitVisualizer = () => {
+            const [input, setInput] = useState("apple,banana,orange");
+            const parts = input.split(",");
+            return (
+                <div className="bg-white p-6 rounded-xl border border-orange-200 shadow-sm">
+                    <h4 className="font-bold text-gray-700 mb-4 flex items-center gap-2">
+                        <Cpu size={18}/> 分割演示
+                    </h4>
+                    <input
+                        value={input}
+                        onChange={e => setInput(e.target.value)}
+                        className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm mb-4"
+                    />
+                    <div className="flex flex-wrap gap-2">
+                        {parts.map((p, i) => (
+                            <span key={i} className="px-3 py-1 rounded-full bg-orange-50 text-orange-700 text-xs">
+                                {p}
+                            </span>
+                        ))}
+                    </div>
+                </div>
+            );
+        };
+
+        const HexVisualizer = () => {
+            const [input, setInput] = useState("1A3F");
+            const [ans, setAns] = useState(0);
+            const calc = () => {
+                let res = 0;
+                for (let i = 0; i < input.length; i++) {
+                    let ch = input[i];
+                    let v;
+                    if (ch >= '0' && ch <= '9') v = ch.charCodeAt(0) - '0'.charCodeAt(0);
+                    else v = ch.charCodeAt(0) - 'A'.charCodeAt(0) + 10;
+                    res = res * 16 + v;
+                }
+                setAns(res);
+            };
+            useEffect(calc, [input]);
+            return (
+                <div className="bg-white p-6 rounded-xl border border-orange-200 shadow-sm">
+                    <h4 className="font-bold text-gray-700 mb-4 flex items-center gap-2">
+                        <Cpu size={18}/> 进制转换可视化
+                    </h4>
+                    <div className="flex items-center gap-3 mb-4">
+                        <span className="text-sm text-gray-500">十六进制：</span>
+                        <input
+                            value={input}
+                            onChange={e => setInput(e.target.value.toUpperCase())}
+                            className="border border-gray-200 rounded-lg px-3 py-1 text-sm w-32"
+                        />
+                    </div>
+                    <div className="text-sm text-gray-600">
+                        十进制结果：
+                        <span className="font-mono text-lg text-orange-600 ml-2">{ans}</span>
+                    </div>
+                </div>
+            );
+        };
+
         const Visualizer = ({ type }) => {
             switch (type) {
                 case "UPPERCASE_DEMO": return <UppercaseVisualizer />;
                 case "SPLIT_DEMO": return <SplitVisualizer />;
                 case "HEX_DEMO": return <HexVisualizer />;
-                case "FIND_DEMO": return <FindVisualizer />;
-                case "REVERSE_SWAP_DEMO": return <ReverseSwapVisualizer />;
-                case "ISBN_DEMO": return <IsbnVisualizer />;
-                default: return <div className="text-gray-400">模块加载错误</div>;
+                default: return null;
             }
         };
 
-        // --- 主应用组件 ---
+        /* ---------- App 主组件（已加各种安全兜底 + iframe 适配） ---------- */
         const App = () => {
-            const [activeSectionId, setActiveSectionId] = useState(sectionsData[0].id);
-            const [activeProblemId, setActiveProblemId] = useState(sectionsData[0].problems[0].id);
+            const firstSection =
+                (Array.isArray(sectionsData) && sectionsData.length > 0)
+                    ? sectionsData[0]
+                    : { id: "", problems: [] };
+
+            const firstProblem =
+                (Array.isArray(firstSection.problems) && firstSection.problems.filter(Boolean).length > 0)
+                    ? firstSection.problems.filter(Boolean)[0]
+                    : { id: "", title: "", desc: "", tags: [], content: [] };
+
+            const [activeSectionId, setActiveSectionId] = useState(firstSection.id || "");
+            const [activeProblemId, setActiveProblemId] = useState(firstProblem.id || "");
             const [activeTab, setActiveTab] = useState('logic');
 
-            const currentSection =
-                sectionsData.find(s => s.id === activeSectionId) || sectionsData[0];
-            const activeProblem =
-                sectionsData.flatMap(s => s.problems)
-                            .find(p => p.id === activeProblemId)
-                || sectionsData[0].problems[0];
-            const isTheory = currentSection.isTheory;
-
-            // 关键1：判断是否嵌在 iframe 中
             const isEmbedded = window.self !== window.top;
 
-            // 原来的“防 F12”等安全保护逻辑
+            const currentSection =
+                (sectionsData.find && sectionsData.find(s => s.id === activeSectionId)) ||
+                firstSection;
+
+            const allProblems = Array.isArray(sectionsData)
+                ? sectionsData.flatMap(s => s.problems || [])
+                : [];
+
+            const safeProblems = allProblems.filter(Boolean);
+
+            const activeProblem =
+                (safeProblems.find && safeProblems.find(p => p.id === activeProblemId)) ||
+                firstProblem;
+
+            const isTheory = !!currentSection.isTheory;
+
+            // 防右键、F12
             useEffect(() => {
                 const handleContextMenu = (e) => { e.preventDefault(); return false; };
                 const handleKeyDown = (e) => {
@@ -121,24 +381,18 @@
                 };
             }, []);
 
-            // 关键2：如果在 iframe 中，把自己的高度发给父页面
+            // 在 iframe 里自动汇报高度
             useEffect(() => {
                 if (!isEmbedded) return;
-
                 const reportSize = () => {
                     const height = document.documentElement.scrollHeight;
                     if (window.parent && window.parent !== window) {
-                        window.parent.postMessage(
-                            { type: "gesp-widget-resize", height },
-                            "*"
-                        );
+                        window.parent.postMessage({ type: "gesp-widget-resize", height }, "*");
                     }
                 };
-
                 reportSize();
                 const ro = new ResizeObserver(reportSize);
                 ro.observe(document.body);
-
                 return () => ro.disconnect();
             }, [isEmbedded]);
 
@@ -152,7 +406,6 @@
                     {/* 左侧导航栏 */}
                     <div className="w-full md:w-72 bg-white border-r border-gray-200 p-4 flex-shrink-0 flex flex-col h-auto md:h-screen sticky top-0 overflow-y-auto justify-between">
                         <div>
-                            {/* 在独立访问时显示大标题；在 iframe 中隐藏它，避免和外层重复 */}
                             {!isEmbedded && (
                                 <div className="mb-6">
                                     <h1 className="text-xl font-extrabold text-orange-600 flex items-center gap-2">
@@ -164,7 +417,6 @@
                                 </div>
                             )}
 
-                            {/* iframe 模式下给个小标题“课程目录” */}
                             {isEmbedded && (
                                 <div className="mb-3 text-xs text-gray-400 uppercase tracking-wider pl-1">
                                     课程目录
@@ -172,45 +424,40 @@
                             )}
 
                             <div className="space-y-6">
-                                {sectionsData.map(section => (
-                                    <div key={section.id}>
+                                {Array.isArray(sectionsData) && sectionsData.map(section => (
+                                    <div key={section.id || Math.random()}>
                                         <div
-                                            className={
-                                                "flex items-center gap-2 mb-3 px-2 py-1 rounded-lg cursor-pointer transition-colors " +
-                                                (activeSectionId === section.id
-                                                    ? "bg-orange-50 text-orange-700"
-                                                    : "text-gray-500 hover:bg-gray-50")
-                                            }
+                                            className={`flex items-center gap-2 mb-3 px-2 py-1 rounded-lg cursor-pointer transition-colors ${
+                                                activeSectionId === section.id
+                                                    ? 'bg-orange-50 text-orange-700'
+                                                    : 'text-gray-500 hover:bg-gray-50'
+                                            }`}
                                             onClick={() => {
+                                                const first = (section.problems || []).filter(Boolean)[0] || firstProblem;
                                                 setActiveSectionId(section.id);
-                                                setActiveProblemId(section.problems[0].id);
+                                                setActiveProblemId(first.id || "");
                                                 setActiveTab('logic');
                                             }}
                                         >
                                             <BookOpen size={16} />
-                                            <span className="font-bold text-sm">
-                                                {section.name}
-                                            </span>
+                                            <span className="font-bold text-sm">{section.name}</span>
                                         </div>
 
                                         {activeSectionId === section.id && (
                                             <div className="space-y-3 pl-2 border-l-2 border-orange-100 ml-2">
-                                                {section.problems.map(problem => (
+                                                {(section.problems || []).filter(Boolean).map(problem => (
                                                     <div
                                                         key={problem.id}
-                                                        onClick={() =>
-                                                            setActiveProblemId(problem.id)
-                                                        }
-                                                        className={
-                                                            "cursor-pointer p-3 rounded-lg border text-sm transition-all " +
-                                                            (activeProblem.id === problem.id
-                                                                ? "border-orange-400 bg-orange-50 text-orange-800"
-                                                                : "border-gray-100 hover:border-orange-200")
-                                                        }
+                                                        onClick={() => setActiveProblemId(problem.id)}
+                                                        className={`cursor-pointer p-3 rounded-lg border text-sm transition-all ${
+                                                            activeProblem && activeProblem.id === problem.id
+                                                                ? 'border-orange-400 bg-orange-50 text-orange-800'
+                                                                : 'border-gray-100 hover:border-orange-200'
+                                                        }`}
                                                     >
-                                                        <div className="font-bold flex items-center gap-2">
+                                                        <div className="font-bold text-gray-800 flex items-center gap-2">
                                                             <span className="text-xs bg-white border px-1 rounded text-gray-400">
-                                                                {problem.id.split('-')[1]}
+                                                                {(problem.id || '').split('-')[1] || '?'}
                                                             </span>
                                                             {problem.title}
                                                         </div>
@@ -223,23 +470,21 @@
                             </div>
                         </div>
 
-                        {/* 底部版权：在 iframe 中也可以留着，当作小水印 */}
                         <div className="text-xs text-gray-300 mt-8 text-center border-t pt-4">
-                            © 2025 童澄未来 (Tongcheng Future). <br/>All Rights Reserved.
+                            © 2025 童澄未来 (Tongcheng Future). <br />All Rights Reserved.
                         </div>
                     </div>
 
                     {/* 右侧主内容 */}
                     <div className="flex-1 p-4 md:p-8 bg-orange-50/30 overflow-y-auto">
                         <div className="max-w-4xl mx-auto">
-                            {/* 标题区 */}
                             <header className="mb-8">
-                                <div className="flex items-center gap-2 text-sm text-orange-600 font-medium mb-2">
+                                <div className="flex itemscenter gap-2 text-sm text-orange-600 font-medium mb-2">
                                     <span className="bg-orange-100 px-2 py-0.5 rounded text-xs">
                                         {activeProblem.id}
                                     </span>
                                     <ChevronRight size={14} />
-                                    <span>{activeProblem.tags.join(" / ")}</span>
+                                    <span>{(activeProblem.tags || []).join(" / ")}</span>
                                 </div>
                                 <h2 className="text-3xl font-bold text-gray-900 mb-4">
                                     {activeProblem.title}
@@ -249,14 +494,10 @@
                                 </p>
                             </header>
 
-                            {/* 理论 or 习题 */}
                             {isTheory ? (
                                 <div className="space-y-8 animate-fade-in-up">
-                                    {activeProblem.content.map((block, idx) => (
-                                        <div
-                                            key={idx}
-                                            className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden"
-                                        >
+                                    {(activeProblem.content || []).map((block, idx) => (
+                                        <div key={idx} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
                                             <div className="bg-orange-50 px-6 py-3 border-b border-orange-100 font-bold text-orange-800">
                                                 {block.title}
                                             </div>
@@ -265,10 +506,8 @@
                                                     <table className="w-full text-sm text-left">
                                                         <thead className="bg-gray-50 text-gray-600">
                                                             <tr>
-                                                                {block.headers.map(h => (
-                                                                    <th key={h} className="px-4 py-2">
-                                                                        {h}
-                                                                    </th>
+                                                                {block.headers.map((h, hi) => (
+                                                                    <th key={hi} className="px-4 py-2">{h}</th>
                                                                 ))}
                                                             </tr>
                                                         </thead>
@@ -278,12 +517,7 @@
                                                                     {r.map((c, ci) => (
                                                                         <td
                                                                             key={ci}
-                                                                            className={
-                                                                                "px-4 py-3 " +
-                                                                                (ci === 1
-                                                                                    ? "font-mono text-blue-600"
-                                                                                    : "")
-                                                                            }
+                                                                            className={"px-4 py-3 " + (ci === 1 ? "font-mono text-blue-600" : "")}
                                                                         >
                                                                             {c}
                                                                         </td>
@@ -309,27 +543,24 @@
                                 </div>
                             ) : (
                                 <>
-                                    {/* Tab 切换 */}
                                     <div className="flex items-center gap-4 mb-6 border-b border-gray-200">
                                         <button
                                             onClick={() => setActiveTab('logic')}
-                                            className={
-                                                "pb-3 px-2 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors " +
-                                                (activeTab === 'logic'
-                                                    ? "border-orange-500 text-orange-600"
-                                                    : "border-transparent text-gray-400 hover:text-gray-600")
-                                            }
+                                            className={`pb-3 px-2 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors ${
+                                                activeTab === 'logic'
+                                                    ? 'border-orange-500 text-orange-600'
+                                                    : 'border-transparent text-gray-400 hover:text-gray-600'
+                                            }`}
                                         >
                                             <Lightbulb size={18}/> 解题思路 & 演示
                                         </button>
                                         <button
                                             onClick={() => setActiveTab('code')}
-                                            className={
-                                                "pb-3 px-2 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors " +
-                                                (activeTab === 'code'
-                                                    ? "border-orange-500 text-orange-600"
-                                                    : "border-transparent text-gray-400 hover:text-gray-600")
-                                            }
+                                            className={`pb-3 px-2 text-sm font-bold flex items-center gap-2 border-b-2 transition-colors ${
+                                                activeTab === 'code'
+                                                    ? 'border-orange-500 text-orange-600'
+                                                    : 'border-transparent text-gray-400 hover:text-gray-600'
+                                            }`}
                                         >
                                             <Code size={18}/> 满分代码
                                         </button>
@@ -348,7 +579,7 @@
                                                 )}
 
                                                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                    {activeProblem.logic.map((step, idx) => (
+                                                    {(activeProblem.logic || []).map((step, idx) => (
                                                         <div key={idx} className="bg-white p-4 rounded-xl border border-gray-100 shadow-sm flex gap-3">
                                                             <div className="flex-shrink-0 w-6 h-6 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center font-bold text-sm">
                                                                 {idx + 1}
