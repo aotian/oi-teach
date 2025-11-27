@@ -10,17 +10,8 @@
     </script>
     <style>
         body{background:#f8fafc}
-        /* 3. 补上微弹跳动画 CSS */
-        @keyframes bounceShort {
-            0%, 100% { transform: translateY(0); }
-            50% { transform: translateY(-5px); }
-        }
-        .animate-bounce-short {
-            animation: bounceShort 0.5s ease-in-out 1; /* 只跳一次 */
-        }
-        /* 淡入动画 */
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        .animate-fade-in { animation: fadeIn 0.3s ease-out forwards; }
+        .loader { border: 3px solid #f3f3f3; border-top: 3px solid #FA7800; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -31,206 +22,176 @@
                 <img src="assets/logo.png" class="w-7 h-7 rounded object-cover">
                 童澄后台
             </div>
-            
             <nav class="flex bg-gray-100 p-1 rounded-lg">
-                <a href="admin-content.html" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition">
-                    📚 内容管理
-                </a>
-                <a href="admin-problems.html" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition">
-                    ✍️ 题库录入
-                </a>
-                <a href="admin-orders.html" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition">
-                    💰 订单审核
-                </a>
-                <a href="admin-users.html" class="px-4 py-1.5 rounded-md text-sm font-bold bg-white text-orange-600 shadow-sm transition">
-                    👥 人员权限
-                </a>
+                <a href="admin-content.html" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition">📚 内容管理</a>
+                <a href="admin-problems.html" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition">✍️ 题库录入</a>
+                <a href="admin-orders.html" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition">💰 订单审核</a>
+                <a href="admin-users.html" class="px-4 py-1.5 rounded-md text-sm font-bold bg-white text-orange-600 shadow-sm transition">👥 人员权限</a>
             </nav>
         </div>
-
         <div class="flex items-center gap-4 text-sm">
             <span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded font-bold">管理员模式</span>
             <a href="index.html" class="text-gray-400 hover:text-gray-600 transition">退出后台</a>
         </div>
     </header>
 
-    <main class="flex-1 max-w-3xl w-full mx-auto p-6 mt-10">
+    <main class="flex-1 w-full max-w-6xl mx-auto p-6">
         
-        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
-            <div class="text-center mb-8">
-                <h2 class="text-2xl font-bold text-gray-800">人员权限配置</h2>
-                <p class="text-gray-400 text-sm mt-2">搜索用户邮箱，手动分配系统角色</p>
+        <div class="flex justify-between items-end mb-6">
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800">用户花名册</h2>
+                <p class="text-gray-500 text-sm mt-1">管理所有注册用户的角色与权限</p>
             </div>
-
-            <div class="flex gap-3 mb-8">
-                <input type="email" id="search-email" placeholder="输入完整的用户邮箱 (例如: teacher@example.com)" 
-                    class="flex-1 border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-brand focus:border-brand outline-none transition shadow-sm">
-                <button onclick="searchUser()" class="bg-gray-800 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition font-bold shadow-md">查找用户</button>
+            <div class="flex gap-3">
+                <input type="text" id="filter-input" placeholder="搜索邮箱..." class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand outline-none w-64">
+                <button onclick="loadAllUsers()" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm font-bold flex items-center gap-2">
+                    🔄 刷新列表
+                </button>
             </div>
-
-            <div id="result-area" class="hidden animate-fade-in">
-                <div class="border-t border-gray-100 pt-6 mb-6">
-                    <div class="flex items-center justify-between bg-gray-50 p-5 rounded-xl border border-gray-100">
-                        <div>
-                            <div class="text-xs text-gray-400 uppercase font-bold mb-1">目标用户</div>
-                            <div id="target-email" class="text-lg font-bold text-gray-800"></div>
-                            <div id="target-id" class="text-xs text-gray-300 font-mono mt-1"></div>
-                        </div>
-                        <div class="text-right">
-                            <div class="text-xs text-gray-400 uppercase font-bold mb-1">当前角色</div>
-                            <span id="current-role" class="px-3 py-1 rounded-full text-sm font-bold bg-white border border-gray-200 text-gray-500">Loading...</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="mb-4 text-xs font-bold text-gray-400 uppercase tracking-wider">角色分配操作</div>
-
-                <div class="grid grid-cols-2 gap-4">
-                    <button onclick="setRole('admin')" class="group relative p-4 border border-red-100 bg-red-50/50 rounded-xl hover:bg-red-50 transition text-left flex items-center gap-3 hover:shadow-md">
-                        <div class="w-10 h-10 rounded-full bg-red-100 text-red-600 flex items-center justify-center text-xl">👑</div>
-                        <div>
-                            <div class="font-bold text-red-800">设为系统管理员</div>
-                            <div class="text-xs text-red-600/70">拥有所有模块的读写权限</div>
-                        </div>
-                    </button>
-                    
-                    <button onclick="setRole('teacher')" class="group relative p-4 border border-blue-100 bg-blue-50/50 rounded-xl hover:bg-blue-50 transition text-left flex items-center gap-3 hover:shadow-md">
-                        <div class="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center text-xl">🧑‍🏫</div>
-                        <div>
-                            <div class="font-bold text-blue-800">设为教研老师</div>
-                            <div class="text-xs text-blue-600/70">仅管理内容与题库</div>
-                        </div>
-                    </button>
-
-                    <button onclick="setRole('paid_user')" class="group relative p-4 border border-yellow-100 bg-yellow-50/50 rounded-xl hover:bg-yellow-50 transition text-left flex items-center gap-3 hover:shadow-md">
-                        <div class="w-10 h-10 rounded-full bg-yellow-100 text-yellow-600 flex items-center justify-center text-xl">💎</div>
-                        <div>
-                            <div class="font-bold text-yellow-800">设为 PRO 会员</div>
-                            <div class="text-xs text-yellow-600/70">解锁所有课程/题目权限</div>
-                        </div>
-                    </button>
-
-                    <button onclick="setRole('free_user')" class="group relative p-4 border border-gray-200 bg-white rounded-xl hover:bg-gray-50 transition text-left flex items-center gap-3 hover:shadow-md">
-                        <div class="w-10 h-10 rounded-full bg-gray-100 text-gray-500 flex items-center justify-center text-xl">🌱</div>
-                        <div>
-                            <div class="font-bold text-gray-700">降级为免费用户</div>
-                            <div class="text-xs text-gray-500">撤销所有特殊权限</div>
-                        </div>
-                    </button>
-                </div>
-            </div>
-
-            <div id="msg-box" class="hidden mt-6 text-center text-sm font-bold p-3 rounded-lg"></div>
-
         </div>
+
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+            <table class="w-full text-sm text-left">
+                <thead class="bg-gray-50 text-gray-500 font-bold border-b border-gray-200">
+                    <tr>
+                        <th class="py-4 px-6 w-1/3">用户邮箱 / ID</th>
+                        <th class="py-4 px-6">注册时间</th>
+                        <th class="py-4 px-6">当前角色</th>
+                        <th class="py-4 px-6 text-right">操作 (修改权限)</th>
+                    </tr>
+                </thead>
+                <tbody id="user-list-body">
+                    <tr><td colspan="4" class="py-10 text-center text-gray-400">正在加载数据...</td></tr>
+                </tbody>
+            </table>
+        </div>
+
     </main>
 
     <script type="module">
         import supabase from './client.js';
 
-        let targetUserId = null;
-        let currentAdminId = null; // 存储当前管理员ID
+        let allUsers = [];
+        let currentAdminId = null;
 
-        // 1. 严格的管理员检查
+        // 初始化
         (async () => {
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return location.href = 'login.html';
-            
-            currentAdminId = user.id; // 记录当前登录者 ID
+            currentAdminId = user.id;
 
             const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
             if (profile?.role !== 'admin') {
-                alert('权限不足：仅系统管理员可访问此页面');
-                location.href = (profile?.role === 'teacher') ? 'admin-content.html' : 'index.html';
+                alert('权限不足');
+                return location.href = 'index.html';
             }
+
+            loadAllUsers();
         })();
 
-        // 2. 查找用户
-        window.searchUser = async () => {
-            const email = document.getElementById('search-email').value.trim();
-            const resultArea = document.getElementById('result-area');
-            const msgBox = document.getElementById('msg-box');
-            
-            resultArea.classList.add('hidden');
-            msgBox.classList.add('hidden');
+        // 加载所有用户
+        window.loadAllUsers = async () => {
+            const tbody = document.getElementById('user-list-body');
+            tbody.innerHTML = '<tr><td colspan="4" class="py-10 text-center text-gray-400"><div class="flex justify-center items-center gap-2"><div class="loader"></div> 正在从数据库拉取名单...</div></td></tr>';
 
-            if (!email) return alert('请输入邮箱');
+            // 调用后端 RPC 函数
+            const { data, error } = await supabase.rpc('get_all_users');
 
-            const { data: uid, error } = await supabase.rpc('get_user_id_by_email', { user_email: email });
-
-            if (error || !uid) {
-                showMsg('❌ 未找到该用户，请检查邮箱拼写。', 'red');
+            if (error) {
+                tbody.innerHTML = `<tr><td colspan="4" class="py-10 text-center text-red-500">加载失败: ${error.message}</td></tr>`;
                 return;
             }
 
-            targetUserId = uid;
-            
-            const { data: profile } = await supabase.from('profiles').select('role').eq('id', uid).single();
-            
-            document.getElementById('target-email').textContent = email;
-            document.getElementById('target-id').textContent = uid;
-            
-            const role = profile?.role || 'free_user';
-            const roleBadge = document.getElementById('current-role');
-            
-            const roleNames = { 'admin': '👑 系统管理员', 'teacher': '🧑‍🏫 教研老师', 'paid_user': '💎 PRO 会员', 'free_user': '🌱 免费用户' };
-            
-            roleBadge.textContent = roleNames[role] || role;
-            
-            roleBadge.className = "px-3 py-1 rounded-full text-sm font-bold border " + 
-                (role === 'admin' ? "bg-red-50 text-red-600 border-red-100" :
-                 role === 'teacher' ? "bg-blue-50 text-blue-600 border-blue-100" :
-                 role === 'paid_user' ? "bg-yellow-50 text-yellow-700 border-yellow-100" :
-                 "bg-gray-50 text-gray-500 border-gray-200");
-
-            resultArea.classList.remove('hidden');
+            allUsers = data || [];
+            renderList(allUsers);
         }
 
-        // 3. 修改角色
-        window.setRole = async (newRole) => {
-            if (!targetUserId) return;
-            
-            // 1. 🚫 防止自己降级/修改自己
-            if (targetUserId === currentAdminId) {
-                showMsg('❌ 安全保护：不能修改自己的权限！', 'red');
+        // 渲染列表
+        function renderList(users) {
+            const tbody = document.getElementById('user-list-body');
+            tbody.innerHTML = '';
+
+            if (users.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="4" class="py-10 text-center text-gray-400">暂无用户</td></tr>';
                 return;
             }
 
-            const email = document.getElementById('target-email').textContent;
-            let warning = `确定要把用户 [${email}] 设为 ${newRole.toUpperCase()} 吗？`;
-            if (newRole === 'admin') warning += "\n\n⚠️ 警告：管理员拥有系统最高权限！";
+            users.forEach(u => {
+                const row = document.createElement('tr');
+                row.className = "border-b border-gray-50 hover:bg-orange-50/30 transition group";
+                
+                // 角色样式
+                let roleBadge = '';
+                if (u.role === 'admin') roleBadge = '<span class="bg-red-100 text-red-700 px-2 py-1 rounded-md text-xs font-bold border border-red-200">👑 管理员</span>';
+                else if (u.role === 'teacher') roleBadge = '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">🧑‍🏫 老师</span>';
+                else if (u.role === 'paid_user') roleBadge = '<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md text-xs font-bold border border-yellow-200">💎 Pro会员</span>';
+                else roleBadge = '<span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">🌱 免费</span>';
+
+                // 操作按钮 (排除自己)
+                let actions = '';
+                if (u.id === currentAdminId) {
+                    actions = '<span class="text-gray-400 italic text-xs mr-2">当前登录</span>';
+                } else {
+                    actions = `
+                        <select onchange="changeRole('${u.id}', '${u.email}', this.value)" class="text-xs border border-gray-300 rounded px-2 py-1 bg-white hover:border-brand focus:outline-none cursor-pointer">
+                            <option value="" disabled selected>⚡ 变更角色...</option>
+                            <option value="free_user">🌱 降级为免费</option>
+                            <option value="paid_user">💎 设为 Pro会员</option>
+                            <option value="teacher">🧑‍🏫 设为老师</option>
+                            <option value="admin">👑 设为管理员</option>
+                        </select>
+                    `;
+                }
+
+                row.innerHTML = `
+                    <td class="py-4 px-6">
+                        <div class="font-bold text-gray-800 text-base">${u.email}</div>
+                        <div class="text-xs text-gray-400 font-mono mt-0.5">${u.id}</div>
+                    </td>
+                    <td class="py-4 px-6 text-gray-500">
+                        ${new Date(u.created_at).toLocaleDateString()}
+                    </td>
+                    <td class="py-4 px-6">
+                        ${roleBadge}
+                    </td>
+                    <td class="py-4 px-6 text-right">
+                        ${actions}
+                    </td>
+                `;
+                tbody.appendChild(row);
+            });
+        }
+
+        // 修改角色逻辑
+        window.changeRole = async (uid, email, newRole) => {
+            const roleNames = { 'free_user': '免费用户', 'paid_user': 'Pro会员', 'teacher': '教研老师', 'admin': '管理员' };
             
-            if (!confirm(warning)) return;
+            if (!confirm(`确认要将用户 [${email}] 的身份修改为 【${roleNames[newRole]}】 吗？`)) {
+                loadAllUsers(); // 取消则刷新回原样
+                return;
+            }
 
             const { error } = await supabase.rpc('admin_set_role', {
-                target_user_id: targetUserId,
+                target_user_id: uid,
                 new_role: newRole
             });
 
             if (error) {
-                showMsg('修改失败: ' + error.message, 'red');
+                alert('修改失败: ' + error.message);
             } else {
-                showMsg(`✅ 修改成功！用户已变更为 ${newRole}`, 'green');
-                setTimeout(searchUser, 800);
+                // 局部刷新 (或者直接刷新全表)
+                // alert('修改成功！');
+                loadAllUsers(); 
             }
         }
 
-        // 2. 🎨 修复：使用静态类名映射，防止 Tailwind 丢失类名
-        function showMsg(text, colorType) {
-            const box = document.getElementById('msg-box');
-            box.textContent = text;
-            
-            // 映射表
-            const colorClasses = {
-                red: 'bg-red-50 text-red-600 border border-red-100',
-                green: 'bg-green-50 text-green-600 border border-green-100',
-                blue: 'bg-blue-50 text-blue-600 border border-blue-100'
-            };
+        // 前端搜索过滤
+        document.getElementById('filter-input').addEventListener('input', (e) => {
+            const key = e.target.value.toLowerCase();
+            const filtered = allUsers.filter(u => u.email.toLowerCase().includes(key) || u.id.includes(key));
+            renderList(filtered);
+        });
 
-            // 清除旧类名，添加新类名和动画
-            box.className = `mt-6 text-center text-sm font-bold p-3 rounded-lg animate-bounce-short ${colorClasses[colorType] || colorClasses.red}`;
-            box.classList.remove('hidden');
-        }
     </script>
 </body>
 </html>

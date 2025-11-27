@@ -3,13 +3,11 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>题库录入 - 童澄 CMS</title>
+    <title>题库管理 - 童澄 CMS</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script>
-        tailwind.config = { theme: { extend: { colors: { brand: { DEFAULT: '#FA7800', hover: '#c2410c' } } } } }
-    </script>
+    <style>body{background:#f8fafc} ::-webkit-scrollbar{width:6px} ::-webkit-scrollbar-thumb{background:#cbd5e1;border-radius:3px}</style>
 </head>
-<body class="bg-gray-50 min-h-screen flex flex-col">
+<body class="h-screen flex flex-col">
 
     <header class="bg-white border-b border-gray-200 px-6 h-16 flex justify-between items-center shadow-sm shrink-0 z-50">
         <div class="flex items-center gap-8">
@@ -17,179 +15,311 @@
                 <img src="assets/logo.png" class="w-7 h-7 rounded object-cover">
                 童澄后台
             </div>
-            
             <nav class="flex bg-gray-100 p-1 rounded-lg">
-                <a href="admin-content.html" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition">
-                    📚 内容管理
-                </a>
-                <a href="admin-problems.html" class="px-4 py-1.5 rounded-md text-sm font-bold bg-white text-orange-600 shadow-sm transition">
-                    ✍️ 题库录入
-                </a>
-                <a href="admin-orders.html" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition">
-                    💰 订单审核
-                </a>
+                <a href="admin-content.html" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition">📚 内容管理</a>
+                <a href="admin-problems.html" class="px-4 py-1.5 rounded-md text-sm font-bold bg-white text-orange-600 shadow-sm transition">✍️ 题库管理</a>
+                <a href="admin-orders.html" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition">💰 订单审核</a>
+                <a href="admin-users.html" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition">👥 人员权限</a>
             </nav>
         </div>
-
         <div class="flex items-center gap-4 text-sm">
             <span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded font-bold">管理员模式</span>
             <a href="index.html" class="text-gray-400 hover:text-gray-600 transition">退出后台</a>
         </div>
     </header>
 
-    <main class="flex-1 max-w-3xl w-full mx-auto p-6">
-        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
-            <h2 class="text-xl font-bold text-gray-800 mb-6 border-l-4 border-brand pl-3">录入新题目</h2>
-            
-            <form id="problem-form" class="space-y-6">
-                <div>
-                    <label class="block text-sm font-bold text-gray-600 mb-2">所属知识点</label>
-                    <select id="topic-select" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand focus:border-brand outline-none" required>
-                        <option value="">加载中...</option>
-                    </select>
+    <div class="flex flex-1 overflow-hidden">
+        <aside class="w-80 bg-white border-r border-gray-200 flex flex-col">
+            <div class="p-4 border-b bg-gray-50 space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="font-bold text-sm text-gray-700">题目列表</span>
+                    <button onclick="window.createNewProblem()" class="text-xs bg-orange-500 text-white px-3 py-1.5 rounded hover:bg-orange-600 shadow-sm transition">+ 录入新题</button>
+                </div>
+                <select id="filter-topic" class="w-full border border-gray-300 rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-orange-500 outline-none" onchange="window.filterProblems()">
+                    <option value="">-- 请先选择课程 --</option>
+                </select>
+            </div>
+            <div id="problem-list" class="flex-1 overflow-y-auto p-2 space-y-1 bg-gray-50/30">
+                <div class="text-center text-xs text-gray-400 mt-10">请选择课程以查看题目</div>
+            </div>
+        </aside>
+
+        <main class="flex-1 flex flex-col bg-white relative min-w-0 overflow-y-auto">
+            <div id="editor-area" class="max-w-3xl mx-auto w-full p-8 hidden">
+                <div class="flex justify-between items-center mb-6 pb-4 border-b border-gray-100">
+                    <h2 class="text-xl font-bold text-gray-800" id="form-title">编辑题目</h2>
+                    <span id="problem-id-display" class="text-xs text-gray-400 font-mono"></span>
                 </div>
 
-                <div>
-                    <label class="block text-sm font-bold text-gray-600 mb-2">题干描述</label>
-                    <textarea id="title" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand focus:border-brand outline-none" placeholder="请输入题目内容..." required></textarea>
-                </div>
-
-                <div>
-                    <label class="block text-sm font-bold text-gray-600 mb-2">选项 (选中即为正确答案)</label>
-                    <div class="space-y-3">
-                        <div class="flex items-center gap-3">
-                            <input type="radio" name="correct" value="0" class="w-4 h-4 text-brand focus:ring-brand" required>
-                            <input type="text" class="opt-input flex-1 border border-gray-300 rounded px-3 py-2 text-sm" placeholder="选项 A" required>
+                <form id="problem-form" class="space-y-6">
+                    <div class="grid grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-600 mb-2">所属课程</label>
+                            <select id="edit-topic" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm bg-gray-50 cursor-not-allowed" disabled></select>
                         </div>
-                        <div class="flex items-center gap-3">
-                            <input type="radio" name="correct" value="1" class="w-4 h-4 text-brand focus:ring-brand">
-                            <input type="text" class="opt-input flex-1 border border-gray-300 rounded px-3 py-2 text-sm" placeholder="选项 B" required>
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <input type="radio" name="correct" value="2" class="w-4 h-4 text-brand focus:ring-brand">
-                            <input type="text" class="opt-input flex-1 border border-gray-300 rounded px-3 py-2 text-sm" placeholder="选项 C">
-                        </div>
-                        <div class="flex items-center gap-3">
-                            <input type="radio" name="correct" value="3" class="w-4 h-4 text-brand focus:ring-brand">
-                            <input type="text" class="opt-input flex-1 border border-gray-300 rounded px-3 py-2 text-sm" placeholder="选项 D">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-600 mb-2">题目类型</label>
+                            <select id="edit-type" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" onchange="toggleTypeUI()">
+                                <option value="choice">⚪ 单项选择题</option>
+                                <option value="judge">⚖️ 判断题</option>
+                                <option value="qa">📝 问答/简答题</option>
+                                <option value="material">📄 材料/阅读题</option>
+                            </select>
                         </div>
                     </div>
-                </div>
 
-                <div class="flex gap-4">
-                    <div class="flex-1">
-                        <label class="block text-sm font-bold text-gray-600 mb-2">难度</label>
-                        <select id="difficulty" class="w-full border border-gray-300 rounded-lg px-3 py-2">
-                            <option value="easy">简单</option>
-                            <option value="medium" selected>中等</option>
-                            <option value="hard">困难</option>
-                        </select>
+                    <div>
+                        <label class="block text-sm font-bold text-gray-600 mb-2">题干描述</label>
+                        <textarea id="edit-title" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-orange-500 outline-none transition" required placeholder="请输入题目内容..."></textarea>
                     </div>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-bold text-gray-600 mb-2">题目解析 (选填)</label>
-                    <textarea id="analysis" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="答题后的反馈解析..."></textarea>
-                </div>
 
-                <div class="pt-4 flex items-center justify-between border-t border-gray-100 mt-4">
-                    <span id="msg" class="text-sm font-bold text-green-600 hidden bg-green-50 px-2 py-1 rounded">✅ 录入成功！</span>
-                    <button type="submit" id="submit-btn" class="bg-brand text-white px-8 py-2 rounded-lg font-bold hover:bg-orange-600 transition shadow-md">提交题目</button>
-                </div>
-            </form>
-        </div>
-    </main>
+                    <div id="section-choice" class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                        <label class="block text-xs font-bold text-gray-500 mb-3 uppercase">选项设置 (选中即为正确答案)</label>
+                        <div class="space-y-3">
+                            <div class="flex items-center gap-3"><input type="radio" name="correct" value="0" class="w-4 h-4 text-orange-500"><input type="text" class="opt-input flex-1 border border-gray-300 rounded px-3 py-2 text-sm" placeholder="选项 A"></div>
+                            <div class="flex items-center gap-3"><input type="radio" name="correct" value="1" class="w-4 h-4 text-orange-500"><input type="text" class="opt-input flex-1 border border-gray-300 rounded px-3 py-2 text-sm" placeholder="选项 B"></div>
+                            <div class="flex items-center gap-3"><input type="radio" name="correct" value="2" class="w-4 h-4 text-orange-500"><input type="text" class="opt-input flex-1 border border-gray-300 rounded px-3 py-2 text-sm" placeholder="选项 C"></div>
+                            <div class="flex items-center gap-3"><input type="radio" name="correct" value="3" class="w-4 h-4 text-orange-500"><input type="text" class="opt-input flex-1 border border-gray-300 rounded px-3 py-2 text-sm" placeholder="选项 D"></div>
+                        </div>
+                    </div>
+
+                    <div id="section-judge" class="bg-gray-50 p-4 rounded-lg border border-gray-100 hidden">
+                        <label class="block text-xs font-bold text-gray-500 mb-3 uppercase">设置正确答案</label>
+                        <div class="flex gap-6">
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="judge-correct" value="0" class="w-4 h-4 text-orange-500"> ✅ 正确 (True)</label>
+                            <label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="judge-correct" value="1" class="w-4 h-4 text-orange-500"> ❌ 错误 (False)</label>
+                        </div>
+                    </div>
+
+                    <div id="section-text" class="hidden">
+                        <label class="block text-sm font-bold text-gray-600 mb-2">参考答案 (文本)</label>
+                        <textarea id="edit-answer-text" rows="4" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="在此输入参考答案或材料解析..."></textarea>
+                    </div>
+
+                    <div class="grid grid-cols-3 gap-6">
+                        <div>
+                            <label class="block text-sm font-bold text-gray-600 mb-2">难度</label>
+                            <select id="edit-difficulty" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                <option value="easy">简单</option>
+                                <option value="medium">中等</option>
+                                <option value="hard">困难</option>
+                            </select>
+                        </div>
+                        <div class="col-span-2">
+                            <label class="block text-sm font-bold text-gray-600 mb-2">解析 (学生做完后可见)</label>
+                            <textarea id="edit-analysis" rows="1" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm"></textarea>
+                        </div>
+                    </div>
+
+                    <div class="pt-6 border-t border-gray-100 flex justify-between items-center">
+                        <button type="button" onclick="window.deleteProblem()" class="text-red-500 hover:text-red-700 text-sm font-bold px-4 py-2 hover:bg-red-50 rounded transition" id="btn-delete">删除此题</button>
+                        <div class="flex items-center gap-4">
+                            <span id="save-msg" class="text-sm font-bold text-green-600 hidden">✅ 保存成功</span>
+                            <button type="submit" class="bg-orange-500 text-white px-8 py-2.5 rounded-lg font-bold hover:bg-orange-600 shadow-md transition">保存提交</button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+            <div id="empty-state" class="flex-1 flex flex-col items-center justify-center text-gray-400 bg-gray-50/50">
+                <div class="text-5xl mb-4 opacity-20">✍️</div>
+                <p class="font-medium">请先在左侧选择课程，再进行操作</p>
+            </div>
+        </main>
+    </div>
 
     <script type="module">
         import supabase from './client.js';
 
+        let currentProblemId = null;
+        let currentTopicId = null;
+        let allProblems = [];
+
         (async () => {
-            // 1. 登录检查
             const { data: { user } } = await supabase.auth.getUser();
             if (!user) return location.href = 'login.html';
-            
-            // 2. 🔴 新增：管理员权限检查 (安全补丁)
             const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+            if (profile?.role !== 'admin' && profile?.role !== 'teacher') return location.href = 'index.html';
             
-            const role = profile?.role;
-
-            // 1. 权限检查：允许 admin 和 teacher
-            if (role !== 'admin' && role !== 'teacher') {
-                alert('权限不足：仅限管理员或教研老师访问');
-                return location.href = 'index.html';
+            if (profile?.role === 'teacher') {
+                document.querySelectorAll('nav a').forEach(l => { if(l.href.includes('orders')||l.href.includes('users')) l.style.display='none'; });
             }
 
-            // 2. 动态调整导航栏 (如果是 teacher，隐藏敏感链接)
-            if (role === 'teacher') {
-                // 隐藏 订单审核、人员权限
-                // 注意：请确保您 HTML 里的导航链接有对应的 ID 或包含特定文字，或者直接用下面的通用隐藏法
-                const navLinks = document.querySelectorAll('nav a');
-                navLinks.forEach(link => {
-                    if (link.href.includes('admin-orders') || link.href.includes('admin-users')) {
-                        link.style.display = 'none';
-                    }
-                });
-                // 修改右上角标签
-                document.querySelector('.bg-orange-100').textContent = '教研老师模式';
-            }
-            
-            // 3. 权限通过后，加载知识点
             const { data: topics } = await supabase.from('topics').select('id, name, category').order('category');
-            const select = document.getElementById('topic-select');
+            const select = document.getElementById('filter-topic');
+            const editSelect = document.getElementById('edit-topic');
             
             const groups = {};
-            topics.forEach(t => {
-                if(!groups[t.category]) groups[t.category] = [];
-                groups[t.category].push(t);
-            });
+            topics.forEach(t => { if(!groups[t.category]) groups[t.category]=[]; groups[t.category].push(t); });
 
-            select.innerHTML = '<option value="">-- 请选择知识点 --</option>';
+            let html = '<option value="">-- 选择课程以筛选 --</option>';
             for(const [cat, items] of Object.entries(groups)){
-                const optgroup = document.createElement('optgroup');
-                optgroup.label = cat;
-                items.forEach(t => {
-                    const opt = document.createElement('option');
-                    opt.value = t.id;
-                    opt.textContent = t.name;
-                    optgroup.appendChild(opt);
-                });
-                select.appendChild(optgroup);
+                html += `<optgroup label="${cat}">`;
+                items.forEach(t => html += `<option value="${t.id}">${t.name}</option>`);
+                html += `</optgroup>`;
             }
+            select.innerHTML = html;
+            editSelect.innerHTML = html;
         })();
 
-        // 提交逻辑 (保持不变)
+        // 切换题型UI
+        window.toggleTypeUI = () => {
+            const type = document.getElementById('edit-type').value;
+            document.getElementById('section-choice').classList.add('hidden');
+            document.getElementById('section-judge').classList.add('hidden');
+            document.getElementById('section-text').classList.add('hidden');
+
+            if (type === 'choice') document.getElementById('section-choice').classList.remove('hidden');
+            else if (type === 'judge') document.getElementById('section-judge').classList.remove('hidden');
+            else document.getElementById('section-text').classList.remove('hidden'); // qa or material
+        }
+
+        window.filterProblems = async () => {
+            currentTopicId = document.getElementById('filter-topic').value;
+            if (!currentTopicId) return;
+            const { data, error } = await supabase.from('problems').select('*').eq('topic_id', currentTopicId).order('id');
+            if (error) return alert('加载失败');
+            allProblems = data;
+            renderList();
+        }
+
+        function renderList() {
+            const el = document.getElementById('problem-list');
+            el.innerHTML = '';
+            if(allProblems.length === 0) { el.innerHTML = '<div class="text-center text-xs text-gray-400 mt-10">该课程暂无题目</div>'; return; }
+
+            allProblems.forEach(p => {
+                const item = document.createElement('div');
+                item.className = 'px-4 py-3 border-b border-gray-100 hover:bg-white cursor-pointer text-sm transition group';
+                if(p.id === currentProblemId) item.classList.add('bg-orange-50', 'border-l-4', 'border-l-orange-500');
+                
+                const typeBadge = {choice:'单选', judge:'判断', qa:'问答', material:'材料'}[p.type] || '单选';
+                
+                item.innerHTML = `
+                    <div class="font-medium text-gray-700 truncate"><span class="text-xs bg-gray-100 px-1 rounded mr-1 text-gray-500">${typeBadge}</span>${p.title}</div>
+                    <div class="text-xs text-gray-400 mt-1 flex justify-between"><span>#${p.id}</span><span>${p.difficulty}</span></div>
+                `;
+                item.onclick = () => window.selectProblem(p);
+                el.appendChild(item);
+            });
+        }
+
+        window.selectProblem = (p) => {
+            currentProblemId = p.id;
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('editor-area').classList.remove('hidden');
+            document.getElementById('form-title').textContent = '编辑题目';
+            document.getElementById('problem-id-display').textContent = `ID: ${p.id}`;
+            document.getElementById('btn-delete').classList.remove('hidden');
+
+            document.getElementById('edit-topic').value = p.topic_id;
+            document.getElementById('edit-type').value = p.type || 'choice';
+            document.getElementById('edit-title').value = p.title;
+            document.getElementById('edit-difficulty').value = p.difficulty;
+            document.getElementById('edit-analysis').value = p.analysis || '';
+            document.getElementById('edit-answer-text').value = p.answer_text || '';
+
+            // 回填选项
+            const inputs = document.querySelectorAll('.opt-input');
+            inputs.forEach((input, idx) => input.value = p.options ? (p.options[idx] || '') : '');
+            
+            // 回填单选
+            const radios = document.querySelectorAll('input[name="correct"]');
+            if(p.type === 'choice' && radios[p.correct_answer_index]) radios[p.correct_answer_index].checked = true;
+            
+            // 回填判断
+            const judgeRadios = document.querySelectorAll('input[name="judge-correct"]');
+            if(p.type === 'judge' && judgeRadios[p.correct_answer_index]) judgeRadios[p.correct_answer_index].checked = true;
+
+            toggleTypeUI();
+            renderList();
+        }
+
+        window.createNewProblem = () => {
+            if (!currentTopicId) return alert('请先在左侧选择一个课程！');
+            currentProblemId = null;
+            document.getElementById('empty-state').classList.add('hidden');
+            document.getElementById('editor-area').classList.remove('hidden');
+            document.getElementById('form-title').textContent = '录入新题';
+            document.getElementById('problem-id-display').textContent = 'New';
+            document.getElementById('btn-delete').classList.add('hidden');
+
+            document.getElementById('edit-topic').value = currentTopicId;
+            document.getElementById('edit-type').value = 'choice';
+            document.getElementById('edit-title').value = '';
+            document.getElementById('edit-analysis').value = '';
+            document.getElementById('edit-answer-text').value = '';
+            document.querySelectorAll('input[type="radio"]').forEach(r => r.checked = false);
+            document.querySelectorAll('.opt-input').forEach(i => i.value = '');
+            
+            toggleTypeUI();
+            renderList();
+        }
+
         document.getElementById('problem-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            const btn = document.getElementById('submit-btn');
-            btn.disabled = true; btn.textContent = '提交中...';
+            const btn = document.querySelector('button[type="submit"]');
+            btn.disabled = true; btn.textContent = '保存中...';
 
-            const options = Array.from(document.querySelectorAll('.opt-input')).map(i => i.value.trim()).filter(v => v);
-            const correctVal = document.querySelector('input[name="correct"]:checked').value;
+            const type = document.getElementById('edit-type').value;
+            let options = [], correctIndex = 0, answerText = '';
 
-            const newProblem = {
-                topic_id: document.getElementById('topic-select').value,
-                title: document.getElementById('title').value,
-                options: options,
-                correct_answer_index: parseInt(correctVal),
-                difficulty: document.getElementById('difficulty').value,
-                analysis: document.getElementById('analysis').value
+            if (type === 'choice') {
+                options = Array.from(document.querySelectorAll('.opt-input')).map(i => i.value.trim()).filter(v => v);
+                const val = document.querySelector('input[name="correct"]:checked')?.value;
+                if (!val) { btn.disabled = false; return alert('请选择正确选项'); }
+                correctIndex = parseInt(val);
+            } else if (type === 'judge') {
+                options = ['正确', '错误'];
+                const val = document.querySelector('input[name="judge-correct"]:checked')?.value;
+                if (!val) { btn.disabled = false; return alert('请选择正确/错误'); }
+                correctIndex = parseInt(val);
+            } else {
+                // QA / Material
+                answerText = document.getElementById('edit-answer-text').value;
+            }
+
+            const payload = {
+                topic_id: document.getElementById('edit-topic').value,
+                type: type,
+                title: document.getElementById('edit-title').value,
+                options: options, // JSONB
+                correct_answer_index: correctIndex,
+                answer_text: answerText,
+                difficulty: document.getElementById('edit-difficulty').value,
+                analysis: document.getElementById('edit-analysis').value
             };
 
-            const { error } = await supabase.from('problems').insert([newProblem]);
-
-            if(error) {
-                alert('出错: ' + error.message);
+            let error;
+            if (currentProblemId) {
+                const res = await supabase.from('problems').update(payload).eq('id', currentProblemId);
+                error = res.error;
             } else {
-                document.getElementById('msg').classList.remove('hidden');
-                setTimeout(() => document.getElementById('msg').classList.add('hidden'), 2000);
-                
-                document.getElementById('title').value = '';
-                document.getElementById('analysis').value = '';
-                document.querySelectorAll('.opt-input').forEach(i => i.value = '');
-                document.querySelector('input[name="correct"]:checked').checked = false;
+                const res = await supabase.from('problems').insert([payload]).select();
+                error = res.error;
+                if (res.data) currentProblemId = res.data[0].id;
             }
-            btn.disabled = false; btn.textContent = '提交题目';
+
+            btn.disabled = false; btn.textContent = '保存提交';
+            if (error) alert('出错: ' + error.message);
+            else {
+                document.getElementById('save-msg').classList.remove('hidden');
+                setTimeout(() => document.getElementById('save-msg').classList.add('hidden'), 2000);
+                window.filterProblems();
+            }
         });
+
+        window.deleteProblem = async () => {
+            if (!currentProblemId) return;
+            if (!confirm('确定要永久删除这道题吗？')) return;
+            const { error } = await supabase.from('problems').delete().eq('id', currentProblemId);
+            if (error) alert('删除失败: ' + error.message);
+            else {
+                currentProblemId = null;
+                document.getElementById('editor-area').classList.add('hidden');
+                document.getElementById('empty-state').classList.remove('hidden');
+                window.filterProblems();
+            }
+        }
     </script>
 </body>
 </html>

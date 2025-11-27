@@ -29,6 +29,9 @@
                 <a href="admin-orders.html" class="px-4 py-1.5 rounded-md text-sm font-bold bg-white text-orange-600 shadow-sm transition">
                     💰 订单审核
                 </a>
+                <a href="admin-users.html" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition">
+                    👥 人员权限
+                </a>
             </nav>
         </div>
 
@@ -150,14 +153,11 @@
             });
         }
 
+        // 核心审核逻辑 (修复版)
         window.handleApprove = async (orderId, userId) => {
             if(!confirm('确认通过此订单并开通会员？')) return;
 
-            const days = document.querySelector(`input[name="dur-${orderId}"]:checked`).value;
-            const newExpiry = new Date();
-            newExpiry.setDate(newExpiry.getDate() + parseInt(days));
-
-            // 1. 先查一下目标用户现在的角色
+            // 1. 查一下对方现在的身份
             const { data: targetProfile, error: profileErr } = await supabase
                 .from('profiles')
                 .select('role')
@@ -165,38 +165,57 @@
                 .single();
 
             if (profileErr) {
-                alert('读取用户角色失败：' + profileErr.message);
+                alert('无法读取用户身份，操作终止。');
                 return;
             }
 
-            // 2. 决定 new_role：
-            //    - admin 还是 admin（拥有所有 VIP 权限）
-            //    - teacher 还是 teacher（以后老师账号也保留）
-            //    - 其它用户才升级为 paid_user
+            // 2. 智能决定角色
+            // 如果对方已经是 admin 或 teacher，保持原样，只加时长！
+            // 只有普通人才升级为 paid_user
             let newRole = 'paid_user';
-            const currentRole = targetProfile?.role?.trim();
+            const currentRole = targetProfile?.role;
+            
             if (currentRole === 'admin' || currentRole === 'teacher') {
-                newRole = currentRole;
+                newRole = currentRole; // 维持原判
             }
 
-            // 3. 调用 RPC，只更新有效期 +（必要时）角色
+            // 3. 计算新日期
+            const days = document.querySelector(`input[name="dur-${orderId}"]:checked`).value;
+            const newExpiry = new Date();
+            newExpiry.setDate(newExpiry.getDate() + parseInt(days));
+
+            // 4. 调用 RPC 设置
             const { error: rpcErr } = await supabase.rpc('admin_set_expiry', {
                 target_user_id: userId,
                 new_expiry_date: newExpiry.toISOString(),
                 new_role: newRole
             });
 
-            if (rpcErr) {
-                alert('权限设置失败: ' + rpcErr.message);
-                return;
-            }
+            if (rpcErr) return alert('权限设置失败: ' + rpcErr.message);
 
-    // 4. 更新订单状态
-    await supabase.from('orders').update({ status: 'approved' }).eq('id', orderId);
-    loadOrders();
-    loadStats();
-};
+            // 5. 更新订单
+            await supabase.from('orders').update({ status: 'approved' }).eq('id', orderId);
+            
+            // 刷新
+            loadOrders(); 
+            loadStats();
+        };
 
+        window.handleReject = async (orderId) => {
+            if(!confirm('确认拒绝？')) return;
+            await supabase.from('orders').update({ status: 'rejected' }).eq('id', orderId);
+            loadOrders();
+        };
+
+        window.handleRevoke = async (orderId, userId) => {
+            if(!confirm('⚠️ 确定要撤销该用户的会员资格吗？')) return;
+            
+            // 撤销时，统一降级为 free_user (不管原来是谁)
+            await supabase.rpc('admin_set_role', { target_user_id: userId, new_role: 'free_user' });
+            await supabase.from('orders').update({ status: 'rejected', memo: '管理员撤销' }).eq('id', orderId);
+            
+            loadOrders();
+        };
     </script>
 </body>
 </html>
