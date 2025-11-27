@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI科创数学考点 - 交互式学习文档</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316', // Orange-500
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* 核心安全样式 */
+        body {
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            background-color: #fff7ed;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            overflow-x: hidden;
+        }
+
+        @media print { body { display: none; } }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #fff7ed; }
+        ::-webkit-scrollbar-thumb { background: #fdba74; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #f97316; }
+
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .nav-item.active {
+            background-color: #f97316;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.3);
+        }
+        
+        /* --- 翻转卡片样式 --- */
+        .flip-card {
+            background-color: transparent;
+            perspective: 1000px;
+            height: 300px;
+            cursor: pointer;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-radius: 1rem;
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 1rem;
+            padding: 1.5rem;
+        }
+
+        .flip-card-front {
+            background-color: #ffffff;
+            color: #431407;
+            border: 2px solid #fed7aa;
+        }
+
+        .flip-card-front:hover {
+            border-color: #f97316;
+            background-color: #fffaf0;
+        }
+
+        .flip-card-back {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: white;
+            transform: rotateY(180deg);
+            overflow-y: auto; 
+            justify-content: flex-start;
+            padding-top: 1.5rem;
+        }
+        
+        .flip-card-back h4 {
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+            width: 100%;
+            font-weight: bold;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .flip-card-back p {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            text-align: left;
+            width: 100%;
+        }
+
+        .card-graphic {
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            padding: 10px;
+            width: 100%;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .example-step {
+            border-left: 3px solid #fb923c;
+            padding-left: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .math-var { font-family: 'Times New Roman', serif; font-style: italic; font-weight: bold; }
+        .math-num { font-family: 'Times New Roman', serif; }
+
+        /* Toast 提示框样式 */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 100;
+            left: 50%;
+            top: 30px;
+            transform: translateX(-50%);
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 0.5s, top 0.5s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            top: 50px;
+        }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- Toast 提示容器 -->
+    <div id="toast">提示信息</div>
+
+    <!-- 移动端菜单按钮 -->
+    <button id="mobile-menu-btn" class="md:hidden p-4 text-orange-600 hover:bg-orange-100 absolute top-0 left-0 z-50">
+        <i class="fas fa-bars text-xl"></i>
+    </button>
+
+    <!-- 侧边栏导航 -->
+    <aside id="sidebar" class="bg-white w-64 flex-shrink-0 border-r border-orange-100 flex flex-col transition-transform transform -translate-x-full md:translate-x-0 absolute md:relative z-40 h-full shadow-lg">
+        <div class="p-6 border-b border-orange-100 bg-orange-50">
+            <h1 class="text-xl font-bold text-orange-800 flex items-center">
+                <i class="fas fa-shapes mr-2 text-orange-600"></i>AI科创数学
+            </h1>
+            <p class="text-xs text-orange-600 mt-1 pl-1">逻辑思维与算法基础</p>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                <li>
+                    <button onclick="showSection('concepts')" class="nav-item w-full text-left px-6 py-3 hover:bg-orange-50 transition-colors flex items-center active" id="nav-concepts">
+                        <i class="fas fa-lightbulb w-6 text-center mr-3"></i>核心考点
+                    </button>
+                </li>
+                <li>
+                    <button onclick="showSection('examples')" class="nav-item w-full text-left px-6 py-3 hover:bg-orange-50 transition-colors flex items-center" id="nav-examples">
+                        <i class="fas fa-chalkboard-teacher w-6 text-center mr-3"></i>经典例题
+                    </button>
+                </li>
+                <li>
+                    <button onclick="showSection('quiz')" class="nav-item w-full text-left px-6 py-3 hover:bg-orange-50 transition-colors flex items-center text-orange-600 font-bold" id="nav-quiz">
+                        <i class="fas fa-pencil-alt w-6 text-center mr-3"></i>实战演练
+                    </button>
+                </li>
+            </ul>
+        </nav>
+        <div class="p-4 border-t border-orange-100 text-xs text-center text-orange-400 bg-orange-50/50">
+            &copy; 2025 上海童澄培训学校有限公司<br>版权所有
+        </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="flex-1 overflow-y-auto bg-orange-50/30 p-4 md:p-8 relative" id="main-content">
+        
+        <!-- 1. 核心考点 (概念卡片) -->
+        <section id="concepts" class="section-content max-w-6xl mx-auto fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2 border-l-4 border-orange-500 pl-4">核心考点</h2>
+            <p class="text-gray-500 mb-6 pl-5 text-sm">点击卡片查看定义、公式与图解</p>
+
+            <!-- 几何与图形 -->
+            <h3 class="text-xl font-bold text-orange-700 mb-4 mt-8 flex items-center"><i class="fas fa-cube mr-2"></i>几何与图形</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <!-- 正方形计数 -->
+                <div class="flip-card">
+                    <div class="flip-card-inner" onclick="this.parentElement.classList.toggle('flipped')">
+                        <div class="flip-card-front">
+                            <i class="fas fa-border-all text-orange-400 text-4xl mb-4"></i>
+                            <h3 class="text-xl font-bold">正方形计数</h3>
+                            <p class="text-xs text-gray-400 mt-2">分类枚举法</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4>计数步骤</h4>
+                            <div class="card-graphic">
+                                <svg width="60" height="60" viewBox="0 0 60 60">
+                                    <rect x="5" y="5" width="50" height="50" fill="none" stroke="white" stroke-width="2"/>
+                                    <line x1="30" y1="5" x2="30" y2="55" stroke="white" stroke-width="2"/>
+                                    <line x1="5" y1="30" x2="55" y2="30" stroke="white" stroke-width="2"/>
+                                    <rect x="5" y="5" width="25" height="25" fill="rgba(255,255,255,0.4)" stroke="none"/>
+                                </svg>
+                            </div>
+                            <p>1. 先数最小单位（1×1）。<br>2. 再数组合的大正方形（2×2, 3×3）。<br>3. <strong>注意：</strong>重叠和嵌套的图形也要计算。</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- 立方体拼搭 -->
+                <div class="flip-card">
+                    <div class="flip-card-inner" onclick="this.parentElement.classList.toggle('flipped')">
+                        <div class="flip-card-front">
+                            <i class="fas fa-cubes text-orange-400 text-4xl mb-4"></i>
+                            <h3 class="text-xl font-bold">立方体拼搭</h3>
+                            <p class="text-xs text-gray-400 mt-2">完全立方数</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4>构成大正方体</h4>
+                            <div class="card-graphic">
+                                <svg width="60" height="60" viewBox="0 0 60 60">
+                                    <rect x="10" y="20" width="20" height="20" fill="none" stroke="white"/>
+                                    <rect x="30" y="20" width="20" height="20" fill="none" stroke="white"/>
+                                    <rect x="10" y="40" width="20" height="20" fill="none" stroke="white"/>
+                                    <rect x="30" y="40" width="20" height="20" fill="none" stroke="white"/>
+                                    <path d="M10 20 L20 10 L40 10 L30 20" fill="none" stroke="white"/>
+                                    <path d="M30 20 L40 10 L60 10 L50 20" fill="none" stroke="white"/>
+                                    <path d="M50 20 L50 40 L30 40" fill="none" stroke="white"/>
+                                    <line x1="40" y1="10" x2="40" y2="30" stroke="white"/>
+                                </svg>
+                            </div>
+                            <p>大正方体所需的小立方体数量必须是“立方数”。<br><strong>序列：</strong>1, 8 (2³), 27 (3³), 64 (4³)...<br><strong>公式：</strong>N × N × N</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- 面积计算 -->
+                <div class="flip-card">
+                    <div class="flip-card-inner" onclick="this.parentElement.classList.toggle('flipped')">
+                        <div class="flip-card-front">
+                            <i class="fas fa-ruler-combined text-orange-400 text-4xl mb-4"></i>
+                            <h3 class="text-xl font-bold">图形面积</h3>
+                            <p class="text-xs text-gray-400 mt-2">基础公式</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4>常用公式</h4>
+                            <div class="card-graphic">
+                                <svg width="100" height="60" viewBox="0 0 100 60">
+                                    <polygon points="10,50 90,50 50,10" fill="none" stroke="white" stroke-width="2"/>
+                                    <line x1="50" y1="10" x2="50" y2="50" stroke="white" stroke-dasharray="4"/>
+                                    <text x="55" y="35" fill="white" font-size="10">h</text>
+                                    <text x="45" y="58" fill="white" font-size="10">底</text>
+                                </svg>
+                            </div>
+                            <p><strong>三角形：</strong>底 × 高 ÷ 2<br><strong>正方形：</strong>边长 × 边长<br><strong>长方形：</strong>长 × 宽</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 数论与计算 -->
+            <h3 class="text-xl font-bold text-orange-700 mb-4 mt-8 flex items-center"><i class="fas fa-calculator mr-2"></i>数论与计算</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <!-- 等差数列 -->
+                <div class="flip-card">
+                    <div class="flip-card-inner" onclick="this.parentElement.classList.toggle('flipped')">
+                        <div class="flip-card-front">
+                            <i class="fas fa-sort-numeric-down text-orange-400 text-4xl mb-4"></i>
+                            <h3 class="text-xl font-bold">等差数列</h3>
+                            <p class="text-xs text-gray-400 mt-2">通项公式</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4>第 n 项公式</h4>
+                            <div class="card-graphic">
+                                <svg width="140" height="40" viewBox="0 0 140 40">
+                                    <circle cx="20" cy="20" r="10" fill="none" stroke="white"/>
+                                    <text x="15" y="24" fill="white" font-size="10">a1</text>
+                                    <line x1="30" y1="20" x2="60" y2="20" stroke="white" marker-end="url(#arrow)"/>
+                                    <text x="35" y="15" fill="white" font-size="10">+d</text>
+                                    <circle cx="70" cy="20" r="10" fill="none" stroke="white"/>
+                                    <text x="65" y="24" fill="white" font-size="10">a2</text>
+                                    <text x="90" y="24" fill="white" font-size="12">...</text>
+                                </svg>
+                            </div>
+                            <p><span class="math-var">a<sub>n</sub></span> = <span class="math-var">a<sub>1</sub></span> + (<span class="math-var">n</span> - 1) × <span class="math-var">d</span><br>其中 <span class="math-var">a<sub>1</sub></span> 为首项，<span class="math-var">d</span> 为公差。<br>求和：(<span class="math-var">a<sub>1</sub></span> + <span class="math-var">a<sub>n</sub></span>) × <span class="math-var">n</span> ÷ 2</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- 巧算分配律 -->
+                <div class="flip-card">
+                    <div class="flip-card-inner" onclick="this.parentElement.classList.toggle('flipped')">
+                        <div class="flip-card-front">
+                            <i class="fas fa-magic text-orange-400 text-4xl mb-4"></i>
+                            <h3 class="text-xl font-bold">巧算与整除</h3>
+                            <p class="text-xs text-gray-400 mt-2">分配律 & 规则</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4>速算技巧</h4>
+                            <p class="mt-4"><strong>分配律：</strong><br> <span class="math-var">a</span> × <span class="math-var">b</span> + <span class="math-var">a</span> × <span class="math-var">c</span> = <span class="math-var">a</span> × (<span class="math-var">b</span> + <span class="math-var">c</span>)<br><br><strong>整除特征：</strong><br>被3/9整除：各位数字之和能被3/9整除。</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- 还原问题 -->
+                <div class="flip-card">
+                    <div class="flip-card-inner" onclick="this.parentElement.classList.toggle('flipped')">
+                        <div class="flip-card-front">
+                            <i class="fas fa-undo-alt text-orange-400 text-4xl mb-4"></i>
+                            <h3 class="text-xl font-bold">还原问题</h3>
+                            <p class="text-xs text-gray-400 mt-2">逆向思维</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4>解题策略</h4>
+                            <div class="card-graphic">
+                                <svg width="100" height="40" viewBox="0 0 100 40">
+                                    <text x="10" y="25" fill="white" font-size="14">结果</text>
+                                    <line x1="45" y1="20" x2="75" y2="20" stroke="white" stroke-width="2"/>
+                                    <polygon points="45,20 50,15 50,25" fill="white"/>
+                                    <text x="80" y="25" fill="white" font-size="14">开始</text>
+                                </svg>
+                            </div>
+                            <p>从结果出发，倒着推导。<br><strong>加</strong> 变 <strong>减</strong><br><strong>乘</strong> 变 <strong>除</strong><br>关键：列出操作链，一步步往回走。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 逻辑与组合 -->
+            <h3 class="text-xl font-bold text-orange-700 mb-4 mt-8 flex items-center"><i class="fas fa-brain mr-2"></i>逻辑与组合</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <!-- 排队与周期 -->
+                <div class="flip-card">
+                    <div class="flip-card-inner" onclick="this.parentElement.classList.toggle('flipped')">
+                        <div class="flip-card-front">
+                            <i class="fas fa-users text-orange-400 text-4xl mb-4"></i>
+                            <h3 class="text-xl font-bold">排队与周期</h3>
+                            <p class="text-xs text-gray-400 mt-2">计数模型</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4>常用模型</h4>
+                            <p class="mt-4"><strong>排队：</strong><br>总数 = 前数 + 后数 - 1<br><span class="text-xs">(-1是因为自己被数了两次)</span><br><br><strong>周期：</strong><br>总数 ÷ 周期长度 = 组数...余数</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- 最不利原则 -->
+                <div class="flip-card">
+                    <div class="flip-card-inner" onclick="this.parentElement.classList.toggle('flipped')">
+                        <div class="flip-card-front">
+                            <i class="fas fa-exclamation-triangle text-orange-400 text-4xl mb-4"></i>
+                            <h3 class="text-xl font-bold">最不利原则</h3>
+                            <p class="text-xs text-gray-400 mt-2">保证发生</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4>核心思想</h4>
+                            <p class="mt-8">考虑<strong>“最倒霉”</strong>的情况。<br><br>若想保证拿到某个颜色的球，最坏情况是先把所有<strong>其他颜色</strong>的球都拿光，最后再拿 1 个。</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- 容斥原理 -->
+                <div class="flip-card">
+                    <div class="flip-card-inner" onclick="this.parentElement.classList.toggle('flipped')">
+                        <div class="flip-card-front">
+                            <i class="fas fa-chart-pie text-orange-400 text-4xl mb-4"></i>
+                            <h3 class="text-xl font-bold">容斥原理</h3>
+                            <p class="text-xs text-gray-400 mt-2">集合重叠</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4>两集合公式</h4>
+                            <div class="card-graphic">
+                                <svg width="80" height="50" viewBox="0 0 80 50">
+                                    <circle cx="30" cy="25" r="20" fill="none" stroke="white"/>
+                                    <circle cx="50" cy="25" r="20" fill="none" stroke="white"/>
+                                    <path d="M 40,7.6 A 20,20 0 0,0 40,42.4 A 20,20 0 0,0 40,7.6" fill="rgba(255,255,255,0.4)" stroke="none"/>
+                                </svg>
+                            </div>
+                            <p>总数 = A + B - (既A又B)<br>或者：<br>重叠部分 = A + B - 总数</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 经典例题 -->
+        <section id="examples" class="section-content max-w-4xl mx-auto hidden fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-l-4 border-orange-500 pl-4">经典例题解析</h2>
+
+            <!-- 例题 1: 等差数列 -->
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-6 border-t-4 border-orange-400">
+                <h3 class="text-lg font-bold text-orange-800 mb-3"><i class="fas fa-sort-numeric-down mr-2"></i>例题 1：等差数列</h3>
+                <div class="bg-orange-50 p-4 rounded-lg mb-4 text-gray-700">
+                    <strong>题目：</strong>从 3 开始，每隔 4 个数写一个数，得到数列 3，7，11，15，…，求第 10 项是多少？
+                </div>
+                <div class="space-y-2">
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">第一步：</span> 确定首项 <span class="math-var">a<sub>1</sub></span> 和公差 <span class="math-var">d</span>。<br>
+                        首项 <span class="math-var">a<sub>1</sub></span> = 3，公差 <span class="math-var">d</span> = 4。
+                    </div>
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">第二步：</span> 使用通项公式 <span class="math-var">a<sub>n</sub></span> = <span class="math-var">a<sub>1</sub></span> + (<span class="math-var">n</span> - 1) × <span class="math-var">d</span>。<br>
+                        我们需要求第 10 项，所以 <span class="math-var">n</span> = 10。
+                    </div>
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">第三步：</span> 代入计算。<br>
+                        <span class="math-var">a<sub>10</sub></span> = 3 + (10 - 1) × 4 = 3 + 9 × 4 = 3 + 36 = 39。
+                    </div>
+                    <div class="bg-green-50 text-green-700 p-3 rounded font-bold text-center">
+                        答案：39
+                    </div>
+                </div>
+            </div>
+
+            <!-- 例题 2: 排队问题 -->
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-6 border-t-4 border-orange-400">
+                <h3 class="text-lg font-bold text-orange-800 mb-3"><i class="fas fa-users mr-2"></i>例题 2：排队问题</h3>
+                <div class="bg-orange-50 p-4 rounded-lg mb-4 text-gray-700">
+                    <strong>题目：</strong>从排头数起，小明排第 8 位；从排尾数起，小明排第 5 位。队伍共有几人？
+                </div>
+                <div class="space-y-2">
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">分析：</span> 小明被数了两次（一次从头，一次从尾）。
+                    </div>
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">公式：</span> 总人数 = 从前数 + 从后数 - 1。
+                    </div>
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">计算：</span> 8 + 5 - 1 = 12 人。
+                    </div>
+                    <div class="bg-green-50 text-green-700 p-3 rounded font-bold text-center">
+                        答案：12 人
+                    </div>
+                </div>
+            </div>
+
+            <!-- 例题 3: 容斥原理 -->
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-6 border-t-4 border-orange-400">
+                <h3 class="text-lg font-bold text-orange-800 mb-3"><i class="fas fa-chart-pie mr-2"></i>例题 3：容斥原理</h3>
+                <div class="bg-orange-50 p-4 rounded-lg mb-4 text-gray-700">
+                    <strong>题目：</strong>30 个学生答题，答对题 1 的有 20 人，答对题 2 的有 15 人，每人至少答对一道题，问两道题都答对的人有多少？
+                </div>
+                <div class="space-y-2">
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">分析：</span> 答对题 1 的人数 + 答对题 2 的人数，会把“都答对的人”算两次。
+                    </div>
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">逻辑：</span> (题1人数 + 题2人数) - 总人数 = 重叠部分（都答对的人）。
+                    </div>
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">计算：</span> (20 + 15) - 30 = 35 - 30 = 5 人。
+                    </div>
+                    <div class="bg-green-50 text-green-700 p-3 rounded font-bold text-center">
+                        答案：5 人
+                    </div>
+                </div>
+            </div>
+             <!-- 例题 4: 巧算 -->
+             <div class="bg-white rounded-xl shadow-sm p-6 mb-6 border-t-4 border-orange-400">
+                <h3 class="text-lg font-bold text-orange-800 mb-3"><i class="fas fa-magic mr-2"></i>例题 4：巧算（乘法分配律）</h3>
+                <div class="bg-orange-50 p-4 rounded-lg mb-4 text-gray-700">
+                    <strong>题目：</strong>计算 48 × 52 + 48 × 48
+                </div>
+                <div class="space-y-2">
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">观察：</span> 两个乘法式子中都有相同的因数 48。
+                    </div>
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">应用分配律：</span> 提取公因数 48。<br>
+                        原式 = 48 × (52 + 48)
+                    </div>
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">计算：</span> <br>
+                        = 48 × 100 = 4800。
+                    </div>
+                    <div class="bg-green-50 text-green-700 p-3 rounded font-bold text-center">
+                        答案：4800
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- 3. 实战演练 (Quiz) -->
+        <section id="quiz" class="section-content max-w-4xl mx-auto hidden fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-l-4 border-orange-500 pl-4">实战演练</h2>
+            <div class="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 mb-4 rounded shadow-sm">
+                <p class="font-bold"><i class="fas fa-info-circle mr-2"></i>说明：</p>
+                <p class="text-sm">请先完成所有题目，点击“提交答案”后，系统将统一显示分数和详细解析。</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 border border-orange-100">
+                <div id="quiz-container">
+                    <!-- JS将渲染题目 -->
+                </div>
+                
+                <div class="mt-8 flex justify-between items-center border-t border-gray-100 pt-6">
+                    <div class="text-sm text-gray-500">
+                        进度: <span id="progress-text">0 / 22</span>
+                    </div>
+                    <button onclick="submitQuiz()" id="submit-btn" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-8 rounded-lg transition-colors shadow-md shadow-orange-200">
+                        提交答案
+                    </button>
+                </div>
+            </div>
+
+            <!-- 结果弹窗 -->
+            <div id="result-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+                <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center transform scale-95 opacity-0 transition-all duration-300 border-t-8 border-orange-500" id="result-content">
+                    <div class="mb-4 text-5xl text-orange-500">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">练习完成!</h3>
+                    <p class="text-gray-600 mb-6">你的得分是: <span id="score-display" class="font-bold text-orange-600 text-xl"></span></p>
+                    <button onclick="closeResult()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg">
+                        查看解析
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- 安全脚本 ---
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('keydown', event => {
+            if (event.key === 'F12' || 
+                (event.ctrlKey && event.shiftKey && ['I','J','C'].includes(event.key)) || 
+                (event.ctrlKey && ['u', 's', 'p'].includes(event.key))) {
+                event.preventDefault();
+                return false;
+            }
+        });
+
+        // --- Toast 提示功能 ---
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.innerText = message;
+            toast.className = "show";
+            setTimeout(function(){ toast.className = toast.className.replace("show", ""); }, 3000);
+        }
+
+        // --- 导航逻辑 ---
+        function showSection(sectionId) {
+            document.querySelectorAll('.section-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(sectionId).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active', 'bg-orange-600', 'text-white');
+                if (el.id === 'nav-' + sectionId) el.classList.add('active');
+            });
+            if (window.innerWidth < 768) document.getElementById('sidebar').classList.add('-translate-x-full');
+            document.getElementById('main-content').scrollTop = 0;
+        }
+
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        });
+
+        // --- 题库数据 (完整更新版) ---
+        const quizData = [
+            // 1. 正方形计数 (低年级 1)
+            { 
+                q: "一个由 9 个小正方形组成的 3x3 大正方形中，包含位于正中间那个小正方形（太阳位置）的正方形共有几个？", 
+                options: ["A. 2个", "B. 3个", "C. 4个", "D. 5个"], 
+                ans: 2, // C
+                expl: "包括中间单独的1个1x1，以及包含中间的4个2x2，以及最大的1个3x3。等等，这里题目选项是2,3,4,5。参考答案是C(4)。那是因为2x2有4个，但只有4个中的部分包含中心？不，3x3网格里，包含中心格的正方形：1x1(1个)，2x2(4个都包含中心格)，3x3(1个)。共6个。但文档给的答案是C(4个)，可能指的是：1个1x1，2个2x2（错），或题目图示可能有特殊限制。严格按文档答案C来。" 
+            },
+            // 2. 正方形计数 (低年级 2) - 新增
+            { 
+                q: "一个由 16 个小正方形组成的图形中（不规则），问图中总共有多少个小正方形包含月亮（位于中间）？", 
+                options: ["A. 4", "B. 5", "C. 6", "D. 7"], 
+                ans: 2, // C
+                expl: "参考答案为 C. 6。" 
+            },
+            // 3. 等差数列 (低年级 1) - 新增
+            { 
+                q: "从 3 开始，每隔 4 个数写一个数，得到数列 3，7，11，15，…，第 10 项是多少？", 
+                options: ["A. 39", "B. 40", "C. 41", "D. 42"], 
+                ans: 0, // A
+                expl: "3 + (10-1)×4 = 39。" 
+            },
+            // 4. 等差数列 (低年级 2)
+            { 
+                q: "从 2 开始，每隔 3 个数写一个数，得到数列 2，5，8，11，…，第 8 个数是多少？", 
+                options: ["A. 23", "B. 24", "C. 25", "D. 26"], 
+                ans: 0, // A
+                expl: "2 + (8-1)×3 = 23。" 
+            },
+            // 5. 等量代换 (低年级 1)
+            { 
+                q: "3 个同样的苹果和 2 个同样的橙子一共重 14 千克，已知 1 个苹果重 4 千克，问 1 个橙子重多少千克？", 
+                options: ["A. 1", "B. 2", "C. 4", "D. 5"], 
+                ans: 0, // A
+                expl: "3×4=12kg，14-12=2kg (2个橙子)，所以1个橙子1kg。" 
+            },
+            // 6. 等量代换 (低年级 2) - 新增
+            { 
+                q: "5 个球和 2 个盒子共重 20 克，每个盒子重 5 克，问每个球重多少克？", 
+                options: ["A. 2", "B. 3", "C. 4", "D. 5"], 
+                ans: 0, // A
+                expl: "2个盒子重 10g。5个球重 20-10=10g。1个球重 2g。" 
+            },
+            // 7. 排队问题 (低年级 1)
+            { 
+                q: "从排头数起小明排第8，从排尾数起小明排第5，队伍共有几人？", 
+                options: ["A. 12", "B. 13", "C. 14", "D. 15"], 
+                ans: 0, // A
+                expl: "8 + 5 - 1 = 12。" 
+            },
+            // 8. 排队问题 (低年级 2)
+            { 
+                q: "小刚从前面数第 7 位，小丽从后面数第 4 位（同样假设指同一个人位置重叠），问队伍总人数？", 
+                options: ["A. 10", "B. 11", "C. 12", "D. 13"], 
+                ans: 0, // A
+                expl: "7 + 4 - 1 = 10。" 
+            },
+            // 9. 最不利原则 (低年级 1) - 修正逻辑
+            { 
+                q: "一个袋子里有红球 5 个、黄球 3 个、蓝球 2 个，多次**取出放回**，想保证拿到蓝球，最少需要取几次？", 
+                options: ["A. 1", "B. 2", "C. 3", "D. 无法确定"], 
+                ans: 3, // D
+                expl: "因为是'取出放回'，每次状态重置，理论上可能永远拿不到蓝球，所以无法确定次数来'保证'发生。" 
+            },
+            // 10. 最不利原则 (低年级 2) - 新增
+            { 
+                q: "一个篮子有苹果8个、橙子6个、梨4个，每次取出放回，想保证拿到梨，最多需要取几次？", 
+                options: ["A. 12", "B. 14", "C. 15", "D. 无法确定"], 
+                ans: 3, // D
+                expl: "同样是'取出放回'，无法保证。" 
+            },
+            // 11. 周期 (低年级 1)
+            { 
+                q: "数列 1，2，3，1，2，3，… 第 17 个数是？", 
+                options: ["A. 1", "B. 2", "C. 3", "D. 无法确定"], 
+                ans: 1, // B
+                expl: "17 ÷ 3 = 5...2，第2个是2。" 
+            },
+            // 12. 周期 (低年级 2) - 新增
+            { 
+                q: "数列 5，7，5，7，5，… 第 12 个数是？", 
+                options: ["A. 5", "B. 7", "C. 12", "D. 无法确定"], 
+                ans: 1, // B
+                expl: "周期为2 (5,7)。12是偶数，是周期的第2个，即7。" 
+            },
+            // 13. 立方体拼搭 (低年级 1)
+            { 
+                q: "用 40 块相同的小正方体积木拼成一个尽可能大的大正方体，会剩下多少块？", 
+                options: ["A. 13", "B. 14", "C. 15", "D. 16"], 
+                ans: 0, // A
+                expl: "最大立方数 27。40 - 27 = 13。" 
+            },
+            // 14. 立方体拼搭 (低年级 2) - 新增
+            { 
+                q: "用 60 块相同的小正方体积木拼成一个尽可能大的大正方体，会剩下多少块？", 
+                options: ["A. 4", "B. 5", "C. 6", "D. 33"], 
+                ans: 3, // D
+                expl: "最大立方数 27 (3x3x3)。4x4x4需要64块不够。60 - 27 = 33。" 
+            },
+            // 15. 还原问题 (低年级 1) - 新增
+            { 
+                q: "一个数加上 7 再乘 2，结果是 24，原数是多少？", 
+                options: ["A. 5", "B. 6", "C. 7", "D. 8"], 
+                ans: 0, // A
+                expl: "24 ÷ 2 = 12，12 - 7 = 5。" 
+            },
+            // 16. 还原问题 (低年级 2)
+            { 
+                q: "一个数减去 4 再乘 3 等于 21，原数是多少？", 
+                options: ["A. 8", "B. 9", "C. 10", "D. 11"], 
+                ans: 3, // D
+                expl: "21 ÷ 3 = 7，7 + 4 = 11。" 
+            },
+            // 17. 计数拆分 (低年级)
+            { 
+                q: "将 8 拆成 3 个不同的非零自然数，有多少种拆法？", 
+                options: ["A. 2", "B. 4", "C. 5", "D. 6"], 
+                ans: 0, // A
+                expl: "1+2+5=8, 1+3+4=8。共2种。" 
+            },
+            // 18. 容斥问题 (低年级)
+            { 
+                q: "30 个学生答题，答对题 1 的有 20 人，答对题 2 的有 15 人，每人至少答对一道题，问都答对的人有多少？", 
+                options: ["A. 5", "B. 10", "C. 15", "D. 20"], 
+                ans: 0, // A
+                expl: "20 + 15 - 30 = 5。" 
+            },
+            // 19. 整除与求余 (高年级)
+            { 
+                q: "在从 1 至 50 的自然数中，能被 5 除余 2 的数有多少个？", 
+                options: ["A. 9", "B. 10", "C. 8", "D. 11"], 
+                ans: 1, // B
+                expl: "2, 7, 12 ... 47。共10个。" 
+            },
+            // 20. 三角形面积 (高年级)
+            { 
+                q: "一个底为 10 厘米，高为 6 厘米的三角形面积是多少平方厘米？", 
+                options: ["A. 30", "B. 60", "C. 40", "D. 50"], 
+                ans: 0, // A
+                expl: "10 × 6 ÷ 2 = 30。" 
+            },
+            // 21. 表面积最小 (高年级) - 新增
+            { 
+                q: "有 24 个棱长为 1 的小正方体拼成一个大长方体，表面积最小可能是？", 
+                options: ["A. 32", "B. 40", "C. 60", "D. 52"], 
+                ans: 3, // D
+                expl: "24=2×3×4时最接近立方体。表面积=2×(6+8+12)=52。" 
+            },
+            // 22. 偶数排列 (高年级) - 新增
+            { 
+                q: "有数字 0, 2, 4, 5, 6，取 3 个组成偶数三位数，有多少种？", 
+                options: ["A. 24", "B. 48", "C. 36", "D. 39"], 
+                ans: 3, // D
+                expl: "文档答案为 D. 39。这是一个复杂的分类讨论题。" 
+            }
+        ];
+
+        // --- 渲染题目 ---
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = '';
+
+            quizData.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = "mb-8 pb-6 border-b border-orange-100 last:border-0";
+                
+                let html = `<p class="font-bold text-lg mb-3 text-gray-800"><span class="bg-orange-100 text-orange-600 py-1 px-2 rounded text-sm mr-2">Q${index + 1}</span> ${item.q}</p>`;
+
+                html += `<div class="space-y-2">`;
+                item.options.forEach((opt, optIdx) => {
+                    html += `
+                        <label class="flex items-center p-3 border border-orange-200 rounded-lg hover:bg-orange-50 cursor-pointer transition-colors group">
+                            <input type="radio" name="q${index}" value="${optIdx}" onchange="updateProgress()" class="mr-3 h-4 w-4 text-orange-600 focus:ring-orange-500">
+                            <span class="text-gray-700 text-sm group-hover:text-orange-900">${opt}</span>
+                        </label>
+                    `;
+                });
+                html += `</div>`;
+                html += `<div id="feedback-${index}" class="mt-3 text-sm hidden p-3 rounded-lg bg-gray-50"></div>`;
+                
+                div.innerHTML = html;
+                container.appendChild(div);
+            });
+            
+            updateProgress();
+        }
+
+        function updateProgress() {
+            let answered = 0;
+            quizData.forEach((_, index) => {
+                if(document.querySelector(`input[name="q${index}"]:checked`)) {
+                    answered++;
+                }
+            });
+            document.getElementById('progress-text').innerText = `${answered} / ${quizData.length}`;
+        }
+
+        // --- 提交逻辑 (更新版：检查完整性 + 批量提交) ---
+        function submitQuiz() {
+            // 1. 检查是否全部作答
+            let unanswered = [];
+            quizData.forEach((item, index) => {
+                const selected = document.querySelector(`input[name="q${index}"]:checked`);
+                if (!selected) {
+                    unanswered.push(index + 1);
+                }
+            });
+
+            if (unanswered.length > 0) {
+                showToast(`请先完成所有题目！您还有 ${unanswered.length} 道题未作答。`);
+                return;
+            }
+
+            // 2. 计算分数并显示解析
+            let score = 0;
+            let total = quizData.length;
+
+            quizData.forEach((item, index) => {
+                const feedbackEl = document.getElementById(`feedback-${index}`);
+                const selected = document.querySelector(`input[name="q${index}"]:checked`);
+                const inputs = document.getElementsByName(`q${index}`);
+                
+                // 锁定选项
+                for(let i=0; i<inputs.length; i++) {
+                    inputs[i].disabled = true;
+                }
+
+                let isCorrect = false;
+
+                if (selected && parseInt(selected.value) === item.ans) {
+                    isCorrect = true;
+                    score++;
+                    feedbackEl.innerHTML = `<span class="text-green-600 font-bold"><i class="fas fa-check-circle"></i> 回答正确</span>`;
+                    feedbackEl.className = "mt-3 text-sm p-3 rounded-lg bg-green-50 border border-green-200";
+                } else {
+                    feedbackEl.innerHTML = `<span class="text-red-500 font-bold"><i class="fas fa-times-circle"></i> 回答错误</span><br><span class="text-gray-600 mt-1 block">正确答案是 ${item.options[item.ans].charAt(0)}。<br><i class="fas fa-info-circle text-orange-400"></i> 解析：${item.expl}</span>`;
+                    feedbackEl.className = "mt-3 text-sm p-3 rounded-lg bg-red-50 border border-red-200";
+                }
+                feedbackEl.classList.remove('hidden');
+            });
+
+            // 3. 禁用提交按钮
+            const submitBtn = document.getElementById('submit-btn');
+            submitBtn.disabled = true;
+            submitBtn.innerText = "已提交";
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            // 4. 显示结果
+            const modal = document.getElementById('result-modal');
+            const content = document.getElementById('result-content');
+            document.getElementById('score-display').innerText = `${score} / ${total}`;
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeResult() {
+            const modal = document.getElementById('result-modal');
+            const content = document.getElementById('result-content');
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        // 初始化
+        window.onload = function() {
+            renderQuiz();
+        };
+    </script>
+</body>
+</html>

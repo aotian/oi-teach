@@ -1,0 +1,674 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>童澄 GESP 交互式教学系统</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 React 和 ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <!-- 引入 Babel 用于解析 JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+
+    <style>
+        /* 自定义滚动条样式，更符合童澄风格 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #fb923c; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ea580c; 
+        }
+        /* 禁止选中文字，配合防复制 */
+        body {
+            user-select: none;
+            -webkit-user-select: none;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect } = React;
+
+        // --- 图标组件 (内置SVG，无需额外依赖) ---
+        const IconBase = ({ d, size = 20, className = "" }) => (
+            <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+                {d}
+            </svg>
+        );
+
+        const Layers = (props) => <IconBase {...props} d={<><polygon points="12 2 2 7 12 12 22 7 12 2"/><polyline points="2 17 12 22 22 17"/><polyline points="2 12 12 17 22 12"/></>} />;
+        const Trophy = (props) => <IconBase {...props} d={<><path d="M6 9H4.5a2.5 2.5 0 0 1 0-5H6"/><path d="M18 9h1.5a2.5 2.5 0 0 0 0-5H18"/><path d="M4 22h16"/><path d="M10 14.66V17c0 .55-.47.98-.97 1.21C7.85 18.75 7 20.24 7 22"/><path d="M14 14.66V17c0 .55.47.98.97 1.21C16.15 18.75 17 20.24 17 22"/><path d="M18 2H6v7a6 6 0 0 0 12 0V2Z"/></>} />;
+        const ChevronRight = (props) => <IconBase {...props} d={<polyline points="9 18 15 12 9 6"/>} />;
+        const Lightbulb = (props) => <IconBase {...props} d={<><path d="M15 14c.2-1 .7-1.7 1.5-2.5 1-1 1.5-2 1.5-3.5A6 6 0 0 0 6 8c0 1 .5 2.2 1.5 3.5.8.7 1.3 1.5 1.5 2.5"/><path d="M9 18h6"/><path d="M10 22h4"/></>} />;
+        const Code = (props) => <IconBase {...props} d={<><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></>} />;
+        const Cpu = (props) => <IconBase {...props} d={<><rect x="4" y="4" width="16" height="16" rx="2" ry="2"/><rect x="9" y="9" width="6" height="6"/><line x1="9" y1="1" x2="9" y2="4"/><line x1="15" y1="1" x2="15" y2="4"/><line x1="9" y1="20" x2="9" y2="23"/><line x1="15" y1="20" x2="15" y2="23"/><line x1="20" y1="9" x2="23" y2="9"/><line x1="20" y1="14" x2="23" y2="14"/><line x1="1" y1="9" x2="4" y2="9"/><line x1="1" y1="14" x2="4" y2="14"/></>} />;
+        const CheckCircle = (props) => <IconBase {...props} d={<><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></>} />;
+
+        // --- 数据源：包含8道题目的详细信息 ---
+        const problemsData = {
+            3: [
+                {
+                    id: 1149,
+                    title: "最长单词",
+                    tags: ["字符串", "遍历", "逻辑判断"],
+                    difficulty: "★★★",
+                    desc: "输入一个英文句子（包含空格），找出其中最长的单词并输出。如果长度相同，输出最先出现的那个。",
+                    logic: [
+                        { title: "接收输入", text: "因为句子包含空格，不能用 cin >> s，必须使用 getline(cin, s) 读取整行。" },
+                        { title: "遍历字符串", text: "像走路一样，从头走到尾。遇到字母就让计数器 len++，记录当前单词长度。" },
+                        { title: "遇到分隔符", text: "遇到空格或句号，说明一个单词结束了。此时比较当前单词长度和历史最大长度。" },
+                        { title: "更新最大值", text: "如果 当前长度 > 最大长度，则更新最大长度，并记录这个单词的起始位置。" }
+                    ],
+                    code: `#include <iostream>
+#include <string>
+using namespace std;
+
+int main() {
+    string s;
+    getline(cin, s); // 读取带空格的一整行
+
+    int maxLen = 0, currentLen = 0;
+    int maxEndIndex = 0; // 记录最长单词结束的位置
+
+    // 技巧：给字符串最后加个空格，统一处理逻辑
+    if (s.back() != ' ') s += ' '; 
+
+    for (int i = 0; i < s.length(); i++) {
+        if (s[i] != ' ' && s[i] != '.') {
+            // 如果是字母，长度+1
+            currentLen++;
+        } else {
+            // 如果是分隔符，结算当前单词
+            if (currentLen > maxLen) {
+                maxLen = currentLen;
+                maxEndIndex = i; // 记录结束位置
+            }
+            currentLen = 0; // 归零，准备下一个单词
+        }
+    }
+
+    // 输出最长单词
+    // substr(起始位置, 长度)
+    // 起始位置 = 结束位置 - 长度
+    cout << s.substr(maxEndIndex - maxLen, maxLen) << endl;
+    return 0;
+}`
+                },
+                {
+                    id: 1082,
+                    title: "第n小的质数",
+                    tags: ["多重循环", "质数判定", "计数器"],
+                    difficulty: "★★★",
+                    desc: "输入一个整数n，求出第n小的质数。例如n=10，第10个质数是29。",
+                    logic: [
+                        { title: "外层循环：找数", text: "我们需要一个循环不断尝试整数 x = 2, 3, 4, 5... 只要找到的质数不够n个，就一直找下去。" },
+                        { title: "内层逻辑：判质", text: "对于每一个数 x，判断它是不是质数。如果是，计数器 count++。" },
+                        { title: "终止条件", text: "当 count 等于 n 时，当前检查的这个数 x 就是答案，输出并结束程序。" }
+                    ],
+                    code: `#include <iostream>
+#include <cmath>
+using namespace std;
+
+// 判质数函数：这是GESP 3-4级的必备技能
+bool isPrime(int num) {
+    if (num < 2) return false;
+    for (int i = 2; i * i <= num; i++) { // 必须用 sqrt 效率优化
+        if (num % i == 0) return false;
+    }
+    return true;
+}
+
+int main() {
+    int n;
+    cin >> n;
+    
+    int count = 0; // 记录找到了几个质数
+    int x = 2;     // 从2开始尝试
+    
+    while (true) {
+        if (isPrime(x)) {
+            count++;
+        }
+        if (count == n) {
+            cout << x << endl;
+            break; // 找到了，收工
+        }
+        x++;
+    }
+    return 0;
+}`
+                }
+            ],
+            4: [
+                {
+                    id: 1179,
+                    title: "奖学金",
+                    tags: ["结构体", "多关键字排序", "函数"],
+                    difficulty: "★★★★",
+                    desc: "根据三科成绩计算总分并排序。优先按总分降序；总分相同按语文降序；还相同按学号升序。",
+                    logic: [
+                        { title: "定义结构体", text: "学生有语文、数学、英语、总分、学号这5个属性，必须打包成 struct Student。" },
+                        { title: "自定义CMP", text: "这是核心！sort函数需要知道谁排前谁排后。编写 cmp 函数处理三个判断条件的优先级。" },
+                        { title: "计算总分", text: "在输入时直接计算 sum = c + m + e，避免排序时重复计算。" },
+                        { title: "输出前5名", text: "题目通常要求输出前5名，注意循环次数。" }
+                    ],
+                    code: `#include <iostream>
+#include <algorithm>
+using namespace std;
+
+struct Student {
+    int id;      // 学号
+    int chinese; // 语文
+    int math;
+    int english;
+    int total;   // 总分
+};
+
+// 核心排序逻辑
+bool cmp(Student a, Student b) {
+    if (a.total != b.total) {
+        return a.total > b.total; // 1. 总分高的在前
+    }
+    if (a.chinese != b.chinese) {
+        return a.chinese > b.chinese; // 2. 语文高的在前
+    }
+    return a.id < b.id; // 3. 学号小的在前
+}
+
+Student stus[305];
+
+int main() {
+    int n;
+    cin >> n;
+    for (int i = 1; i <= n; i++) {
+        stus[i].id = i; // 记录学号
+        cin >> stus[i].chinese >> stus[i].math >> stus[i].english;
+        stus[i].total = stus[i].chinese + stus[i].math + stus[i].english;
+    }
+
+    sort(stus + 1, stus + 1 + n, cmp);
+
+    for (int i = 1; i <= 5; i++) {
+        cout << stus[i].id << " " << stus[i].total << endl;
+    }
+    return 0;
+}`
+                },
+                {
+                    id: 1127,
+                    title: "图像旋转",
+                    tags: ["二维数组", "矩阵模拟", "坐标变换"],
+                    difficulty: "★★★★",
+                    desc: "输入一个 n*m 的矩阵，将其顺时针旋转 90 度后输出。",
+                    logic: [
+                        { title: "找规律", text: "拿一张纸画3x3表格。原坐标 (i, j) 旋转后会去哪里？" },
+                        { title: "坐标变换公式", text: "顺时针90度核心公式：新列号 = 原行号; 新行号 = n - 1 - 原列号。（或者直接倒序输出列）" },
+                        { title: "简单方法", text: "不一定要真移动数据。直接按旋转后的顺序打印即可：先循环列 j 从 0 到 m-1，再循环行 i 从 n-1 到 0。" }
+                    ],
+                    code: `#include <iostream>
+using namespace std;
+
+int a[105][105];
+
+int main() {
+    int n, m;
+    cin >> n >> m;
+    
+    // 输入矩阵
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < m; j++) {
+            cin >> a[i][j];
+        }
+    }
+
+    // 旋转输出逻辑
+    // 顺时针旋转90度 = 原来的第一列倒着变成第一行
+    for (int j = 0; j < m; j++) {       // 外层枚举原来的列
+        for (int i = n - 1; i >= 0; i--) { // 内层倒序枚举原来的行
+            cout << a[i][j] << " ";
+        }
+        cout << endl; // 打印完一行（原一列）换行
+    }
+
+    return 0;
+}`
+                }
+            ],
+            5: [
+                {
+                    id: 1174,
+                    title: "大整数乘法",
+                    tags: ["高精度", "数组模拟", "进位处理"],
+                    difficulty: "★★★★★",
+                    desc: "求两个不超过200位的非负整数的积。long long 存不下，必须用数组模拟。",
+                    logic: [
+                        { title: "倒序存储", text: "字符串读入，转换成数字倒序存入数组。a[0]存个位，a[1]存十位，方便进位。" },
+                        { title: "竖式核心", text: "双重循环：a[i] * b[j] 的结果应该贡献给 c[i+j]。这是高精乘法的核心公式。" },
+                        { title: "统一进位", text: "先算完所有的乘积叠加，最后统一处理进位（模10取余，除10进位）。" },
+                        { title: "去除前导零", text: "运算结果可能最高位是0，输出前要检查并去除。" }
+                    ],
+                    code: `#include <iostream>
+#include <string>
+#include <vector>
+using namespace std;
+
+int main() {
+    string s1, s2;
+    cin >> s1 >> s2;
+    
+    // 结果最长是两位数长度之和
+    vector<int> a, b, c(s1.length() + s2.length(), 0);
+
+    // 倒序处理
+    for (int i = s1.length() - 1; i >= 0; i--) a.push_back(s1[i] - '0');
+    for (int i = s2.length() - 1; i >= 0; i--) b.push_back(s2[i] - '0');
+
+    // 核心乘法逻辑
+    for (int i = 0; i < a.size(); i++) {
+        for (int j = 0; j < b.size(); j++) {
+            c[i + j] += a[i] * b[j]; // 累加乘积
+        }
+    }
+
+    // 处理进位
+    for (int i = 0; i < c.size() - 1; i++) {
+        c[i + 1] += c[i] / 10;
+        c[i] %= 10;
+    }
+
+    // 去除前导零（从高位往低位看）
+    int len = c.size() - 1;
+    while (len > 0 && c[len] == 0) len--;
+
+    // 倒序输出
+    for (int i = len; i >= 0; i--) cout << c[i];
+    
+    return 0;
+}`
+                },
+                {
+                    id: 1157,
+                    title: "哥德巴赫猜想",
+                    tags: ["数论", "函数优化", "枚举"],
+                    difficulty: "★★★★",
+                    desc: "验证：任何大于2的偶数都能分成两个质数之和。输入N，输出所有分解方案。",
+                    logic: [
+                        { title: "拆分逻辑", text: "对于偶数 N，我们只需要枚举第一个数 i (从2到 N/2)。" },
+                        { title: "验证逻辑", text: "如果 i 是质数，且 (N - i) 也是质数，那么这就是一个解：N = i + (N-i)。" },
+                        { title: "效率关键", text: "判质函数 isPrime 必须高效（只循环到 sqrt(n)），否则大数会超时。" }
+                    ],
+                    code: `#include <iostream>
+using namespace std;
+
+// 高效判质数
+bool isPrime(int n) {
+    if (n < 2) return false;
+    for (int i = 2; i * i <= n; i++) {
+        if (n % i == 0) return false;
+    }
+    return true;
+}
+
+int main() {
+    int n;
+    // 假设题目输入多组数据或单个数，这里以单数为例
+    // 题目通常要求输出例如: 10=3+7
+    cin >> n; 
+    
+    for (int i = 2; i <= n / 2; i++) {
+        // 如果 i 和 n-i 都是质数
+        if (isPrime(i) && isPrime(n - i)) {
+            cout << n << "=" << i << "+" << n - i << endl;
+            // 如果题目只要第一个解，这里加 break
+        }
+    }
+    return 0;
+}`
+                }
+            ],
+            6: [
+                {
+                    id: 1214,
+                    title: "八皇后",
+                    tags: ["DFS", "回溯算法", "经典题"],
+                    difficulty: "★★★★★",
+                    desc: "在8x8棋盘上放8个皇后，使其不能互相攻击（同行、同列、同对角线）。输出第b个解。",
+                    logic: [
+                        { title: "按行搜索", text: "我们一行一行地放。dfs(row) 表示正在尝试在第 row 行放皇后。" },
+                        { title: "冲突判断", text: "放之前检查：这一列有没有？左上对角线有没有？右上对角线有没有？" },
+                        { title: "标记数组", text: "用三个数组 col[], diag1[], diag2[] 记录占位情况，O(1)时间判断冲突。" },
+                        { title: "回溯", text: "放好后进入下一行 dfs(row+1)。如果后面走不通，退回来（重置标记），换个位置再试。" }
+                    ],
+                    code: `#include <iostream>
+using namespace std;
+
+int ans[9]; // ans[i] 表示第i行的皇后放在第几列
+int b, cnt = 0; // b是要求的第几个解，cnt是当前计数
+bool col[9], d1[20], d2[20]; // 列、主对角线、副对角线标记
+
+void dfs(int row) {
+    if (row > 8) { // 8行都放完了，找到一个解
+        cnt++;
+        if (cnt == b) {
+            for (int i = 1; i <= 8; i++) cout << ans[i];
+            cout << endl;
+        }
+        return;
+    }
+
+    for (int c = 1; c <= 8; c++) {
+        // 检查列、主对角线(row-c)、副对角线(row+c)是否有冲突
+        // +8 是为了防止 row-c 出现负数索引
+        if (!col[c] && !d1[row - c + 8] && !d2[row + c]) {
+            // 标记占用
+            col[c] = true; 
+            d1[row - c + 8] = true; 
+            d2[row + c] = true;
+            ans[row] = c; // 记录位置
+            
+            dfs(row + 1); // 递归下一行
+            
+            // 回溯：撤销标记，准备尝试下一列
+            col[c] = false; 
+            d1[row - c + 8] = false; 
+            d2[row + c] = false;
+        }
+    }
+}
+
+int main() {
+    int n; // 这里的n通常指有多少组测试数据，这里简化
+    cin >> b; 
+    dfs(1);
+    return 0;
+}`
+                },
+                {
+                    id: 1258,
+                    title: "数字金字塔",
+                    tags: ["动态规划", "递推", "记忆化"],
+                    difficulty: "★★★★",
+                    desc: "从金字塔顶走到低，每次只能向左下或右下走，求路径数字之和的最大值。",
+                    logic: [
+                        { title: "自底向上（聪明法）", text: "不要从上往下盲目走。从倒数第二行开始看：对于每个点，它到底部最大的和 = 自身 + max(左下, 右下)。" },
+                        { title: "状态转移", text: "dp[i][j] = a[i][j] + max(dp[i+1][j], dp[i+1][j+1])。" },
+                        { title: "最终答案", text: "一直推到塔顶，dp[1][1] 就是全局最大值。不需要递归，效率极高。" }
+                    ],
+                    code: `#include <iostream>
+#include <algorithm>
+using namespace std;
+
+int a[1005][1005]; // 存原始数据
+int f[1005][1005]; // 存DP结果（即从该点到底部的最大和）
+
+int main() {
+    int n;
+    cin >> n;
+    // 输入金字塔
+    for (int i = 1; i <= n; i++) {
+        for (int j = 1; j <= i; j++) {
+            cin >> a[i][j];
+        }
+    }
+
+    // 初始化最后一行：到底部的最大和就是它自己
+    for (int j = 1; j <= n; j++) {
+        f[n][j] = a[n][j];
+    }
+
+    // 从倒数第二行开始，往上递推
+    for (int i = n - 1; i >= 1; i--) {
+        for (int j = 1; j <= i; j++) {
+            // 核心公式：选左下和右下中较大的那个累加
+            f[i][j] = a[i][j] + max(f[i + 1][j], f[i + 1][j + 1]);
+        }
+    }
+
+    // 塔顶就是答案
+    cout << f[1][1] << endl;
+    return 0;
+}`
+                }
+            ]
+        };
+
+        const LevelBadge = ({ level, active, onClick }) => (
+            <button
+                onClick={onClick}
+                className={`flex items-center space-x-2 px-4 py-3 w-full rounded-xl transition-all duration-200 ${
+                    active 
+                        ? 'bg-orange-500 text-white shadow-lg transform scale-105' 
+                        : 'bg-white text-gray-600 hover:bg-orange-50 border border-gray-100'
+                }`}
+            >
+                <div className={`p-2 rounded-lg ${active ? 'bg-white/20' : 'bg-orange-100 text-orange-600'}`}>
+                    <Trophy size={20} />
+                </div>
+                <div className="flex flex-col items-start">
+                    <span className="font-bold text-sm">GESP {level}级</span>
+                    <span className="text-xs opacity-80">{level === 3 ? '字符串与循环' : level === 4 ? '结构体与模拟' : level === 5 ? '数论与高精' : '搜索与动规'}</span>
+                </div>
+            </button>
+        );
+
+        const ProblemCard = ({ problem, active, onClick }) => (
+            <div 
+                onClick={onClick}
+                className={`cursor-pointer p-4 rounded-xl border transition-all duration-200 ${
+                    active 
+                        ? 'border-orange-500 bg-orange-50 ring-2 ring-orange-200' 
+                        : 'border-gray-200 bg-white hover:border-orange-300 hover:shadow-md'
+                }`}
+            >
+                <div className="flex justify-between items-start mb-2">
+                    <span className="font-bold text-gray-800 flex items-center gap-2">
+                        <span className="bg-orange-100 text-orange-700 px-2 py-0.5 rounded text-xs">#{problem.id}</span>
+                        {problem.title}
+                    </span>
+                    <span className="text-yellow-500 text-xs tracking-widest">{problem.difficulty}</span>
+                </div>
+                <div className="flex flex-wrap gap-1 mt-2">
+                    {problem.tags.map((tag, idx) => (
+                        <span key={idx} className="text-xs px-2 py-0.5 bg-gray-100 text-gray-600 rounded-full">
+                            {tag}
+                        </span>
+                    ))}
+                </div>
+            </div>
+        );
+
+        const App = () => {
+            const [activeLevel, setActiveLevel] = useState(3);
+            const [activeProblemId, setActiveProblemId] = useState(problemsData[3][0].id);
+            const [activeTab, setActiveTab] = useState('logic');
+
+            const currentLevelProblems = problemsData[activeLevel];
+            const activeProblem = currentLevelProblems.find(p => p.id === activeProblemId) || currentLevelProblems[0];
+
+            useEffect(() => {
+                const handleContextMenu = (e) => {
+                    e.preventDefault();
+                    return false;
+                };
+
+                const handleKeyDown = (e) => {
+                    if (
+                        e.key === 'F12' || 
+                        (e.ctrlKey && e.shiftKey && e.key === 'I') || 
+                        (e.ctrlKey && e.shiftKey && e.key === 'C') || 
+                        (e.ctrlKey && e.shiftKey && e.key === 'J') || 
+                        (e.ctrlKey && e.key === 'u')
+                    ) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        return false;
+                    }
+                };
+
+                document.addEventListener('contextmenu', handleContextMenu);
+                document.addEventListener('keydown', handleKeyDown);
+
+                return () => {
+                    document.removeEventListener('contextmenu', handleContextMenu);
+                    document.removeEventListener('keydown', handleKeyDown);
+                };
+            }, []);
+
+            return (
+                <div className="min-h-screen bg-gray-50 text-gray-800 font-sans flex flex-col md:flex-row select-none">
+                    
+                    {/* Sidebar Navigation */}
+                    <div className="w-full md:w-64 bg-white border-r border-gray-200 p-4 flex-shrink-0 flex flex-col gap-4 overflow-y-auto h-auto md:h-screen sticky top-0">
+                        <div className="mb-4">
+                            <h1 className="text-xl font-extrabold text-orange-600 flex items-center gap-2">
+                                <Layers className="text-orange-500" />
+                                GESP 题库精讲
+                            </h1>
+                            <p className="text-xs text-gray-400 mt-1">一本通OJ 高频难点配套 - 童澄专版</p>
+                        </div>
+
+                        <div className="space-y-2">
+                            {[3, 4, 5, 6].map(level => (
+                                <LevelBadge 
+                                    key={level} 
+                                    level={level} 
+                                    active={activeLevel === level}
+                                    onClick={() => {
+                                        setActiveLevel(level);
+                                        setActiveProblemId(problemsData[level][0].id);
+                                        setActiveTab('logic');
+                                    }}
+                                />
+                            ))}
+                        </div>
+
+                        <div className="mt-6">
+                            <h3 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-1">本级题目列表</h3>
+                            <div className="space-y-3">
+                                {currentLevelProblems.map(problem => (
+                                    <ProblemCard 
+                                        key={problem.id}
+                                        problem={problem}
+                                        active={activeProblem.id === problem.id}
+                                        onClick={() => setActiveProblemId(problem.id)}
+                                    />
+                                ))}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Main Content */}
+                    <div className="flex-1 p-4 md:p-8 overflow-y-auto">
+                        <div className="max-w-4xl mx-auto">
+                            
+                            {/* Header */}
+                            <header className="mb-8">
+                                <div className="flex items-center gap-2 text-sm text-orange-600 font-medium mb-2">
+                                    <span>GESP {activeLevel}级</span>
+                                    <ChevronRight size={14} />
+                                    <span>一本通OJ #{activeProblem.id}</span>
+                                </div>
+                                <h2 className="text-3xl font-bold text-gray-900 mb-4">{activeProblem.title}</h2>
+                                <p className="text-gray-600 bg-white p-4 rounded-xl border border-gray-200 shadow-sm leading-relaxed">
+                                    {activeProblem.desc}
+                                </p>
+                            </header>
+
+                            {/* Interaction Tabs */}
+                            <div className="flex items-center gap-2 mb-6 border-b border-gray-200">
+                                <button 
+                                    onClick={() => setActiveTab('logic')}
+                                    className={`px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors border-b-2 ${
+                                        activeTab === 'logic' 
+                                        ? 'border-orange-500 text-orange-600' 
+                                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                                    }`}
+                                >
+                                    <Lightbulb size={16} />
+                                    解题思路图解
+                                </button>
+                                <button 
+                                    onClick={() => setActiveTab('code')}
+                                    className={`px-4 py-2 text-sm font-medium flex items-center gap-2 transition-colors border-b-2 ${
+                                        activeTab === 'code' 
+                                        ? 'border-orange-500 text-orange-600' 
+                                        : 'border-transparent text-gray-500 hover:text-gray-700'
+                                    }`}
+                                >
+                                    <Code size={16} />
+                                    参考代码 (C++)
+                                </button>
+                            </div>
+
+                            {/* Tab Content */}
+                            <div className="min-h-[400px]">
+                                {activeTab === 'logic' && (
+                                    <div className="grid grid-cols-1 gap-4">
+                                        {activeProblem.logic.map((step, idx) => (
+                                            <div key={idx} className="bg-white p-5 rounded-xl border border-gray-100 shadow-sm hover:shadow-md transition-shadow flex gap-4">
+                                                <div className="flex-shrink-0 w-8 h-8 bg-orange-100 text-orange-600 rounded-full flex items-center justify-center font-bold">
+                                                    {idx + 1}
+                                                </div>
+                                                <div>
+                                                    <h4 className="font-bold text-gray-800 mb-1">{step.title}</h4>
+                                                    <p className="text-gray-600 text-sm leading-relaxed">{step.text}</p>
+                                                </div>
+                                            </div>
+                                        ))}
+                                        
+                                        <div className="mt-4 p-6 bg-orange-50 rounded-xl border border-orange-100 flex flex-col items-center justify-center text-center">
+                                            <div className="text-orange-900 font-semibold mb-2 flex items-center gap-2">
+                                                <Cpu size={18} />
+                                                核心思维模型
+                                            </div>
+                                            <div className="text-orange-600 text-sm max-w-lg">
+                                                {activeLevel === 3 ? "提示：重点在于边界条件的处理（如最后一个字符）。" :
+                                                activeLevel === 4 ? "提示：画图是解决矩阵和排序问题的最好方法。" :
+                                                activeLevel === 5 ? "提示：数论题不要暴力枚举，利用数学性质（如sqrt）优化。" :
+                                                "提示：搜索问题要像走迷宫一样思考，遇到死胡同记得'回溯'。"}
+                                            </div>
+                                        </div>
+                                    </div>
+                                )}
+
+                                {activeTab === 'code' && (
+                                    <div className="relative">
+                                        <div className="absolute top-0 right-0 p-2">
+                                            <span className="text-xs text-gray-400 bg-gray-800 px-2 py-1 rounded">C++</span>
+                                        </div>
+                                        <pre className="bg-gray-900 text-gray-100 p-6 rounded-xl overflow-x-auto text-sm font-mono leading-relaxed shadow-inner">
+                                            <code>{activeProblem.code}</code>
+                                        </pre>
+                                        <div className="mt-4 flex items-start gap-2 text-sm text-gray-500">
+                                            <CheckCircle size={16} className="text-green-500 mt-0.5" />
+                                            <span>此代码已针对一本通OJ进行优化，包含必要的头文件和命名空间。注释部分解释了关键逻辑。</span>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+<div class="p-4 border-t border-orange-100 text-xs text-center text-orange-400 bg-orange-50/50">
+            &copy; 2025 上海童澄培训学校有限公司<br>版权所有
+        </div>
+</body>
+</html>

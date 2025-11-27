@@ -1,138 +1,171 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>我的账户 - 童澄未来</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root{ --brand:#f97316; --line:#ffe4cc; --bg:#fff7ed; --ink:#1f2937; }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',Roboto,Arial,sans-serif;color:var(--ink)}
-    .wrap{max-width:1100px;margin:24px auto;padding:0 16px}
-    h1{margin:0 0 12px 0}
-    .row{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .card{background:#fff;border:1px solid var(--line);border-radius:14px;padding:18px}
-    .muted{color:#64748b;font-size:13px}
-    .btn{display:inline-block;background:var(--brand);color:#fff;border-radius:10px;padding:10px 14px;text-decoration:none;cursor:pointer}
-    .btn.gray{background:#6b7280}
-    .pill{display:inline-block;margin-left:8px;padding:2px 8px;border-radius:999px;border:1px solid #e5e7eb;background:#f9fafb;color:#6b7280;font-size:12px}
-    .pill.green{background:#d1fae5;border-color:#6ee7b7;color:#10b981}
-    table{width:100%;border-collapse:collapse;margin-top:8px}
-    th,td{border-bottom:1px dashed #eee;padding:10px 8px;text-align:left;font-size:14px}
-    .admin-only{margin-top:12px;padding:12px;border:1px dashed #d1fae5;background:#f0fdf4;border-radius:10px}
-    @media (max-width:860px){ .row{grid-template-columns:1fr} }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>我的账户 - 童澄未来</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { DEFAULT: '#FA7800', light: '#fffbf0', hover: '#c2410c' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }</style>
 </head>
-<body>
-  <div class="wrap">
-    <h1>我的账户</h1>
+<body class="bg-gray-50 text-gray-700">
 
-    <div class="row">
-      <!-- 左：会员状态 -->
-      <div class="card">
-        <h3>会员状态 <span id="vip-pill" class="pill">未开通</span></h3>
-        <p class="muted">到期：<span id="expire">—</span></p>
-        <div style="margin-top:12px">
-          <a class="btn" href="upgrade.html">去升级 / 续费</a>
-          <button id="logout" class="btn gray" style="margin-left:8px">退出登录</button>
+    <nav class="h-16 bg-white border-b border-orange-100 flex items-center justify-between px-6 md:px-10 shadow-sm">
+        <div class="flex items-center gap-2">
+            <img src="assets/logo.png" alt="Logo" class="w-8 h-8 rounded-lg shadow-sm object-cover">
+            <span class="text-xl font-bold text-gray-800">个人中心</span>
         </div>
-      </div>
-
-      <!-- 右：账号资料 -->
-      <div class="card">
-        <h3>账户资料</h3>
-        <p class="muted">邮箱：<span id="email">—</span></p>
-        <p class="muted">用户ID：<span id="uid">—</span></p>
-        <p class="muted">角色：<span id="role">—</span></p>
-
-        <!-- 仅管理员可见 -->
-        <div id="admin-panel" class="admin-only" style="display:none">
-          <div style="font-weight:700;color:#065f46;margin-bottom:6px">管理员工具</div>
-          <a class="btn" href="admin-orders.html">进入订单审核后台</a>
+        <div class="flex gap-4 text-sm font-medium">
+            <a href="index.html" class="hover:text-brand">返回首页</a>
+            <a href="learn.html" class="hover:text-brand">去学习</a>
+            <button id="btn-logout" class="text-gray-400 hover:text-red-500">退出登录</button>
         </div>
-      </div>
-    </div>
+    </nav>
 
-    <!-- 我的订单 -->
-    <div class="card" style="margin-top:16px">
-      <h3>我的订单（最近 20 条）</h3>
-      <div class="muted">若无记录，请上传支付截图后等待审核。</div>
-      <table id="orders">
-        <thead>
-          <tr>
-            <th>时间</th><th>邮箱</th><th>截图</th><th>备注</th><th>状态</th>
-          </tr>
-        </thead>
-        <tbody></tbody>
-      </table>
-    </div>
-  </div>
+    <main class="max-w-4xl mx-auto py-10 px-6 space-y-8">
+        
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8 relative overflow-hidden">
+            <div class="absolute top-0 right-0 w-32 h-32 bg-orange-50 rounded-bl-full -mr-10 -mt-10 z-0"></div>
+            
+            <div class="relative z-10 flex flex-col md:flex-row justify-between items-start md:items-center gap-6">
+                <div>
+                    <h2 class="text-gray-500 text-sm font-bold uppercase tracking-wider mb-1">当前账号</h2>
+                    <div id="user-email" class="text-2xl font-bold text-gray-800 mb-4">加载中...</div>
+                    
+                    <div class="flex items-center gap-3">
+                        <span id="user-role-badge" class="px-3 py-1 bg-gray-100 text-gray-500 rounded-full text-sm font-bold">
+                            免费版
+                        </span>
+                        <span id="user-expiry" class="text-sm text-gray-400"></span>
+                    </div>
+                </div>
 
-  <script type="module">
-    import supabaseClient from './client.js';
+                <div class="flex flex-col gap-3 w-full md:w-auto">
+                    <a href="upgrade.html" class="px-6 py-3 bg-brand text-white font-bold rounded-xl hover:bg-brand-hover shadow-lg shadow-orange-100 text-center transition transform hover:-translate-y-0.5">
+                        🚀 升级 / 续费会员
+                    </a>
+                    <div class="text-xs text-center text-gray-400">解锁全部课程与题目</div>
+                </div>
+            </div>
+        </div>
 
-    function fmt(t){ try{ return new Date(t).toLocaleString(); }catch{return t||'—'} }
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-8">
+            <h3 class="text-lg font-bold text-gray-800 mb-6 border-l-4 border-brand pl-3">订单记录</h3>
+            
+            <div class="overflow-x-auto">
+                <table class="w-full text-sm text-left">
+                    <thead class="text-gray-400 font-medium border-b border-gray-100">
+                        <tr>
+                            <th class="py-3 px-2">时间</th>
+                            <th class="py-3 px-2">备注</th>
+                            <th class="py-3 px-2">状态</th>
+                        </tr>
+                    </thead>
+                    <tbody id="order-list">
+                        <tr>
+                            <td colspan="3" class="py-8 text-center text-gray-400">加载记录中...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
 
-    async function main(){
-      const { data } = await supabaseClient.auth.getUser();
-      const user = data?.user;
-      if (!user) { location.href = 'login.html?redirect=' + encodeURIComponent(location.pathname); return; }
+    </main>
 
-      // 账号资料
-      document.getElementById('email').textContent = user.email || '—';
-      document.getElementById('uid').textContent = user.id;
+    <script type="module">
+        import supabase from './client.js';
 
-      // profile
-      let role='free_user', expires=null;
-      const prof = await supabaseClient.from('profiles').select('role,membership_expires_at').eq('id', user.id).maybeSingle();
-      if (prof?.data){ role = prof.data.role || 'free_user'; expires = prof.data.membership_expires_at || null; }
-      document.getElementById('role').textContent = role;
+        (async () => {
+            // 1. 鉴权
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
 
-      // 会员状态徽章 + 到期
-      const paid = role==='admin' || (role==='paid_user' && expires && new Date(expires)>new Date());
-      const pill = document.getElementById('vip-pill');
-      pill.textContent = paid ? '已开通' : '未开通';
-      if (paid) pill.classList.add('green');
-      document.getElementById('expire').textContent = expires ? fmt(expires) : '—';
+            // 2. 填充基本信息
+            document.getElementById('user-email').textContent = user.email;
 
-      // 退出
-      document.getElementById('logout').addEventListener('click', async ()=>{
-        await supabaseClient.auth.signOut();
-        location.href = 'index.html';
-      });
+            // 3. 获取 Profile (查看角色和到期时间)
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('role, expires_at')
+                .eq('id', user.id)
+                .single();
 
-      // 管理员区块
-      if (role === 'admin') document.getElementById('admin-panel').style.display = 'block';
+            const role = profile?.role || 'free_user';
+            const badge = document.getElementById('user-role-badge');
+            const expiryEl = document.getElementById('user-expiry');
 
-      // 订单列表
-      const tb = document.querySelector('#orders tbody');
-      tb.innerHTML = '<tr><td colspan="5" class="muted">加载中…</td></tr>';
-      const { data: rows, error } = await supabaseClient
-        .from('orders')
-        .select('created_at,email,image_url,memo,status')
-        .eq('user_id', user.id)
-        .order('created_at', { ascending:false })
-        .limit(20);
+            if (role === 'paid_user' || role === 'admin') {
+                badge.className = "px-3 py-1 bg-yellow-100 text-yellow-700 border border-yellow-200 rounded-full text-sm font-bold";
+                badge.textContent = role === 'admin' ? "👑 管理员" : "💎 PRO 会员";
+                
+                if (profile.expires_at) {
+                    const date = new Date(profile.expires_at).toLocaleDateString();
+                    // 计算剩余天数
+                    const daysLeft = Math.ceil((new Date(profile.expires_at) - new Date()) / (1000 * 60 * 60 * 24));
+                    if (daysLeft > 0) {
+                        expiryEl.innerHTML = `有效期至: <b>${date}</b> (剩 ${daysLeft} 天)`;
+                    } else {
+                        expiryEl.innerHTML = `<span class="text-red-500">已于 ${date} 过期</span>`;
+                    }
+                } else {
+                    expiryEl.textContent = "有效期: 永久 / 未设置";
+                }
+            } else {
+                badge.textContent = "🌱 免费版用户";
+                expiryEl.textContent = "暂无到期时间";
+            }
 
-      if (error){ tb.innerHTML = `<tr><td colspan="5" class="muted">加载失败：${error.message}</td></tr>`; return; }
-      if (!rows || rows.length===0){ tb.innerHTML = '<tr><td colspan="5" class="muted">暂无记录</td></tr>'; return; }
+            // 4. 获取订单记录
+            const { data: orders } = await supabase
+                .from('orders')
+                .select('created_at, status, memo')
+                .eq('user_id', user.id)
+                .order('created_at', { ascending: false });
 
-      tb.innerHTML = rows.map(r => `
-        <tr>
-          <td>${fmt(r.created_at)}</td>
-          <td>${r.email || ''}</td>
-          <td>${r.image_url ? `<a href="${r.image_url}" target="_blank">查看截图</a>` : ''}</td>
-          <td>${r.memo || ''}</td>
-          <td>${r.status || ''}</td>
-        </tr>
-      `).join('');
-    }
+            const listEl = document.getElementById('order-list');
+            listEl.innerHTML = '';
 
-    main().catch(console.error);
-  </script>
+            if (!orders || orders.length === 0) {
+                listEl.innerHTML = '<tr><td colspan="3" class="py-8 text-center text-gray-400">暂无订单记录</td></tr>';
+            } else {
+                orders.forEach(order => {
+                    const date = new Date(order.created_at).toLocaleString();
+                    let statusHtml = '';
+                    
+                    if (order.status === 'approved') statusHtml = '<span class="text-green-600 bg-green-50 px-2 py-1 rounded text-xs font-bold">已通过</span>';
+                    else if (order.status === 'rejected') statusHtml = '<span class="text-red-600 bg-red-50 px-2 py-1 rounded text-xs font-bold">已拒绝</span>';
+                    else statusHtml = '<span class="text-blue-600 bg-blue-50 px-2 py-1 rounded text-xs font-bold">审核中</span>';
 
-  <!-- 只需 client.js（你已全站引用 CDN） -->
-  <script type="module" src="client.js"></script>
+                    const row = document.createElement('tr');
+                    row.className = "border-b border-gray-50 hover:bg-gray-50 transition";
+                    row.innerHTML = `
+                        <td class="py-4 px-2 text-gray-500">${date}</td>
+                        <td class="py-4 px-2 font-medium text-gray-700">${order.memo || '-'}</td>
+                        <td class="py-4 px-2">${statusHtml}</td>
+                    `;
+                    listEl.appendChild(row);
+                });
+            }
+        })();
+
+        // 登出
+        document.getElementById('btn-logout').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.href = 'index.html';
+        });
+    </script>
 </body>
 </html>

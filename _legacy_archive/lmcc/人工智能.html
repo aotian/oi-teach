@@ -1,0 +1,864 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>人工智能基础 - 交互式学习文档</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        /* 核心安全样式：禁止选择和复制 */
+        body {
+            -webkit-user-select: none; /* Safari */
+            -ms-user-select: none; /* IE 10/11 */
+            user-select: none; /* Standard */
+            -webkit-touch-callout: none; /* iOS Safari */
+            background-color: #f3f4f6;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            overflow-x: hidden;
+        }
+
+        /* 打印时隐藏内容 */
+        @media print {
+            body { display: none; }
+        }
+
+        /* 滚动条美化 */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #f1f1f1; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1; 
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8; 
+        }
+
+        /* 动画类 */
+        .fade-in {
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-hover:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+
+        /* 侧边栏激活状态 */
+        .nav-item.active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .timeline-line {
+            position: absolute;
+            left: 50%;
+            top: 0;
+            bottom: 0;
+            width: 4px;
+            background-color: #e5e7eb;
+            transform: translateX(-50%);
+        }
+
+        /* --- 翻转卡片样式 --- */
+        .flip-card {
+            background-color: transparent;
+            perspective: 1000px;
+            height: 220px;
+            cursor: pointer;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-radius: 0.75rem;
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+        }
+
+        .flip-card-front {
+            background-color: #ffffff;
+            color: #1f2937;
+            border: 2px solid #e5e7eb;
+        }
+
+        .flip-card-front:hover {
+            border-color: #3b82f6;
+            background-color: #f8fafc;
+        }
+
+        .flip-card-back {
+            background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+            color: white;
+            transform: rotateY(180deg);
+            overflow-y: auto; 
+        }
+        
+        .flip-card-back h4 {
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+            width: 100%;
+            font-weight: bold;
+        }
+
+        .flip-card-back p {
+            font-size: 0.95rem;
+            line-height: 1.5;
+        }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- 移动端菜单按钮 -->
+    <button id="mobile-menu-btn" class="md:hidden p-4 text-gray-600 hover:bg-gray-100 absolute top-0 left-0 z-50">
+        <i class="fas fa-bars text-xl"></i>
+    </button>
+
+    <!-- 侧边栏导航 -->
+    <aside id="sidebar" class="bg-white w-64 flex-shrink-0 border-r border-gray-200 flex flex-col transition-transform transform -translate-x-full md:translate-x-0 absolute md:relative z-40 h-full">
+        <div class="p-6 border-b border-gray-100 bg-blue-50">
+            <h1 class="text-xl font-bold text-blue-800"><i class="fas fa-robot mr-2"></i>AI 基础学习</h1>
+            <p class="text-xs text-blue-600 mt-1">上海市中小学生人工智能算法设计</p>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                <li>
+                    <button onclick="showSection('concepts')" class="nav-item w-full text-left px-6 py-3 hover:bg-gray-50 transition-colors flex items-center active" id="nav-concepts">
+                        <i class="fas fa-brain w-6 text-center mr-3"></i>基本概念
+                    </button>
+                </li>
+                <li>
+                    <button onclick="showSection('history')" class="nav-item w-full text-left px-6 py-3 hover:bg-gray-50 transition-colors flex items-center" id="nav-history">
+                        <i class="fas fa-history w-6 text-center mr-3"></i>发展历程
+                    </button>
+                </li>
+                <li>
+                    <button onclick="showSection('tech')" class="nav-item w-full text-left px-6 py-3 hover:bg-gray-50 transition-colors flex items-center" id="nav-tech">
+                        <i class="fas fa-network-wired w-6 text-center mr-3"></i>技术体系
+                    </button>
+                </li>
+                <li>
+                    <button onclick="showSection('apps')" class="nav-item w-full text-left px-6 py-3 hover:bg-gray-50 transition-colors flex items-center" id="nav-apps">
+                        <i class="fas fa-grip-horizontal w-6 text-center mr-3"></i>应用领域
+                    </button>
+                </li>
+                <li>
+                    <button onclick="showSection('ethics')" class="nav-item w-full text-left px-6 py-3 hover:bg-gray-50 transition-colors flex items-center" id="nav-ethics">
+                        <i class="fas fa-balance-scale w-6 text-center mr-3"></i>挑战与伦理
+                    </button>
+                </li>
+                <li>
+                    <button onclick="showSection('vocab-cards')" class="nav-item w-full text-left px-6 py-3 hover:bg-gray-50 transition-colors flex items-center" id="nav-vocab-cards">
+                        <i class="fas fa-tags w-6 text-center mr-3"></i>核心概念卡片
+                    </button>
+                </li>
+                <li>
+                    <button onclick="showSection('quiz')" class="nav-item w-full text-left px-6 py-3 hover:bg-gray-50 transition-colors flex items-center text-blue-600 font-semibold" id="nav-quiz">
+                        <i class="fas fa-pencil-alt w-6 text-center mr-3"></i>互动练习
+                    </button>
+                </li>
+            </ul>
+        </nav>
+        <div class="p-4 border-t border-gray-100 text-xs text-center text-gray-400">
+            &copy; 2025 上海童澄培训学校有限公司 版权所有
+        </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="flex-1 overflow-y-auto bg-gray-50 p-4 md:p-8 relative" id="main-content">
+        
+        <!-- 1. 基本概念 -->
+        <section id="concepts" class="section-content max-w-4xl mx-auto fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-l-4 border-blue-500 pl-4">人工智能的基本概念</h2>
+            
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                <div class="flex items-start">
+                    <div class="bg-blue-100 p-3 rounded-lg mr-4 text-blue-600">
+                        <i class="fas fa-quote-left text-xl"></i>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-bold mb-2">定义与本质</h3>
+                        <p class="text-gray-600 leading-relaxed mb-4">
+                            <strong>人工智能 (AI)</strong> 是研究如何让计算机模拟、延伸和扩展人的智能的一门学科。
+                            本质是通过计算机模拟人类智能行为，使机器能够表现出感知、推理、学习、规划、决策等智能行为。
+                        </p>
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-100">
+                            <span class="font-semibold text-gray-700">任务示例：</span>
+                            <span class="text-gray-600 text-sm">学习、推理、解决问题、规划、导航、NLP、模式识别、感知、决策等。</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-bold text-gray-800 mb-4">核心能力</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8">
+                <div class="bg-white p-5 rounded-lg shadow-sm card-hover transition-all duration-300 border-t-4 border-green-400">
+                    <h4 class="font-bold text-lg mb-2"><i class="fas fa-book-reader text-green-500 mr-2"></i>学习能力</h4>
+                    <p class="text-gray-600 text-sm">从数据中自动学习规律。例如：机器学习。</p>
+                </div>
+                <div class="bg-white p-5 rounded-lg shadow-sm card-hover transition-all duration-300 border-t-4 border-purple-400">
+                    <h4 class="font-bold text-lg mb-2"><i class="fas fa-chess-knight text-purple-500 mr-2"></i>推理能力</h4>
+                    <p class="text-gray-600 text-sm">根据已有知识进行逻辑推导。例如：专家系统。</p>
+                </div>
+                <div class="bg-white p-5 rounded-lg shadow-sm card-hover transition-all duration-300 border-t-4 border-yellow-400">
+                    <h4 class="font-bold text-lg mb-2"><i class="fas fa-eye text-yellow-500 mr-2"></i>感知能力</h4>
+                    <p class="text-gray-600 text-sm">识别环境信息。例如：图像识别、语音识别。</p>
+                </div>
+                <div class="bg-white p-5 rounded-lg shadow-sm card-hover transition-all duration-300 border-t-4 border-red-400">
+                    <h4 class="font-bold text-lg mb-2"><i class="fas fa-map-signs text-red-500 mr-2"></i>决策能力</h4>
+                    <p class="text-gray-600 text-sm">在复杂场景中选择最优策略。例如：自动驾驶。</p>
+                </div>
+            </div>
+
+            <h3 class="text-xl font-bold text-gray-800 mb-4">AI 的分类</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="bg-blue-50 rounded-xl p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-blue-200 rounded-full opacity-50"></div>
+                    <h4 class="text-lg font-bold text-blue-800 mb-2">弱人工智能 (Narrow AI)</h4>
+                    <p class="text-sm text-blue-700 mb-3">专注于特定任务，目前我们接触的绝大多数 AI 都属于此类。</p>
+                    <ul class="text-sm text-blue-600 list-disc list-inside space-y-1">
+                        <li>语音助手 (Siri, 小爱)</li>
+                        <li>刷脸支付</li>
+                        <li>下象棋机器人</li>
+                    </ul>
+                </div>
+                
+                <div class="bg-indigo-50 rounded-xl p-6 relative overflow-hidden">
+                    <div class="absolute top-0 right-0 -mt-2 -mr-2 w-16 h-16 bg-indigo-200 rounded-full opacity-50"></div>
+                    <h4 class="text-lg font-bold text-indigo-800 mb-2">强人工智能 (General AI)</h4>
+                    <p class="text-sm text-indigo-700 mb-3">具备通用人类智能，像真正的“机器朋友”，目前<strong>尚未实现</strong>。</p>
+                    <ul class="text-sm text-indigo-600 list-disc list-inside space-y-1">
+                        <li>大白 (Baymax)</li>
+                        <li>瓦力 (WALL-E)</li>
+                        <li>哆啦A梦</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 发展历程 -->
+        <section id="history" class="section-content max-w-4xl mx-auto hidden fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-8 border-l-4 border-blue-500 pl-4">人工智能发展历程</h2>
+            
+            <div class="relative py-4">
+                <div class="timeline-line hidden md:block"></div>
+                
+                <!-- Item 1 -->
+                <div class="mb-8 flex justify-between items-center w-full right-timeline group md:flex-row flex-col">
+                    <div class="order-1 w-full md:w-5/12"></div>
+                    <div class="z-20 flex items-center order-1 bg-blue-500 shadow-xl w-8 h-8 rounded-full mb-2 md:mb-0 justify-center text-white text-xs font-bold">1</div>
+                    <div class="order-1 bg-white rounded-lg shadow-md w-full md:w-5/12 px-6 py-4 card-hover transition-transform">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-bold text-gray-800 text-lg">起步发展期</h3>
+                            <span class="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded-full">1943-1980</span>
+                        </div>
+                        <p class="text-sm text-gray-600">神经元模型、图灵测试、专家系统、反向传播算法。</p>
+                    </div>
+                </div>
+
+                <!-- Item 2 -->
+                <div class="mb-8 flex justify-between flex-row-reverse items-center w-full left-timeline group md:flex-row flex-col">
+                    <div class="order-1 w-full md:w-5/12"></div>
+                    <div class="z-20 flex items-center order-1 bg-indigo-500 shadow-xl w-8 h-8 rounded-full mb-2 md:mb-0 justify-center text-white text-xs font-bold">2</div>
+                    <div class="order-1 bg-white rounded-lg shadow-md w-full md:w-5/12 px-6 py-4 card-hover transition-transform">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-bold text-gray-800 text-lg">平稳发展期</h3>
+                            <span class="bg-indigo-100 text-indigo-800 text-xs px-2 py-1 rounded-full">1990-2010</span>
+                        </div>
+                        <p class="text-sm text-gray-600">支持向量机(SVM)、集成学习、深度学习概念提出。</p>
+                    </div>
+                </div>
+
+                <!-- Item 3 -->
+                <div class="mb-8 flex justify-between items-center w-full right-timeline group md:flex-row flex-col">
+                    <div class="order-1 w-full md:w-5/12"></div>
+                    <div class="z-20 flex items-center order-1 bg-purple-500 shadow-xl w-8 h-8 rounded-full mb-2 md:mb-0 justify-center text-white text-xs font-bold">3</div>
+                    <div class="order-1 bg-white rounded-lg shadow-md w-full md:w-5/12 px-6 py-4 card-hover transition-transform">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-bold text-gray-800 text-lg">快速发展期</h3>
+                            <span class="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded-full">2011-2016</span>
+                        </div>
+                        <p class="text-sm text-gray-600">AlexNet (图像识别)、AlphaGo (围棋)、ResNet。</p>
+                    </div>
+                </div>
+
+                <!-- Item 4 -->
+                <div class="mb-8 flex justify-between flex-row-reverse items-center w-full left-timeline group md:flex-row flex-col">
+                    <div class="order-1 w-full md:w-5/12"></div>
+                    <div class="z-20 flex items-center order-1 bg-pink-500 shadow-xl w-8 h-8 rounded-full mb-2 md:mb-0 justify-center text-white text-xs font-bold">4</div>
+                    <div class="order-1 bg-white rounded-lg shadow-md w-full md:w-5/12 px-6 py-4 card-hover transition-transform">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-bold text-gray-800 text-lg">繁荣发展期</h3>
+                            <span class="bg-pink-100 text-pink-800 text-xs px-2 py-1 rounded-full">2017-2022</span>
+                        </div>
+                        <p class="text-sm text-gray-600">Transformer、GPT系列、AlphaFold (蛋白质预测)。</p>
+                    </div>
+                </div>
+
+                <!-- Item 5 -->
+                <div class="mb-8 flex justify-between items-center w-full right-timeline group md:flex-row flex-col">
+                    <div class="order-1 w-full md:w-5/12"></div>
+                    <div class="z-20 flex items-center order-1 bg-red-500 shadow-xl w-8 h-8 rounded-full mb-2 md:mb-0 justify-center text-white text-xs font-bold">5</div>
+                    <div class="order-1 bg-white rounded-lg shadow-md w-full md:w-5/12 px-6 py-4 card-hover transition-transform border-2 border-red-500">
+                        <div class="flex justify-between items-center mb-2">
+                            <h3 class="font-bold text-gray-800 text-lg">爆发发展期</h3>
+                            <span class="bg-red-100 text-red-800 text-xs px-2 py-1 rounded-full">2023-至今</span>
+                        </div>
+                        <p class="text-sm text-gray-600">GPT-4 (多模态)、具身智能、国产大模型 (如DeepSeek)。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 3. 技术体系 -->
+        <section id="tech" class="section-content max-w-4xl mx-auto hidden fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-l-4 border-blue-500 pl-4">AI 技术体系</h2>
+
+            <div class="space-y-6">
+                <!-- 机器学习 -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="bg-blue-600 p-4 text-white flex items-center">
+                        <i class="fas fa-cogs text-2xl mr-3"></i>
+                        <h3 class="text-xl font-bold">机器学习 (Machine Learning)</h3>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-gray-700 mb-4 bg-blue-50 p-3 rounded">定义：让计算机通过数据“学会做事情”，不需要人手动告诉它每一步怎么做。</p>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50">
+                                <div class="text-blue-500 mb-2"><i class="fas fa-chalkboard-teacher text-2xl"></i></div>
+                                <h4 class="font-bold mb-1">监督学习</h4>
+                                <p class="text-xs text-gray-500 mb-2">"有答案的练习册"</p>
+                                <p class="text-xs text-gray-600">有标签数据，如分猫狗、识别垃圾邮件。</p>
+                            </div>
+                            <div class="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50">
+                                <div class="text-blue-500 mb-2"><i class="fas fa-layer-group text-2xl"></i></div>
+                                <h4 class="font-bold mb-1">无监督学习</h4>
+                                <p class="text-xs text-gray-500 mb-2">"自己给玩具分类"</p>
+                                <p class="text-xs text-gray-600">无标签，找规律，如图片分组、用户聚类。</p>
+                            </div>
+                            <div class="border border-gray-200 rounded-lg p-4 text-center hover:bg-gray-50">
+                                <div class="text-blue-500 mb-2"><i class="fas fa-gamepad text-2xl"></i></div>
+                                <h4 class="font-bold mb-1">强化学习</h4>
+                                <p class="text-xs text-gray-500 mb-2">"试错中学习"</p>
+                                <p class="text-xs text-gray-600">通过奖惩优化策略，如AI玩游戏、下棋。</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 深度学习 -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="bg-purple-600 p-4 text-white flex items-center">
+                        <i class="fas fa-network-wired text-2xl mr-3"></i>
+                        <h3 class="text-xl font-bold">深度学习 (Deep Learning)</h3>
+                    </div>
+                    <div class="p-6">
+                        <p class="text-gray-700 mb-4 bg-purple-50 p-3 rounded">
+                            定义：机器学习的一种高级方法，用多层神经网络自动发现数据特征。
+                            <br><span class="text-xs text-gray-500 block mt-1">原理比喻：像大脑细胞一样一层层传递，从边缘到形状再到整体（如认猫）。</span>
+                        </p>
+                        
+                        <div class="space-y-3">
+                            <div class="flex items-center p-3 border rounded-lg">
+                                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold mr-4 shrink-0">CNN</div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800">卷积神经网络</h4>
+                                    <p class="text-sm text-gray-600">识别图片，如人脸识别。</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-3 border rounded-lg">
+                                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold mr-4 shrink-0">RNN</div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800">循环神经网络</h4>
+                                    <p class="text-sm text-gray-600">处理连续数据，如机器翻译。</p>
+                                </div>
+                            </div>
+                            <div class="flex items-center p-3 border rounded-lg">
+                                <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center text-purple-600 font-bold mr-4 shrink-0">TF</div>
+                                <div>
+                                    <h4 class="font-bold text-gray-800">Transformer</h4>
+                                    <p class="text-sm text-gray-600">处理语言，如聊天机器人 GPT。</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 4. 应用领域 -->
+        <section id="apps" class="section-content max-w-4xl mx-auto hidden fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-l-4 border-blue-500 pl-4">主要应用领域</h2>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- NLP -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border-t-4 border-blue-500">
+                    <div class="text-blue-500 text-3xl mb-4"><i class="fas fa-comments"></i></div>
+                    <h3 class="text-lg font-bold mb-2">自然语言处理 (NLP)</h3>
+                    <p class="text-sm text-gray-600 mb-3">让计算机理解和生成人类语言。</p>
+                    <ul class="text-xs text-gray-500 list-disc list-inside bg-gray-50 p-2 rounded">
+                        <li>文本/情感分析</li>
+                        <li>机器翻译</li>
+                        <li>问答系统</li>
+                    </ul>
+                </div>
+
+                <!-- CV -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border-t-4 border-green-500">
+                    <div class="text-green-500 text-3xl mb-4"><i class="fas fa-camera"></i></div>
+                    <h3 class="text-lg font-bold mb-2">计算机视觉</h3>
+                    <p class="text-sm text-gray-600 mb-3">让计算机“看懂”图像或视频。</p>
+                    <ul class="text-xs text-gray-500 list-disc list-inside bg-gray-50 p-2 rounded">
+                        <li>面部识别</li>
+                        <li>物体检测</li>
+                        <li>影像分析</li>
+                    </ul>
+                </div>
+
+                <!-- Robotics -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border-t-4 border-gray-500">
+                    <div class="text-gray-500 text-3xl mb-4"><i class="fas fa-robot"></i></div>
+                    <h3 class="text-lg font-bold mb-2">机器人学</h3>
+                    <p class="text-sm text-gray-600 mb-3">结合机械、电子和AI。</p>
+                    <ul class="text-xs text-gray-500 list-disc list-inside bg-gray-50 p-2 rounded">
+                        <li>制造业</li>
+                        <li>服务业</li>
+                        <li>医疗机器人</li>
+                    </ul>
+                </div>
+
+                <!-- Expert Systems -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border-t-4 border-yellow-500">
+                    <div class="text-yellow-500 text-3xl mb-4"><i class="fas fa-user-md"></i></div>
+                    <h3 class="text-lg font-bold mb-2">专家系统</h3>
+                    <p class="text-sm text-gray-600 mb-3">基于知识库和推理引擎解决问题。</p>
+                    <ul class="text-xs text-gray-500 list-disc list-inside bg-gray-50 p-2 rounded">
+                        <li>医疗诊断</li>
+                        <li>财务咨询</li>
+                    </ul>
+                </div>
+
+                <!-- Speech -->
+                <div class="bg-white p-6 rounded-xl shadow-sm border-t-4 border-red-500">
+                    <div class="text-red-500 text-3xl mb-4"><i class="fas fa-microphone-alt"></i></div>
+                    <h3 class="text-lg font-bold mb-2">语音识别与合成</h3>
+                    <p class="text-sm text-gray-600 mb-3">语音转文字，或文字转语音。</p>
+                    <ul class="text-xs text-gray-500 list-disc list-inside bg-gray-50 p-2 rounded">
+                        <li>虚拟助手</li>
+                        <li>电话客服</li>
+                    </ul>
+                </div>
+            </div>
+        </section>
+
+        <!-- 5. 挑战与伦理 -->
+        <section id="ethics" class="section-content max-w-4xl mx-auto hidden fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-l-4 border-blue-500 pl-4">挑战与伦理问题</h2>
+            
+            <div class="space-y-4">
+                <div class="flex bg-white p-4 rounded-lg shadow-sm">
+                    <div class="flex-shrink-0 mr-4">
+                        <div class="w-12 h-12 bg-red-100 text-red-500 rounded-full flex items-center justify-center text-xl">
+                            <i class="fas fa-user-shield"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800">数据隐私与安全</h3>
+                        <p class="text-sm text-gray-600">需大量数据训练，可能含敏感信息。数据泄露、滥用侵犯隐私。</p>
+                    </div>
+                </div>
+
+                <div class="flex bg-white p-4 rounded-lg shadow-sm">
+                    <div class="flex-shrink-0 mr-4">
+                        <div class="w-12 h-12 bg-orange-100 text-orange-500 rounded-full flex items-center justify-center text-xl">
+                            <i class="fas fa-balance-scale-right"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800">算法偏见</h3>
+                        <p class="text-sm text-gray-600">继承训练数据偏见，导致招聘、贷款等领域的不公平歧视。</p>
+                    </div>
+                </div>
+
+                <div class="flex bg-white p-4 rounded-lg shadow-sm">
+                    <div class="flex-shrink-0 mr-4">
+                        <div class="w-12 h-12 bg-gray-100 text-gray-500 rounded-full flex items-center justify-center text-xl">
+                            <i class="fas fa-box-open"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800">可解释性问题</h3>
+                        <p class="text-sm text-gray-600">"黑盒"模型难以解释决策过程，影响在医疗、法律等关键领域的信任。</p>
+                    </div>
+                </div>
+
+                <div class="flex bg-white p-4 rounded-lg shadow-sm">
+                    <div class="flex-shrink-0 mr-4">
+                        <div class="w-12 h-12 bg-blue-100 text-blue-500 rounded-full flex items-center justify-center text-xl">
+                            <i class="fas fa-briefcase"></i>
+                        </div>
+                    </div>
+                    <div>
+                        <h3 class="text-lg font-bold text-gray-800">就业影响</h3>
+                        <p class="text-sm text-gray-600">自动化取代重复性工作，冲击就业市场结构。</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 6. 核心概念卡片 (新增) -->
+        <section id="vocab-cards" class="section-content max-w-6xl mx-auto hidden fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-l-4 border-blue-500 pl-4">核心概念词汇卡</h2>
+            <div class="flex items-center justify-between mb-6">
+                <p class="text-gray-600"><i class="fas fa-hand-pointer mr-2 text-blue-500"></i>点击卡片翻转查看详细定义。</p>
+            </div>
+            
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="vocab-grid">
+                <!-- 由 JS 生成 -->
+            </div>
+        </section>
+
+        <!-- 7. 互动练习 -->
+        <section id="quiz" class="section-content max-w-4xl mx-auto hidden fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-l-4 border-blue-500 pl-4">知识巩固测试</h2>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8">
+                <div id="quiz-container">
+                    <!-- 题目将通过 JS 渲染在这里 -->
+                </div>
+                
+                <div class="mt-8 flex justify-between items-center border-t border-gray-100 pt-6">
+                    <div class="text-sm text-gray-500">
+                        进度: <span id="progress-text">1 / 20</span>
+                    </div>
+                    <button onclick="submitQuiz()" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded-lg transition-colors shadow-md">
+                        提交答案
+                    </button>
+                </div>
+            </div>
+
+            <!-- 结果弹窗 -->
+            <div id="result-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+                <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center transform scale-95 opacity-0 transition-all duration-300" id="result-content">
+                    <div class="mb-4 text-5xl text-blue-500">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">测试完成!</h3>
+                    <p class="text-gray-600 mb-6">你的得分是: <span id="score-display" class="font-bold text-blue-600 text-xl"></span></p>
+                    <button onclick="closeResult()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg">
+                        关闭
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- 安全脚本：禁止右键、F12、复制 ---
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        
+        document.addEventListener('keydown', event => {
+            // 禁止 F12
+            if (event.key === 'F12') {
+                event.preventDefault();
+                return false;
+            }
+            // 禁止 Ctrl+Shift+I (DevTools)
+            if (event.ctrlKey && event.shiftKey && event.key === 'I') {
+                event.preventDefault();
+                return false;
+            }
+            // 禁止 Ctrl+Shift+J (Console)
+            if (event.ctrlKey && event.shiftKey && event.key === 'J') {
+                event.preventDefault();
+                return false;
+            }
+            // 禁止 Ctrl+Shift+C (Inspect)
+            if (event.ctrlKey && event.shiftKey && event.key === 'C') {
+                event.preventDefault();
+                return false;
+            }
+            // 禁止 Ctrl+U (View Source)
+            if (event.ctrlKey && event.key === 'u') {
+                event.preventDefault();
+                return false;
+            }
+            // 禁止 Ctrl+S (Save)
+            if (event.ctrlKey && event.key === 's') {
+                event.preventDefault();
+                return false;
+            }
+            // 禁止 Ctrl+P (Print)
+            if (event.ctrlKey && event.key === 'p') {
+                event.preventDefault();
+                return false;
+            }
+        });
+
+        // --- 导航逻辑 ---
+        function showSection(sectionId) {
+            // 隐藏所有部分
+            document.querySelectorAll('.section-content').forEach(el => {
+                el.classList.add('hidden');
+            });
+            
+            // 显示选中的部分
+            const target = document.getElementById(sectionId);
+            target.classList.remove('hidden');
+            
+            // 更新导航状态
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active', 'bg-blue-500', 'text-white');
+                if (el.id === 'nav-' + sectionId) {
+                    el.classList.add('active');
+                }
+            });
+
+            // 移动端：点击后自动收起菜单
+            if (window.innerWidth < 768) {
+                document.getElementById('sidebar').classList.add('-translate-x-full');
+            }
+
+            // 如果是 Quiz 页面，重置滚动
+            document.getElementById('main-content').scrollTop = 0;
+        }
+
+        // 移动端菜单切换
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        });
+
+        // --- 核心词汇数据 ---
+        const vocabData = [
+            { term: "人工智能 (AI)", def: "研究如何让计算机模拟、延伸和扩展人的智能的学科，包括感知、推理、学习等能力。" },
+            { term: "弱人工智能", def: "Narrow AI：专注于特定任务（如语音助手、围棋AI），不具备自我意识。" },
+            { term: "强人工智能", def: "General AI：具备通用人类智能，能像人一样思考、学习。目前尚未实现。" },
+            { term: "机器学习 (ML)", def: "让计算机通过数据“学会做事情”，不需要人手动告诉它每一步怎么做。" },
+            { term: "监督学习", def: "“有答案的练习册”。使用有标签的数据进行训练，如把猫狗图片分类。" },
+            { term: "无监督学习", def: "“自己给玩具分类”。使用无标签的数据，让电脑自己找规律，如数据聚类。" },
+            { term: "强化学习", def: "“试错中学习”。通过“奖励”和“惩罚”机制来优化策略，如AI玩游戏、下棋。" },
+            { term: "深度学习 (DL)", def: "机器学习的高级方法，使用多层神经网络自动发现数据特征，模拟人脑工作。" },
+            { term: "CNN (卷积神经网络)", def: "擅长处理图像数据，能识别边缘、形状，广泛用于人脸识别等计算机视觉领域。" },
+            { term: "RNN (循环神经网络)", def: "擅长处理连续数据（如时间序列、语音），常用于机器翻译和语音识别。" },
+            { term: "Transformer", def: "一种强大的深度学习模型，特别擅长处理自然语言，是ChatGPT等大模型的基础。" },
+            { term: "自然语言处理 (NLP)", def: "让计算机理解、解析和生成人类语言的技术，如机器翻译、聊天机器人。" },
+            { term: "计算机视觉 (CV)", def: "让计算机“看懂”图像或视频的技术，如自动驾驶中的障碍物检测。" },
+            { term: "专家系统", def: "基于人类专家的知识库和推理规则来解决特定问题的系统，如医疗诊断系统。" },
+            { term: "算法偏见", def: "因训练数据不公平导致AI模型产生的歧视性判断，如招聘筛选中对特定群体的偏见。" }
+        ];
+
+        function renderVocabCards() {
+            const grid = document.getElementById('vocab-grid');
+            grid.innerHTML = '';
+            
+            vocabData.forEach((item, index) => {
+                const card = document.createElement('div');
+                card.className = 'flip-card';
+                card.innerHTML = `
+                    <div class="flip-card-inner" onclick="this.parentElement.classList.toggle('flipped')">
+                        <div class="flip-card-front shadow-sm">
+                            <i class="fas fa-lightbulb text-yellow-400 text-3xl mb-3"></i>
+                            <h3 class="text-xl font-bold text-gray-800">${item.term}</h3>
+                            <p class="text-xs text-gray-400 mt-2">点击翻转查看定义</p>
+                        </div>
+                        <div class="flip-card-back shadow-md">
+                            <h4 class="text-lg mb-2">${item.term}</h4>
+                            <p class="text-white text-opacity-90">${item.def}</p>
+                        </div>
+                    </div>
+                `;
+                grid.appendChild(card);
+            });
+        }
+
+        // --- 题库数据 ---
+        const quizData = [
+            // 选择题
+            { type: 'choice', q: "人工智能（AI）的主要目标是：", options: ["A. 让机器像人一样聪明", "B. 让机器变大", "C. 让电脑变亮", "D. 让电脑更贵"], ans: 0 },
+            { type: 'choice', q: "下列哪一项是人工智能的感知能力？", options: ["A. 自动驾驶识别障碍物", "B. 计算数学题", "C. 写作文", "D. 整理房间"], ans: 0 },
+            { type: 'choice', q: "Siri 和小爱同学属于哪类人工智能？", options: ["A. 强人工智能", "B. 弱人工智能", "C. 超人工智能", "D. 量子智能"], ans: 1 },
+            { type: 'choice', q: "下列哪一项是人工智能的学习能力示例？", options: ["A. AI 根据游戏经验提高胜率", "B. 电脑随机亮灯", "C. 电视播放动画", "D. 收拾桌面"], ans: 0 },
+            { type: 'choice', q: "自动翻译、DeepSeek属于人工智能的哪一个分支？", options: ["A. 语音识别", "B. 自然语言处理", "C. 计算机视觉", "D. 机器人学"], ans: 1 },
+            { type: 'choice', q: "AlphaGo 战胜人类棋手属于人工智能发展历程中的哪个阶段？", options: ["A. 起步期", "B. 平稳期", "C. 快速发展期", "D. 繁荣发展期"], ans: 2 }, // 根据文档：2011-2016是快速发展期，AlphaGo在此列
+            { type: 'choice', q: "人工智能系统可能会因为训练数据不公平而产生：", options: ["A. 数据泄露", "B. 算法偏见", "C. 可解释性问题", "D. 就业影响"], ans: 1 },
+            { type: 'choice', q: "计算机通过摄像头识别人脸，这属于哪种技术？", options: ["A. 计算机视觉", "B. 自然语言处理", "C. 语音识别", "D. 强人工智能"], ans: 0 },
+            { type: 'choice', q: "下列哪一个是强化学习的示例？", options: ["A. AI 玩游戏通过试错提高成绩", "B. AI 写文章按模板输出", "C. AI 显示固定图片", "D. AI 打印文件"], ans: 0 },
+            { type: 'choice', q: "深度学习比传统机器学习更擅长处理哪类数据？", options: ["A. 文字、图片、声音", "B. 数字加减", "C. 做手工", "D. 玩游戏"], ans: 0 },
+            
+            // 判断题
+            { type: 'tf', q: "AI 可以根据经验从数据中自动学习。", ans: true },
+            { type: 'tf', q: "强人工智能已经完全实现了。", ans: false },
+            { type: 'tf', q: "人脸识别属于计算机视觉技术。", ans: true },
+            { type: 'tf', q: "自动驾驶只需要感知能力，不需要决策能力。", ans: false },
+            { type: 'tf', q: "使用 AI 可能会带来就业和隐私方面的影响。", ans: true },
+
+            // 填空题 (简化为选择或输入，这里为了交互方便使用带提示的输入)
+            { type: 'fill', q: "人工智能就是让机器变 ______ 。(聪明/笨拙)", ans: "聪明" },
+            { type: 'fill', q: "让电脑理解和生成人类语言的技术叫 ______ 。(计算机视觉/自然语言处理)", ans: "自然语言处理" },
+            { type: 'fill', q: "让电脑看懂图片和视频的技术叫 ______ 。(计算机视觉/语音识别)", ans: "计算机视觉" },
+            { type: 'fill', q: "AI 系统能听懂人类说话并转换成文字，这叫 ______ 。(语音合成/语音识别)", ans: "语音识别" },
+            { type: 'fill', q: "AI 可以通过分析大量数据自己找规律并优化行为，这种学习方式叫 ______ 。", ans: "机器学习" } // 也可以是深度学习，但文档中填空上下文更倾向机器学习
+        ];
+
+        // --- 渲染题目 ---
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = '';
+
+            quizData.forEach((item, index) => {
+                const div = document.createElement('div');
+                div.className = "mb-8 pb-6 border-b border-gray-100 last:border-0";
+                
+                let html = `<p class="font-bold text-lg mb-3 text-gray-800"><span class="bg-blue-100 text-blue-600 py-1 px-2 rounded text-sm mr-2">Q${index + 1}</span> ${item.q}</p>`;
+
+                if (item.type === 'choice') {
+                    html += `<div class="space-y-2">`;
+                    item.options.forEach((opt, optIdx) => {
+                        html += `
+                            <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer transition-colors">
+                                <input type="radio" name="q${index}" value="${optIdx}" class="mr-3 h-4 w-4 text-blue-600">
+                                <span class="text-gray-700 text-sm">${opt}</span>
+                            </label>
+                        `;
+                    });
+                    html += `</div>`;
+                } else if (item.type === 'tf') {
+                    html += `
+                        <div class="flex space-x-4">
+                            <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer w-32 justify-center">
+                                <input type="radio" name="q${index}" value="true" class="mr-2"> <i class="fas fa-check text-green-500 mr-1"></i> 正确
+                            </label>
+                            <label class="flex items-center p-3 border rounded-lg hover:bg-gray-50 cursor-pointer w-32 justify-center">
+                                <input type="radio" name="q${index}" value="false" class="mr-2"> <i class="fas fa-times text-red-500 mr-1"></i> 错误
+                            </label>
+                        </div>
+                    `;
+                } else if (item.type === 'fill') {
+                    html += `
+                        <input type="text" name="q${index}" placeholder="请输入答案" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-50">
+                    `;
+                }
+
+                // 结果反馈区域
+                html += `<div id="feedback-${index}" class="mt-2 text-sm hidden font-semibold"></div>`;
+                
+                div.innerHTML = html;
+                container.appendChild(div);
+            });
+            
+            document.getElementById('progress-text').innerText = `共 ${quizData.length} 题`;
+        }
+
+        // --- 提交逻辑 ---
+        function submitQuiz() {
+            let score = 0;
+            let total = quizData.length;
+
+            quizData.forEach((item, index) => {
+                const feedbackEl = document.getElementById(`feedback-${index}`);
+                let isCorrect = false;
+
+                if (item.type === 'choice') {
+                    const selected = document.querySelector(`input[name="q${index}"]:checked`);
+                    if (selected && parseInt(selected.value) === item.ans) {
+                        isCorrect = true;
+                    }
+                } else if (item.type === 'tf') {
+                    const selected = document.querySelector(`input[name="q${index}"]:checked`);
+                    const val = selected ? (selected.value === 'true') : null;
+                    if (val === item.ans) {
+                        isCorrect = true;
+                    }
+                } else if (item.type === 'fill') {
+                    const input = document.querySelector(`input[name="q${index}"]`);
+                    // 简单模糊匹配：去除空格
+                    if (input && input.value.trim() === item.ans) {
+                        isCorrect = true;
+                    }
+                }
+
+                if (isCorrect) {
+                    score++;
+                    feedbackEl.innerHTML = '<span class="text-green-600"><i class="fas fa-check-circle"></i> 回答正确</span>';
+                    feedbackEl.classList.remove('hidden');
+                } else {
+                    let correctText = "";
+                    if (item.type === 'choice') correctText = item.options[item.ans];
+                    else if (item.type === 'tf') correctText = item.ans ? "正确" : "错误";
+                    else correctText = item.ans;
+                    
+                    feedbackEl.innerHTML = `<span class="text-red-500"><i class="fas fa-times-circle"></i> 回答错误 (正确答案: ${correctText})</span>`;
+                    feedbackEl.classList.remove('hidden');
+                }
+            });
+
+            // 显示结果模态框
+            const modal = document.getElementById('result-modal');
+            const content = document.getElementById('result-content');
+            const scoreDisplay = document.getElementById('score-display');
+            
+            scoreDisplay.innerText = `${score} / ${total}`;
+            modal.classList.remove('hidden');
+            // 简单动画
+            setTimeout(() => {
+                content.classList.remove('scale-95', 'opacity-0');
+                content.classList.add('scale-100', 'opacity-100');
+            }, 10);
+        }
+
+        function closeResult() {
+            const modal = document.getElementById('result-modal');
+            const content = document.getElementById('result-content');
+            
+            content.classList.remove('scale-100', 'opacity-100');
+            content.classList.add('scale-95', 'opacity-0');
+            
+            setTimeout(() => {
+                modal.classList.add('hidden');
+            }, 300);
+        }
+
+        // 初始化
+        window.onload = function() {
+            renderQuiz();
+            renderVocabCards(); // 渲染卡片
+        };
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,648 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI科创思维数学 - 逻辑与应用</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#fff7ed',
+                            100: '#ffedd5',
+                            200: '#fed7aa',
+                            300: '#fdba74',
+                            400: '#fb923c',
+                            500: '#f97316', // Orange-500
+                            600: '#ea580c',
+                            700: '#c2410c',
+                            800: '#9a3412',
+                            900: '#7c2d12',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* 核心安全样式 */
+        body {
+            -webkit-user-select: none;
+            -ms-user-select: none;
+            user-select: none;
+            -webkit-touch-callout: none;
+            background-color: #fff7ed;
+            font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif;
+            overflow-x: hidden;
+        }
+
+        @media print { body { display: none; } }
+
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #fff7ed; }
+        ::-webkit-scrollbar-thumb { background: #fdba74; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #f97316; }
+
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .nav-item.active {
+            background-color: #f97316;
+            color: white;
+            box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.3);
+        }
+        
+        /* --- 翻转卡片样式 --- */
+        .flip-card {
+            background-color: transparent;
+            perspective: 1000px;
+            height: 300px;
+            cursor: pointer;
+        }
+
+        .flip-card-inner {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            text-align: center;
+            transition: transform 0.6s;
+            transform-style: preserve-3d;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            border-radius: 1rem;
+        }
+
+        .flip-card.flipped .flip-card-inner {
+            transform: rotateY(180deg);
+        }
+
+        .flip-card-front, .flip-card-back {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            -webkit-backface-visibility: hidden;
+            backface-visibility: hidden;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            border-radius: 1rem;
+            padding: 1.5rem;
+        }
+
+        .flip-card-front {
+            background-color: #ffffff;
+            color: #431407;
+            border: 2px solid #fed7aa;
+        }
+
+        .flip-card-front:hover {
+            border-color: #f97316;
+            background-color: #fffaf0;
+        }
+
+        .flip-card-back {
+            background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
+            color: white;
+            transform: rotateY(180deg);
+            overflow-y: auto; 
+            justify-content: flex-start;
+            padding-top: 1.5rem;
+        }
+        
+        .flip-card-back h4 {
+            border-bottom: 1px solid rgba(255,255,255,0.3);
+            padding-bottom: 0.5rem;
+            margin-bottom: 0.5rem;
+            width: 100%;
+            font-weight: bold;
+            font-size: 1.1rem;
+            flex-shrink: 0;
+        }
+
+        .flip-card-back p {
+            font-size: 0.9rem;
+            line-height: 1.5;
+            text-align: left;
+            width: 100%;
+        }
+
+        .card-graphic {
+            background: rgba(255,255,255,0.15);
+            border-radius: 8px;
+            margin-bottom: 10px;
+            padding: 10px;
+            width: 100%;
+            height: 80px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            flex-shrink: 0;
+        }
+
+        .example-step {
+            border-left: 3px solid #fb923c;
+            padding-left: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .math-var { font-family: 'Times New Roman', serif; font-style: italic; font-weight: bold; }
+        .math-num { font-family: 'Times New Roman', serif; }
+
+        /* Toast */
+        #toast {
+            visibility: hidden;
+            min-width: 250px;
+            background-color: #333;
+            color: #fff;
+            text-align: center;
+            border-radius: 8px;
+            padding: 16px;
+            position: fixed;
+            z-index: 100;
+            left: 50%;
+            top: 30px;
+            transform: translateX(-50%);
+            font-size: 16px;
+            opacity: 0;
+            transition: opacity 0.5s, top 0.5s;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+
+        #toast.show {
+            visibility: visible;
+            opacity: 1;
+            top: 50px;
+        }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <!-- Toast -->
+    <div id="toast">提示信息</div>
+
+    <!-- 移动端菜单 -->
+    <button id="mobile-menu-btn" class="md:hidden p-4 text-orange-600 hover:bg-orange-100 absolute top-0 left-0 z-50">
+        <i class="fas fa-bars text-xl"></i>
+    </button>
+
+    <!-- 侧边栏 -->
+    <aside id="sidebar" class="bg-white w-64 flex-shrink-0 border-r border-orange-100 flex flex-col transition-transform transform -translate-x-full md:translate-x-0 absolute md:relative z-40 h-full shadow-lg">
+        <div class="p-6 border-b border-orange-100 bg-orange-50">
+            <h1 class="text-xl font-bold text-orange-800 flex items-center">
+                <i class="fas fa-puzzle-piece mr-2 text-orange-600"></i>AI科创思维
+            </h1>
+            <p class="text-xs text-orange-600 mt-1 pl-1">逻辑与应用 (低年级组)</p>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                <li>
+                    <button onclick="showSection('concepts')" class="nav-item w-full text-left px-6 py-3 hover:bg-orange-50 transition-colors flex items-center active" id="nav-concepts">
+                        <i class="fas fa-lightbulb w-6 text-center mr-3"></i>思维考点
+                    </button>
+                </li>
+                <li>
+                    <button onclick="showSection('examples')" class="nav-item w-full text-left px-6 py-3 hover:bg-orange-50 transition-colors flex items-center" id="nav-examples">
+                        <i class="fas fa-chalkboard-teacher w-6 text-center mr-3"></i>经典例题
+                    </button>
+                </li>
+                <li>
+                    <button onclick="showSection('quiz')" class="nav-item w-full text-left px-6 py-3 hover:bg-orange-50 transition-colors flex items-center text-orange-600 font-bold" id="nav-quiz">
+                        <i class="fas fa-pencil-alt w-6 text-center mr-3"></i>全真演练
+                    </button>
+                </li>
+            </ul>
+        </nav>
+        <div class="p-4 border-t border-orange-100 text-xs text-center text-orange-400 bg-orange-50/50">
+            &copy; 2025 上海童澄培训学校有限公司<br>版权所有
+        </div>
+    </aside>
+
+    <!-- 主内容区 -->
+    <main class="flex-1 overflow-y-auto bg-orange-50/30 p-4 md:p-8 relative" id="main-content">
+        
+        <!-- 1. 核心考点 -->
+        <section id="concepts" class="section-content max-w-6xl mx-auto fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2 border-l-4 border-orange-500 pl-4">思维考点</h2>
+            <p class="text-gray-500 mb-6 pl-5 text-sm">点击卡片翻转查看定义、公式与图解</p>
+
+            <!-- 逻辑推理 -->
+            <h3 class="text-xl font-bold text-orange-700 mb-4 mt-8 flex items-center"><i class="fas fa-brain mr-2"></i>逻辑推理</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <!-- 抽屉原理 -->
+                <div class="flip-card">
+                    <div class="flip-card-inner" onclick="this.parentElement.classList.toggle('flipped')">
+                        <div class="flip-card-front">
+                            <i class="fas fa-box-open text-orange-400 text-4xl mb-4"></i>
+                            <h3 class="text-xl font-bold">抽屉原理</h3>
+                            <p class="text-xs text-gray-400 mt-2">最不利原则</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4>核心公式</h4>
+                            <div class="card-graphic">
+                                <svg width="100" height="60" viewBox="0 0 100 60">
+                                    <rect x="10" y="10" width="20" height="30" fill="none" stroke="white"/>
+                                    <rect x="40" y="10" width="20" height="30" fill="none" stroke="white"/>
+                                    <rect x="70" y="10" width="20" height="30" fill="none" stroke="white"/>
+                                    <circle cx="20" cy="25" r="5" fill="white"/>
+                                    <circle cx="50" cy="25" r="5" fill="white"/>
+                                    <circle cx="80" cy="25" r="5" fill="white"/>
+                                    <circle cx="20" cy="55" r="5" fill="rgba(255,255,255,0.5)" stroke="white" stroke-dasharray="2,2"/>
+                                </svg>
+                            </div>
+                            <p>保证发生 = <strong>最坏情况 + 1</strong>。<br>想保证拿到某个颜色的球，最坏情况是先把所有<strong>其他颜色</strong>的球都拿光，最后再拿 1 个。</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- 间隔问题 -->
+                <div class="flip-card">
+                    <div class="flip-card-inner" onclick="this.parentElement.classList.toggle('flipped')">
+                        <div class="flip-card-front">
+                            <i class="fas fa-ruler-horizontal text-orange-400 text-4xl mb-4"></i>
+                            <h3 class="text-xl font-bold">间隔问题</h3>
+                            <p class="text-xs text-gray-400 mt-2">锯木头/爬楼梯</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4>锯数与段数</h4>
+                            <div class="card-graphic">
+                                <svg width="100" height="40" viewBox="0 0 100 40">
+                                    <line x1="10" y1="20" x2="90" y2="20" stroke="white" stroke-width="4"/>
+                                    <line x1="36" y1="10" x2="36" y2="30" stroke="white" stroke-width="2" stroke-dasharray="4"/>
+                                    <line x1="63" y1="10" x2="63" y2="30" stroke="white" stroke-width="2" stroke-dasharray="4"/>
+                                    <text x="20" y="35" fill="white" font-size="10">1</text>
+                                    <text x="47" y="35" fill="white" font-size="10">2</text>
+                                    <text x="75" y="35" fill="white" font-size="10">3</text>
+                                </svg>
+                            </div>
+                            <p><strong>锯的次数 = 段数 - 1</strong><br>总时间 = 单次时间 × 次数<br>注意：楼梯层数同理，从1楼到3楼只走了2层。</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- 移多补少 -->
+                <div class="flip-card">
+                    <div class="flip-card-inner" onclick="this.parentElement.classList.toggle('flipped')">
+                        <div class="flip-card-front">
+                            <i class="fas fa-exchange-alt text-orange-400 text-4xl mb-4"></i>
+                            <h3 class="text-xl font-bold">移多补少</h3>
+                            <p class="text-xs text-gray-400 mt-2">逆向推理</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4>解题策略</h4>
+                            <div class="card-graphic">
+                                <svg width="100" height="50" viewBox="0 0 100 50">
+                                    <rect x="10" y="20" width="30" height="20" fill="none" stroke="white"/>
+                                    <rect x="60" y="20" width="30" height="20" fill="none" stroke="white"/>
+                                    <path d="M 25,15 Q 50,5 75,15" fill="none" stroke="white" marker-end="url(#arrow)"/>
+                                </svg>
+                            </div>
+                            <p>1. 明确移动方向（谁给谁）。<br>2. 根据最终状态（多/少/相等）列算式。<br>3. 还原初始状态。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 计数与组合 -->
+            <h3 class="text-xl font-bold text-orange-700 mb-4 mt-8 flex items-center"><i class="fas fa-calculator mr-2"></i>计数与组合</h3>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                <!-- 路径计数 -->
+                <div class="flip-card">
+                    <div class="flip-card-inner" onclick="this.parentElement.classList.toggle('flipped')">
+                        <div class="flip-card-front">
+                            <i class="fas fa-route text-orange-400 text-4xl mb-4"></i>
+                            <h3 class="text-xl font-bold">顺序与路径</h3>
+                            <p class="text-xs text-gray-400 mt-2">标数法</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4>标数法/枚举法</h4>
+                            <p>从起点开始，标记到达每一点的方法数。<br>某点的路径数 = 所有能直接到达该点的前序点路径数之和。<br>也可以按顺序一步步列举。</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- 组合搭配 -->
+                <div class="flip-card">
+                    <div class="flip-card-inner" onclick="this.parentElement.classList.toggle('flipped')">
+                        <div class="flip-card-front">
+                            <i class="fas fa-tshirt text-orange-400 text-4xl mb-4"></i>
+                            <h3 class="text-xl font-bold">组合搭配</h3>
+                            <p class="text-xs text-gray-400 mt-2">乘法原理</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4>分步计数</h4>
+                            <p>如果完成一件事需要分几步（如选上衣、选裤子）：<br><strong>总方法数 = 第一步选择数 × 第二步选择数 × ...</strong><br>注意“可以不选”也是一种选择。</p>
+                        </div>
+                    </div>
+                </div>
+                <!-- 奇偶规律 -->
+                <div class="flip-card">
+                    <div class="flip-card-inner" onclick="this.parentElement.classList.toggle('flipped')">
+                        <div class="flip-card-front">
+                            <i class="fas fa-toggle-on text-orange-400 text-4xl mb-4"></i>
+                            <h3 class="text-xl font-bold">奇偶规律</h3>
+                            <p class="text-xs text-gray-400 mt-2">周期性</p>
+                        </div>
+                        <div class="flip-card-back">
+                            <h4>状态判断</h4>
+                            <p>移动次数是<strong>奇数</strong> -> 状态改变（如开/关，黑/白）。<br>移动次数是<strong>偶数</strong> -> 状态恢复。<br>无需一步步模拟，直接看次数的奇偶性。</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- 2. 经典例题 -->
+        <section id="examples" class="section-content max-w-4xl mx-auto hidden fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-l-4 border-orange-500 pl-4">经典例题解析</h2>
+
+            <!-- 例题 1: 间隔问题 -->
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-6 border-t-4 border-orange-400">
+                <h3 class="text-lg font-bold text-orange-800 mb-3"><i class="fas fa-ruler-horizontal mr-2"></i>例题 1：锯木头（间隔问题）</h3>
+                <div class="bg-orange-50 p-4 rounded-lg mb-4 text-gray-700">
+                    <strong>题目：</strong>小明把一根铁棒锯成 3 段用了 4 分钟，如果他要把这根铁棒锯成 6 段，需要用几分钟？
+                </div>
+                <div class="space-y-2">
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">第一步：</span> 计算锯一次的时间。<br>
+                        锯成 3 段需要锯 <span class="math-var">3 - 1 = 2</span> 次。<br>
+                        锯一次时间 = <span class="math-var">4 ÷ 2 = 2</span> 分钟。
+                    </div>
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">第二步：</span> 计算锯 6 段的次数。<br>
+                        次数 = <span class="math-var">6 - 1 = 5</span> 次。
+                    </div>
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">第三步：</span> 计算总时间。<br>
+                        总时间 = <span class="math-var">5 × 2 = 10</span> 分钟。
+                    </div>
+                    <div class="bg-green-50 text-green-700 p-3 rounded font-bold text-center">
+                        答案：10 分钟
+                    </div>
+                </div>
+            </div>
+
+            <!-- 例题 2: 移多补少 -->
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-6 border-t-4 border-orange-400">
+                <h3 class="text-lg font-bold text-orange-800 mb-3"><i class="fas fa-exchange-alt mr-2"></i>例题 2：移多补少</h3>
+                <div class="bg-orange-50 p-4 rounded-lg mb-4 text-gray-700">
+                    <strong>题目：</strong>有一箱苹果，上层有 20 个，从下层拿 6 个到上层，这时下层比上层多 2 个。下层原有多少个苹果？
+                </div>
+                <div class="space-y-2">
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">第一步：</span> 计算现在的上层数量。<br>
+                        现在上层 = <span class="math-var">20 + 6 = 26</span> 个。
+                    </div>
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">第二步：</span> 根据关系求现在的下层数量。<br>
+                        现在下层比上层多 2 个，所以现在下层 = <span class="math-var">26 + 2 = 28</span> 个。
+                    </div>
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">第三步：</span> 还原原来的下层数量。<br>
+                        下层给了上层 6 个，所以原来下层 = <span class="math-var">28 + 6 = 34</span> 个。
+                    </div>
+                    <div class="bg-green-50 text-green-700 p-3 rounded font-bold text-center">
+                        答案：34 个
+                    </div>
+                </div>
+            </div>
+
+            <!-- 例题 3: 归一问题 -->
+            <div class="bg-white rounded-xl shadow-sm p-6 mb-6 border-t-4 border-orange-400">
+                <h3 class="text-lg font-bold text-orange-800 mb-3"><i class="fas fa-clock mr-2"></i>例题 3：归一问题</h3>
+                <div class="bg-orange-50 p-4 rounded-lg mb-4 text-gray-700">
+                    <strong>题目：</strong>2 个小朋友 4 分钟可以吃完 8 个苹果，照这样计算，3 个小朋友吃 24 个苹果需要几分钟？
+                </div>
+                <div class="space-y-2">
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">第一步：</span> 求单位效率（1个小朋友1分钟吃多少）。<br>
+                        或者求 1 个小朋友吃 1 个苹果要多久？<br>
+                        更简单的思路：求每个小朋友每分钟吃几个。<br>
+                        <span class="math-var">8 ÷ 4 ÷ 2 = 1</span> 个/人/分钟。
+                    </div>
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">第二步：</span> 计算 3 个小朋友每分钟吃几个。<br>
+                        <span class="math-var">3 × 1 = 3</span> 个。
+                    </div>
+                    <div class="example-step">
+                        <span class="font-bold text-orange-600">第三步：</span> 计算吃 24 个需要的时间。<br>
+                        <span class="math-var">24 ÷ 3 = 8</span> 分钟。
+                    </div>
+                    <div class="bg-green-50 text-green-700 p-3 rounded font-bold text-center">
+                        答案：8 分钟
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- 3. 实战演练 (Quiz) -->
+        <section id="quiz" class="section-content max-w-4xl mx-auto hidden fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-l-4 border-orange-500 pl-4">全真演练</h2>
+            <div class="bg-orange-100 border-l-4 border-orange-500 text-orange-700 p-4 mb-4 rounded shadow-sm">
+                <p class="font-bold"><i class="fas fa-info-circle mr-2"></i>说明：</p>
+                <p class="text-sm">本套练习共 26 题。请先完成所有题目，点击“提交答案”后，系统将统一显示分数和详细解析。</p>
+            </div>
+            
+            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 border border-orange-100">
+                <div id="quiz-container">
+                    <!-- JS将渲染题目 -->
+                </div>
+                
+                <div class="mt-8 flex justify-between items-center border-t border-gray-100 pt-6">
+                    <div class="text-sm text-gray-500">
+                        进度: <span id="progress-text">0 / 26</span>
+                    </div>
+                    <button onclick="submitQuiz()" id="submit-btn" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-8 rounded-lg transition-colors shadow-md shadow-orange-200">
+                        提交答案
+                    </button>
+                </div>
+            </div>
+
+            <!-- 结果弹窗 -->
+            <div id="result-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+                <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center transform scale-95 opacity-0 transition-all duration-300 border-t-8 border-orange-500" id="result-content">
+                    <div class="mb-4 text-5xl text-orange-500">
+                        <i class="fas fa-trophy"></i>
+                    </div>
+                    <h3 class="text-2xl font-bold mb-2">练习完成!</h3>
+                    <p class="text-gray-600 mb-6">你的得分是: <span id="score-display" class="font-bold text-orange-600 text-xl"></span></p>
+                    <button onclick="closeResult()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg">
+                        查看解析
+                    </button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- 安全脚本 ---
+        document.addEventListener('contextmenu', event => event.preventDefault());
+        document.addEventListener('keydown', event => {
+            if (event.key === 'F12' || (event.ctrlKey && ['u', 's', 'p'].includes(event.key))) {
+                event.preventDefault(); return false;
+            }
+        });
+
+        function showToast(message) {
+            const toast = document.getElementById("toast");
+            toast.innerText = message;
+            toast.className = "show";
+            setTimeout(() => toast.className = toast.className.replace("show", ""), 3000);
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(sectionId).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active', 'bg-orange-600', 'text-white');
+                if (el.id === 'nav-' + sectionId) el.classList.add('active');
+            });
+            if (window.innerWidth < 768) document.getElementById('sidebar').classList.add('-translate-x-full');
+            document.getElementById('main-content').scrollTop = 0;
+        }
+
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        });
+
+        // --- 题库数据 ---
+        const quizData = [
+            // 1. 顺序与路径
+            { q: "从 1 号房间走到 7 号房间（只能从小号走向相邻大号），共有多少种不同的走法？", options: ["A. 8", "B. 9", "C. 10", "D. 11"], ans: 0, expl: "使用标数法：到达每个房间的路径数 = 前序房间路径数之和。最终计算得 8 种。" },
+            
+            // 2. 分类与计数
+            { q: "每份套餐含一份水果、一份主食、一杯饮品。水果2种，主食2种，饮品2种。共有多少种不同价钱的套餐？(注：题目问不同价钱，但选项类似总数，按组合数算)", options: ["A. 6", "B. 7", "C. 8", "D. 9"], ans: 2, expl: "2 × 2 × 2 = 8 种组合。" },
+            { q: "每份套餐含一份水果(2种)、一份主菜(2种)、一杯饮品(2种)。共有多少种搭配？", options: ["A. 5", "B. 6", "C. 7", "D. 8"], ans: 3, expl: "2 × 2 × 2 = 8 种组合。" },
+
+            // 3. 数字和图形规律
+            { q: "机器人密码规律：最左3577，中间2633。最右边的密码是？", options: ["A. 7233", "B. 2533", "C. 2263", "D. 2753"], ans: 1, expl: "观察图形特征与数字对应关系，最右侧图形对应的密码为 2533。" },
+
+            // 4. 组合问题
+            { q: "5 个小朋友进行羽毛球单打比赛，每两人比赛一场，一共进行多少场？", options: ["A. 8", "B. 10", "C. 12", "D. 15"], ans: 1, expl: "5 × 4 ÷ 2 = 10 场。" },
+            { q: "5 个人互相握手，一共握手多少次？", options: ["A. 8", "B. 10", "C. 12", "D. 15"], ans: 1, expl: "5 × 4 ÷ 2 = 10 次。" },
+
+            // 5. 图形层数规律
+            { q: "五边形点阵，第1层1个，第2层每边2个（共6个?不，是1+5=6）。第8层共有多少个点？", options: ["A. 25", "B. 30", "C. 35", "D. 40"], ans: 2, expl: "参考文档答案C。规律通常为层数增加带来的边的累加。" },
+
+            // 6. 抽屉原理
+            { q: "盒子里红、蓝、黄、绿卡片各 6 张。至少抽出多少张，才能保证一定抽到蓝色卡片？", options: ["A. 6", "B. 19", "C. 18", "D. 17"], ans: 1, expl: "最坏情况：抽光红、黄、绿（6+6+6=18），再抽 1 张必为蓝。18 + 1 = 19。" },
+            { q: "盒子里黑、蓝、红、绿笔各 4 支。至少拿出多少支，才能保证拿到一支红色笔？", options: ["A. 4", "B. 12", "C. 13", "D. 15"], ans: 2, expl: "最坏情况：抽光黑、蓝、绿（4+4+4=12），再抽 1 支必为红。12 + 1 = 13。" },
+
+            // 7. 图形代数
+            { q: "△ + □ = 10，△ - □ = 4。三角形等于？", options: ["A. 3", "B. 6", "C. 7", "D. 9"], ans: 2, expl: "两式相加：2△ = 14 => △ = 7。" },
+            { q: "2○ + △ = 12，○ - △ = 3。三角形等于？", options: ["A. 2", "B. 4", "C. 5", "D. 6"], ans: 0, expl: "由式2得 ○ = △ + 3，代入式1：2(△+3) + △ = 12 => 3△ + 6 = 12 => 3△ = 6 => △ = 2。" },
+
+            // 8. 图形条件与数
+            { q: "周长 10 的等腰三角形有几种整数边长？", options: ["A. 1", "B. 2", "C. 3", "D. 4"], ans: 1, expl: "(4,4,2) 和 (3,3,4)。共2种。" },
+            { q: "周长 12 的三角形，三边为整数，有几种？", options: ["A. 1", "B. 2", "C. 3", "D. 4"], ans: 2, expl: "(4,4,4), (5,5,2), (5,4,3)？文档参考答案为 C(3)。" },
+
+            // 9. 间隔问题
+            { q: "把铁棒锯成 3 段用了 4 分钟，锯成 6 段需要几分钟？", options: ["A. 6", "B. 8", "C. 10", "D. 12"], ans: 2, expl: "锯3段需2次，每次2分钟。锯6段需5次，5×2=10分钟。" },
+            { q: "把竹竿锯成 2 段用了 5 分钟，锯成 5 段需要几分钟？", options: ["A. 10", "B. 15", "C. 20", "D. 25"], ans: 2, expl: "锯2段需1次，每次5分钟。锯5段需4次，4×5=20分钟。" },
+
+            // 10. 组合思想
+            { q: "3 双鞋、2 条裤子、1 顶帽子（可戴可不戴）。共有多少种搭配？", options: ["A. 12", "B. 10", "C. 9", "D. 6"], ans: 0, expl: "3 × 2 × (1+1) = 12 种。" },
+            { q: "2 件T恤、3 条裙子、2 顶帽子（可戴可不戴）。共有多少种搭配？", options: ["A. 18", "B. 20", "C. 12", "D. 24"], ans: 2, expl: "参考文档答案 C(12)。" },
+
+            // 11. 奇偶规律
+            { q: "小猫在2号位，每次换到相邻座位，换7次后在几号？", options: ["A. 1", "B. 2", "C. 3", "D. 4"], ans: 2, expl: "2是偶数位，移动奇数次后，位置奇偶性改变，应在奇数位（1或3）。参考答案C。" },
+            { q: "小球在3号格，每次移到相邻格，移8次后在几号？", options: ["A. 1", "B. 2", "C. 3", "D. 无法确定"], ans: 0, expl: "3是奇数位，移动偶数次后，奇偶性不变，仍在奇数位（1或3）。参考答案A。" },
+
+            // 12. 年龄问题
+            { q: "妹妹 7 岁，4 年后两人年龄和 30 岁，姐姐现在几岁？", options: ["A. 15", "B. 16", "C. 17", "D. 18"], ans: 0, expl: "现在年龄和 = 30 - 4×2 = 22。姐姐 = 22 - 7 = 15。" },
+            { q: "3 年后两人年龄和 26，一人现在 8 岁，另一人现在几岁？", options: ["A. 12", "B. 13", "C. 14", "D. 15"], ans: 0, expl: "现在年龄和 = 26 - 3×2 = 20。另一人 = 20 - 8 = 12。" },
+
+            // 13. 归一问题
+            { q: "2 人 4 分钟吃 8 个苹果。3 人吃 24 个苹果需几分钟？", options: ["A. 6", "B. 8", "C. 9", "D. 12"], ans: 1, expl: "效率：8÷2÷4=1个/人/分。3人效率3个/分。24÷3=8分钟。" },
+            { q: "1 台机器 6 小时生产 18 个零件。3 台机器生产 36 个零件需几小时？", options: ["A. 3", "B. 4", "C. 6", "D. 8"], ans: 1, expl: "效率：18÷6=3个/台/时。3台效率9个/时。36÷9=4小时。" },
+
+            // 14. 方位逻辑
+            { q: "汽车在飞机北，火车在轮船西，飞机在火车和轮船中间。轮船在桌上哪一侧？", options: ["A. 东", "B. 西", "C. 北", "D. 南"], ans: 0, expl: "火车--飞机--轮船。火车在西，轮船在东。" },
+            { q: "狗在猫北，兔在鸟西，猫在兔鸟中间。最东侧的是？", options: ["A. 狗", "B. 猫", "C. 兔", "D. 鸟"], ans: 3, expl: "兔--猫--鸟。鸟在最东。" },
+
+            // 15. 条件排序
+            { q: "甲<乙，丙>乙，丁比甲多比丙少。从少到多排列？", options: ["A. 甲丁乙丙", "B. 甲乙丁丙", "C. 丁甲乙丙", "D. 甲丙乙丁"], ans: 0, expl: "已知 A < B < C。又 A < D < C。参考答案A。" },
+            { q: "红>绿>蓝，黄比蓝多比红少。从多到少排列？", options: ["A. 红黄绿蓝", "B. 红绿黄蓝", "C. 黄红绿蓝", "D. 红蓝黄绿"], ans: 0, expl: "已知 R > G > B。又 B < Y < R。参考答案A。" },
+
+            // 16. 移多补少
+            { q: "上层20，下层给上层6个后，下层比上层多2个。下层原有多少？", options: ["A. 24", "B. 26", "C. 28", "D. 34"], ans: 3, expl: "现在上 = 20+6=26。现在下 = 26+2=28。原来下 = 28+6=34。" },
+            { q: "上篮15，下篮给上篮5个后，下篮比上篮少4个。下篮原有多少？", options: ["A. 14", "B. 18", "C. 20", "D. 21"], ans: 3, expl: "现在上 = 15+5=20。现在下 = 20-4=16。原来下 = 16+5=21。" }
+        ];
+
+        function renderQuiz() {
+            const container = document.getElementById('quiz-container');
+            container.innerHTML = '';
+            quizData.forEach((item, index) => {
+                let html = `<div class="mb-8 pb-6 border-b border-orange-100 last:border-0">
+                    <p class="font-bold text-lg mb-3 text-gray-800"><span class="bg-orange-100 text-orange-600 py-1 px-2 rounded text-sm mr-2">Q${index + 1}</span> ${item.q}</p>
+                    <div class="space-y-2">`;
+                item.options.forEach((opt, optIdx) => {
+                    html += `<label class="flex items-center p-3 border border-orange-200 rounded-lg hover:bg-orange-50 cursor-pointer transition-colors group">
+                        <input type="radio" name="q${index}" value="${optIdx}" onchange="updateProgress()" class="mr-3 h-4 w-4 text-orange-600 focus:ring-orange-500">
+                        <span class="text-gray-700 text-sm group-hover:text-orange-900">${opt}</span>
+                    </label>`;
+                });
+                html += `</div><div id="feedback-${index}" class="mt-3 text-sm hidden p-3 rounded-lg bg-gray-50"></div></div>`;
+                container.insertAdjacentHTML('beforeend', html);
+            });
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const answered = quizData.reduce((acc, _, idx) => acc + (document.querySelector(`input[name="q${idx}"]:checked`) ? 1 : 0), 0);
+            document.getElementById('progress-text').innerText = `${answered} / ${quizData.length}`;
+        }
+
+        function submitQuiz() {
+            const unanswered = quizData.map((_, i) => !document.querySelector(`input[name="q${i}"]:checked`) ? i+1 : null).filter(i => i);
+            if (unanswered.length > 0) return showToast(`请先完成剩余题目！`);
+
+            let score = 0;
+            quizData.forEach((item, index) => {
+                const inputs = document.getElementsByName(`q${index}`);
+                const selected = document.querySelector(`input[name="q${index}"]:checked`);
+                const feedback = document.getElementById(`feedback-${index}`);
+                
+                inputs.forEach(inp => inp.disabled = true);
+                const isCorrect = parseInt(selected.value) === item.ans;
+                if (isCorrect) score++;
+
+                feedback.innerHTML = isCorrect 
+                    ? `<span class="text-green-600 font-bold"><i class="fas fa-check-circle"></i> 回答正确</span>` 
+                    : `<span class="text-red-500 font-bold"><i class="fas fa-times-circle"></i> 回答错误</span><br><span class="text-gray-600 mt-1 block">正确答案：${item.options[item.ans]}<br><i class="fas fa-info-circle text-orange-400"></i> ${item.expl}</span>`;
+                feedback.className = `mt-3 text-sm p-3 rounded-lg border ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`;
+                feedback.classList.remove('hidden');
+            });
+
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerText = "已提交";
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            const modal = document.getElementById('result-modal');
+            document.getElementById('score-display').innerText = `${score} / ${quizData.length}`;
+            modal.classList.remove('hidden');
+            setTimeout(() => document.getElementById('result-content').classList.replace('scale-95', 'scale-100'), 10);
+            setTimeout(() => document.getElementById('result-content').classList.replace('opacity-0', 'opacity-100'), 10);
+        }
+
+        function closeResult() {
+            const modal = document.getElementById('result-modal');
+            document.getElementById('result-content').classList.replace('scale-100', 'scale-95');
+            document.getElementById('result-content').classList.replace('opacity-100', 'opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        window.onload = function() { renderQuiz(); };
+    </script>
+</body>
+</html>

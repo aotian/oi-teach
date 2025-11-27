@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>题库录入 - 童澄 CMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { brand: { DEFAULT: '#FA7800', hover: '#c2410c' } } } } }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+
+    <header class="bg-white border-b border-gray-200 px-6 h-16 flex justify-between items-center shadow-sm shrink-0 z-50">
+        <div class="flex items-center gap-8">
+            <div class="font-bold text-gray-800 text-lg flex items-center gap-2">
+                <img src="assets/logo.png" class="w-7 h-7 rounded object-cover">
+                童澄后台
+            </div>
+            
+            <nav class="flex bg-gray-100 p-1 rounded-lg">
+                <a href="admin-content.html" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition">
+                    📚 内容管理
+                </a>
+                <a href="admin-problems.html" class="px-4 py-1.5 rounded-md text-sm font-bold bg-white text-orange-600 shadow-sm transition">
+                    ✍️ 题库录入
+                </a>
+                <a href="admin-orders.html" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition">
+                    💰 订单审核
+                </a>
+            </nav>
+        </div>
+
+        <div class="flex items-center gap-4 text-sm">
+            <span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded font-bold">管理员模式</span>
+            <a href="index.html" class="text-gray-400 hover:text-gray-600 transition">退出后台</a>
+        </div>
+    </header>
+
+    <main class="flex-1 max-w-3xl w-full mx-auto p-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-8">
+            <h2 class="text-xl font-bold text-gray-800 mb-6 border-l-4 border-brand pl-3">录入新题目</h2>
+            
+            <form id="problem-form" class="space-y-6">
+                <div>
+                    <label class="block text-sm font-bold text-gray-600 mb-2">所属知识点</label>
+                    <select id="topic-select" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand focus:border-brand outline-none" required>
+                        <option value="">加载中...</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-600 mb-2">题干描述</label>
+                    <textarea id="title" rows="3" class="w-full border border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand focus:border-brand outline-none" placeholder="请输入题目内容..." required></textarea>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-bold text-gray-600 mb-2">选项 (选中即为正确答案)</label>
+                    <div class="space-y-3">
+                        <div class="flex items-center gap-3">
+                            <input type="radio" name="correct" value="0" class="w-4 h-4 text-brand focus:ring-brand" required>
+                            <input type="text" class="opt-input flex-1 border border-gray-300 rounded px-3 py-2 text-sm" placeholder="选项 A" required>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="radio" name="correct" value="1" class="w-4 h-4 text-brand focus:ring-brand">
+                            <input type="text" class="opt-input flex-1 border border-gray-300 rounded px-3 py-2 text-sm" placeholder="选项 B" required>
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="radio" name="correct" value="2" class="w-4 h-4 text-brand focus:ring-brand">
+                            <input type="text" class="opt-input flex-1 border border-gray-300 rounded px-3 py-2 text-sm" placeholder="选项 C">
+                        </div>
+                        <div class="flex items-center gap-3">
+                            <input type="radio" name="correct" value="3" class="w-4 h-4 text-brand focus:ring-brand">
+                            <input type="text" class="opt-input flex-1 border border-gray-300 rounded px-3 py-2 text-sm" placeholder="选项 D">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex gap-4">
+                    <div class="flex-1">
+                        <label class="block text-sm font-bold text-gray-600 mb-2">难度</label>
+                        <select id="difficulty" class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                            <option value="easy">简单</option>
+                            <option value="medium" selected>中等</option>
+                            <option value="hard">困难</option>
+                        </select>
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-bold text-gray-600 mb-2">题目解析 (选填)</label>
+                    <textarea id="analysis" rows="2" class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm" placeholder="答题后的反馈解析..."></textarea>
+                </div>
+
+                <div class="pt-4 flex items-center justify-between border-t border-gray-100 mt-4">
+                    <span id="msg" class="text-sm font-bold text-green-600 hidden bg-green-50 px-2 py-1 rounded">✅ 录入成功！</span>
+                    <button type="submit" id="submit-btn" class="bg-brand text-white px-8 py-2 rounded-lg font-bold hover:bg-orange-600 transition shadow-md">提交题目</button>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <script type="module">
+        import supabase from './client.js';
+
+        (async () => {
+            // 1. 登录检查
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return location.href = 'login.html';
+            
+            // 2. 🔴 新增：管理员权限检查 (安全补丁)
+            const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+            
+            const role = profile?.role;
+
+            // 1. 权限检查：允许 admin 和 teacher
+            if (role !== 'admin' && role !== 'teacher') {
+                alert('权限不足：仅限管理员或教研老师访问');
+                return location.href = 'index.html';
+            }
+
+            // 2. 动态调整导航栏 (如果是 teacher，隐藏敏感链接)
+            if (role === 'teacher') {
+                // 隐藏 订单审核、人员权限
+                // 注意：请确保您 HTML 里的导航链接有对应的 ID 或包含特定文字，或者直接用下面的通用隐藏法
+                const navLinks = document.querySelectorAll('nav a');
+                navLinks.forEach(link => {
+                    if (link.href.includes('admin-orders') || link.href.includes('admin-users')) {
+                        link.style.display = 'none';
+                    }
+                });
+                // 修改右上角标签
+                document.querySelector('.bg-orange-100').textContent = '教研老师模式';
+            }
+            
+            // 3. 权限通过后，加载知识点
+            const { data: topics } = await supabase.from('topics').select('id, name, category').order('category');
+            const select = document.getElementById('topic-select');
+            
+            const groups = {};
+            topics.forEach(t => {
+                if(!groups[t.category]) groups[t.category] = [];
+                groups[t.category].push(t);
+            });
+
+            select.innerHTML = '<option value="">-- 请选择知识点 --</option>';
+            for(const [cat, items] of Object.entries(groups)){
+                const optgroup = document.createElement('optgroup');
+                optgroup.label = cat;
+                items.forEach(t => {
+                    const opt = document.createElement('option');
+                    opt.value = t.id;
+                    opt.textContent = t.name;
+                    optgroup.appendChild(opt);
+                });
+                select.appendChild(optgroup);
+            }
+        })();
+
+        // 提交逻辑 (保持不变)
+        document.getElementById('problem-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true; btn.textContent = '提交中...';
+
+            const options = Array.from(document.querySelectorAll('.opt-input')).map(i => i.value.trim()).filter(v => v);
+            const correctVal = document.querySelector('input[name="correct"]:checked').value;
+
+            const newProblem = {
+                topic_id: document.getElementById('topic-select').value,
+                title: document.getElementById('title').value,
+                options: options,
+                correct_answer_index: parseInt(correctVal),
+                difficulty: document.getElementById('difficulty').value,
+                analysis: document.getElementById('analysis').value
+            };
+
+            const { error } = await supabase.from('problems').insert([newProblem]);
+
+            if(error) {
+                alert('出错: ' + error.message);
+            } else {
+                document.getElementById('msg').classList.remove('hidden');
+                setTimeout(() => document.getElementById('msg').classList.add('hidden'), 2000);
+                
+                document.getElementById('title').value = '';
+                document.getElementById('analysis').value = '';
+                document.querySelectorAll('.opt-input').forEach(i => i.value = '');
+                document.querySelector('input[name="correct"]:checked').checked = false;
+            }
+            btn.disabled = false; btn.textContent = '提交题目';
+        });
+    </script>
+</body>
+</html>

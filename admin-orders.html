@@ -1,244 +1,202 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="utf-8" />
-  <title>人工订单审核后台（增强）</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    :root{ --brand:#f97316 }
-    body{ background:#fff7ed }
-    .card{ background:#fff;border:1px solid #ffe4cc;border-radius:14px;padding:14px }
-    .pill{border-radius:999px;padding:2px 8px;font-size:12px}
-    .pill-pending{background:#fef9c3;color:#854d0e}
-    .pill-approved{background:#dcfce7;color:#166534}
-    .pill-rejected{background:#fee2e2;color:#991b1b}
-    .btn{background:var(--brand);color:#fff;border:0;border-radius:10px;padding:8px 12px}
-    .btn.gray{background:#6b7280}
-    .btn.red{background:#dc2626}
-    .radio-row label{margin-right:14px}
-    .dup{outline:2px solid #f97316}
-  </style>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>订单审核后台 - 童澄 CMS</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = { theme: { extend: { colors: { brand: { DEFAULT: '#FA7800', hover: '#c2410c' } } } } }
+    </script>
+    <style>body{background:#f8fafc}</style>
 </head>
-<body>
-  <div class="max-w-5xl mx-auto px-4 py-6">
-    <div class="flex items-center justify-between mb-4">
-      <h1 class="text-2xl font-extrabold text-orange-900">人工订单审核后台（增强）</h1>
-      <a class="text-orange-700 underline" href="./index.html">返回首页</a>
-    </div>
+<body class="min-h-screen flex flex-col">
 
-    <!-- 过滤区 -->
-    <div class="mb-4 flex items-center gap-2">
-      <button class="btn gray" data-filter="pending">待审核</button>
-      <button class="btn gray" data-filter="approved">已通过</button>
-      <button class="btn gray" data-filter="rejected">已拒绝</button>
-      <button class="btn gray" data-filter="all">全部</button>
-      <input id="kw" class="ml-3 px-3 py-2 rounded border" placeholder="按邮箱搜索..." />
-      <button id="btn-refresh" class="btn gray">刷新</button>
-    </div>
-
-    <!-- 列表 -->
-    <div id="list" class="space-y-4">
-      <div class="text-slate-500">加载中...</div>
-    </div>
-  </div>
-
-  <!-- 业务逻辑（ESM） -->
-  <script type="module">
-    import supabase from './client.js';
-
-    // ========= 权限：只允许 admin =========
-    async function ensureAdmin(){
-      const { data:auth } = await supabase.auth.getUser();
-      const user = auth?.user;
-      if(!user){ location.href = './login.html?redirect=' + encodeURIComponent(location.pathname); return null; }
-      const { data: prof, error } = await supabase.from('profiles')
-        .select('role').eq('id', user.id).maybeSingle();
-      if(error || !prof || prof.role!=='admin'){
-        alert('仅管理员可访问');
-        location.href = './index.html';
-        return null;
-      }
-      return user;
-    }
-
-    // ========= 数据 =========
-    let FILTER = 'pending';
-    let CACHE = [];
-
-    // 加载订单（带简单去重提示）
-    async function loadOrders(){
-      const kw = document.getElementById('kw').value.trim();
-      let query = supabase.from('orders')
-        .select('id,user_id,email,image_url,memo,status,created_at', { count:'exact' })
-        .order('created_at', { ascending:false });
-
-      if(FILTER!=='all') query = query.eq('status', FILTER);
-      if(kw) query = query.ilike('email', `%${kw}%`);
-
-      const { data, error } = await query;
-      if(error){ renderError(error.message); return; }
-      CACHE = data || [];
-      renderList();
-    }
-
-    // ========= 渲染 =========
-    const $list = document.getElementById('list');
-
-    function renderError(msg){
-      $list.innerHTML = `<div class="text-red-600">加载失败：${msg}</div>`;
-    }
-
-    function badge(status){
-      const map = {
-        pending: 'pill pill-pending',
-        approved:'pill pill-approved',
-        rejected:'pill pill-rejected'
-      };
-      return `<span class="${map[status]||'pill'}">${status}</span>`;
-    }
-
-    function renderList(){
-      if(!CACHE.length){
-        $list.innerHTML = `<div class="text-slate-500">没有数据</div>`;
-        return;
-      }
-
-      // 简单重复提交标记（同一 user_id 多条）
-      const dupUser = new Set();
-      const seen = new Set();
-      for(const r of CACHE){
-        const k = r.user_id||r.email;
-        if(seen.has(k)) dupUser.add(k);
-        else seen.add(k);
-      }
-
-      $list.innerHTML = CACHE.map(rec => {
-        const dup = dupUser.has(rec.user_id||rec.email) ? 'dup' : '';
-        const date = new Date(rec.created_at).toLocaleString();
-        return `
-          <div class="card ${dup}">
-            <div class="flex gap-4">
-              <img src="${rec.image_url}" class="w-40 h-40 object-contain border rounded" alt="凭证"/>
-              <div class="flex-1">
-                <div class="flex items-center gap-2 mb-1">
-                  <div class="font-bold">${rec.email||'(无邮箱)'}</div>
-                  ${badge(rec.status)}
-                  ${dup ? '<span class="pill pill-pending">重复提交</span>' : ''}
-                </div>
-                <div class="text-sm text-slate-600 mb-2">
-                  订单ID：${rec.id} · 提交：${date}<br/>
-                  备注：${rec.memo||'-'}
-                </div>
-
-                <!-- 审核面板 -->
-                <div class="card">
-                  <div class="text-sm font-bold text-orange-800 mb-2">开通 / 续期设置</div>
-                  <div class="radio-row text-sm mb-2">
-                    <label><input type="radio" name="d-${rec.id}" value="30"> 30天</label>
-                    <label><input type="radio" name="d-${rec.id}" value="90"> 90天</label>
-                    <label><input type="radio" name="d-${rec.id}" value="365" checked> 365天</label>
-                    <label class="ml-2">指定到期：
-                      <input type="date" id="date-${rec.id}" class="border rounded px-2 py-1 text-sm">
-                    </label>
-                  </div>
-                  <div class="flex gap-2">
-                    <button class="btn" data-act="approve" data-id="${rec.id}" data-user="${rec.user_id}">通过并设置到期</button>
-                    <button class="btn red" data-act="revoke" data-id="${rec.id}" data-user="${rec.user_id}">撤销会员资格</button>
-                    <button class="btn gray" data-act="reject" data-id="${rec.id}">拒绝</button>
-                  </div>
-                </div>
-              </div>
+    <header class="bg-white border-b border-gray-200 px-6 h-16 flex justify-between items-center shadow-sm shrink-0 z-50">
+        <div class="flex items-center gap-8">
+            <div class="font-bold text-gray-800 text-lg flex items-center gap-2">
+                <img src="assets/logo.png" class="w-7 h-7 rounded object-cover">
+                童澄后台
             </div>
-          </div>
-        `;
-      }).join('');
-    }
+            
+            <nav class="flex bg-gray-100 p-1 rounded-lg">
+                <a href="admin-content.html" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition">
+                    📚 内容管理
+                </a>
+                <a href="admin-problems.html" class="px-4 py-1.5 rounded-md text-sm font-medium text-gray-500 hover:text-gray-900 transition">
+                    ✍️ 题库录入
+                </a>
+                <a href="admin-orders.html" class="px-4 py-1.5 rounded-md text-sm font-bold bg-white text-orange-600 shadow-sm transition">
+                    💰 订单审核
+                </a>
+            </nav>
+        </div>
 
-    // ========= 动作：通过/撤销/拒绝 =========
-    function getExpiryFromUI(orderId){
-      const d = document.getElementById(`date-${orderId}`).value;
-      if(d){ return new Date(d+'T23:59:59'); }
-      const radios = [...document.querySelectorAll(`input[name="d-${orderId}"]`)];
-      const picked = radios.find(r=>r.checked);
-      const days = parseInt(picked?.value||'365',10);
-      const now = new Date();
-      now.setDate(now.getDate()+days);
-      now.setHours(23,59,59,0);
-      return now;
-    }
+        <div class="flex items-center gap-4 text-sm">
+            <span class="text-xs bg-orange-100 text-orange-600 px-2 py-1 rounded font-bold">管理员模式</span>
+            <a href="index.html" class="text-gray-400 hover:text-gray-600 transition">退出后台</a>
+        </div>
+    </header>
 
-    async function approveOrder(orderId, userId){
-      const expires = getExpiryFromUI(orderId).toISOString();
+    <main class="flex-1 max-w-5xl w-full mx-auto p-6">
+        <div class="flex justify-between items-center mb-6">
+            <h2 class="text-xl font-bold text-gray-800">待处理订单</h2>
+            <div class="flex gap-4 items-center text-sm">
+                <span id="stat-info" class="text-gray-500 bg-white px-3 py-1 rounded border border-gray-200">加载统计...</span>
+                <button onclick="location.reload()" class="text-brand hover:underline">刷新列表</button>
+            </div>
+        </div>
 
-      // 1) 更新 profiles（角色 + 到期）
-      const { error: e1 } = await supabase
-        .from('profiles')
-        .update({ role:'paid_user', membership_expires_at: expires })
-        .eq('id', userId);
+        <div id="order-list" class="space-y-4">
+            <div class="text-center text-gray-400 mt-20">正在加载订单...</div>
+        </div>
+    </main>
 
-      if(e1){ alert('更新会员失败：'+e1.message); return; }
+    <script type="module">
+        import supabase from './client.js';
 
-      // 2) 更新订单状态
-      const { error: e2 } = await supabase
-        .from('orders')
-        .update({ status:'approved' })
-        .eq('id', orderId);
+        (async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return location.href = 'login.html';
+            
+            const { data: profile } = await supabase.from('profiles').select('role').eq('id', user.id).single();
+            if (profile?.role !== 'admin') {
+                alert('权限不足');
+                return location.href = 'index.html';
+            }
 
-      if(e2){ alert('更新订单失败：'+e2.message); return; }
+            loadStats();
+            loadOrders();
+        })();
 
-      await loadOrders();
-    }
+        async function loadStats() {
+            const { data } = await supabase.from('orders_stats_daily').select('*').limit(1);
+            const t = data?.[0];
+            if (t) {
+                document.getElementById('stat-info').innerHTML = 
+                    `今日: <b>${t.total}</b> 单 (待审 <span class="text-brand font-bold">${t.pending}</span>)`;
+            }
+        }
 
-    async function revokeUser(userId, orderId){
-      const { error: e1 } = await supabase
-        .from('profiles')
-        .update({ role:'free_user', membership_expires_at: null })
-        .eq('id', userId);
-      if(e1){ alert('撤销失败：'+e1.message); return; }
+        async function loadOrders() {
+            const { data: orders, error } = await supabase
+                .from('orders')
+                .select('*')
+                .order('created_at', { ascending: false })
+                .limit(50);
 
-      // 可选：把当前订单标记为 revoked（若你保留此状态）
-      await supabase.from('orders').update({ status:'rejected' }).eq('id', orderId);
-      await loadOrders();
-    }
+            if (error) return alert('加载失败');
 
-    async function rejectOrder(orderId){
-      const { error } = await supabase
-        .from('orders')
-        .update({ status:'rejected' })
-        .eq('id', orderId);
-      if(error){ alert('拒绝失败：'+error.message); return; }
-      await loadOrders();
-    }
+            const container = document.getElementById('order-list');
+            container.innerHTML = '';
 
-    // ========= 事件 =========
-    document.addEventListener('click', async (e)=>{
-      const btn = e.target.closest('button');
-      if(!btn) return;
-      if(btn.dataset.filter){
-        FILTER = btn.dataset.filter;
-        await loadOrders();
-        return;
-      }
-      if(btn.id === 'btn-refresh'){ await loadOrders(); return; }
+            const hashMap = {};
+            orders.forEach(o => {
+                if (o.image_hash) hashMap[o.image_hash] = (hashMap[o.image_hash] || 0) + 1;
+            });
 
-      const act = btn.dataset.act;
-      if(!act) return;
-      const orderId = btn.dataset.id;
-      const userId  = btn.dataset.user;
+            orders.forEach(o => {
+                const isDup = o.image_hash && hashMap[o.image_hash] > 1;
+                const date = new Date(o.created_at).toLocaleString();
+                
+                let statusBadge = '';
+                if (o.status === 'pending') statusBadge = '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-xs font-bold">待审核</span>';
+                else if (o.status === 'approved') statusBadge = '<span class="bg-green-100 text-green-700 px-2 py-1 rounded text-xs font-bold">已通过</span>';
+                else statusBadge = '<span class="bg-red-100 text-red-700 px-2 py-1 rounded text-xs font-bold">已拒绝</span>';
 
-      if(act==='approve')  await approveOrder(orderId, userId);
-      if(act==='revoke')   await revokeUser(userId, orderId);
-      if(act==='reject')   await rejectOrder(orderId);
-    });
+                const el = document.createElement('div');
+                el.className = "bg-white rounded-xl shadow-sm border border-gray-200 p-6 flex flex-col md:flex-row gap-6 transition hover:shadow-md";
+                
+                el.innerHTML = `
+                    <div class="w-full md:w-48 shrink-0 bg-gray-50 rounded-lg border border-gray-100 flex items-center justify-center overflow-hidden">
+                        <a href="${o.image_url}" target="_blank">
+                            <img src="${o.image_url}" class="max-h-40 object-contain hover:scale-110 transition duration-300">
+                        </a>
+                    </div>
+                    <div class="flex-1">
+                        <div class="flex justify-between items-start mb-2">
+                            <div>
+                                <div class="text-sm text-gray-500 mb-1">订单号 #${o.id} · ${date}</div>
+                                <div class="font-bold text-gray-800 text-lg">${o.email}</div>
+                            </div>
+                            <div class="flex flex-col items-end gap-1">
+                                ${statusBadge}
+                                ${isDup ? '<span class="bg-red-50 text-red-500 px-2 py-0.5 rounded text-[10px] border border-red-100">⚠️ 重复图片</span>' : ''}
+                            </div>
+                        </div>
+                        <div class="bg-orange-50 text-orange-800 px-3 py-2 rounded text-sm mb-4 border border-orange-100">
+                            📝 备注：${o.memo || '无'}
+                        </div>
+                        ${o.status === 'pending' ? `
+                            <div class="border-t border-gray-100 pt-4 flex items-center gap-3 flex-wrap">
+                                <span class="text-sm font-bold text-gray-600">开通时长:</span>
+                                <label class="flex items-center gap-1 cursor-pointer text-sm"><input type="radio" name="dur-${o.id}" value="30" checked> 30天</label>
+                                <label class="flex items-center gap-1 cursor-pointer text-sm"><input type="radio" name="dur-${o.id}" value="90"> 90天</label>
+                                <label class="flex items-center gap-1 cursor-pointer text-sm"><input type="radio" name="dur-${o.id}" value="365"> 1年</label>
+                                <div class="flex-1 text-right space-x-2">
+                                    <button onclick="window.handleReject(${o.id})" class="px-3 py-1.5 text-sm text-gray-500 hover:bg-gray-100 rounded border border-gray-200 transition">拒绝</button>
+                                    <button onclick="window.handleApprove(${o.id}, '${o.user_id}')" class="px-4 py-1.5 text-sm bg-brand text-white font-bold rounded hover:bg-brand-hover shadow-sm transition">通过并开通</button>
+                                </div>
+                            </div>
+                        ` : ''}
+                        ${o.status === 'approved' ? `
+                            <div class="mt-2 text-right">
+                                <button onclick="window.handleRevoke(${o.id}, '${o.user_id}')" class="text-xs text-red-400 hover:underline">撤销会员资格</button>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+                container.appendChild(el);
+            });
+        }
 
-    document.getElementById('kw').addEventListener('keydown', (e)=>{
-      if(e.key==='Enter') loadOrders();
-    });
+        window.handleApprove = async (orderId, userId) => {
+            if(!confirm('确认通过此订单并开通会员？')) return;
 
-    // ========= 启动 =========
-    const me = await ensureAdmin();
-    if(me){ await loadOrders(); }
-  </script>
+            const days = document.querySelector(`input[name="dur-${orderId}"]:checked`).value;
+            const newExpiry = new Date();
+            newExpiry.setDate(newExpiry.getDate() + parseInt(days));
+
+            // 1. 先查一下目标用户现在的角色
+            const { data: targetProfile, error: profileErr } = await supabase
+                .from('profiles')
+                .select('role')
+                .eq('id', userId)
+                .single();
+
+            if (profileErr) {
+                alert('读取用户角色失败：' + profileErr.message);
+                return;
+            }
+
+            // 2. 决定 new_role：
+            //    - admin 还是 admin（拥有所有 VIP 权限）
+            //    - teacher 还是 teacher（以后老师账号也保留）
+            //    - 其它用户才升级为 paid_user
+            let newRole = 'paid_user';
+            const currentRole = targetProfile?.role?.trim();
+            if (currentRole === 'admin' || currentRole === 'teacher') {
+                newRole = currentRole;
+            }
+
+            // 3. 调用 RPC，只更新有效期 +（必要时）角色
+            const { error: rpcErr } = await supabase.rpc('admin_set_expiry', {
+                target_user_id: userId,
+                new_expiry_date: newExpiry.toISOString(),
+                new_role: newRole
+            });
+
+            if (rpcErr) {
+                alert('权限设置失败: ' + rpcErr.message);
+                return;
+            }
+
+    // 4. 更新订单状态
+    await supabase.from('orders').update({ status: 'approved' }).eq('id', orderId);
+    loadOrders();
+    loadStats();
+};
+
+    </script>
 </body>
 </html>

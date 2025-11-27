@@ -1,138 +1,176 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>登录与注册 - 童澄未来</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    .spinner { border: 3px solid rgba(255,255,255,.3); border-radius: 50%; border-top-color:#fff; animation: spin 1s ease-in-out infinite; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    @keyframes shake { 0%,100% { transform: translateX(0); } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
-    .animate-shake { animation: shake .3s ease-in-out; }
-  </style>
-</head>
-<body class="bg-gradient-to-br from-sky-100 to-blue-200 min-h-screen flex items-center justify-center p-4">
-  <div class="bg-white w-full max-w-md p-8 rounded-xl shadow-2xl transition-all duration-500" id="auth-card">
-    <div class="flex justify-center mb-6">
-      <a href="https://teach.tongchengweilai.com" target="_blank" class="flex items-center gap-2">
-        <svg class="h-10 w-10 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M12 21a9.004 9.004 0 008.716-6.747M12 21a9.004 9.004 0 01-8.716-6.747M12 21c.24 0 .468.02.69.055M12 21c-.24 0-.468.02-.69.055M12 3a9.004 9.004 0 00-8.716 6.747M12 3a9.004 9.004 0 018.716 6.747M12 3c.24 0 .468.02.69.055M12 3c-.24 0-.468.02-.69.055M12 12a3 3 0 100-6 3 3 0 000 6z"/>
-        </svg>
-        <span class="text-2xl font-bold text-gray-800">童澄未来</span>
-      </a>
-    </div>
-    <h2 id="form-title" class="text-3xl font-bold text-center text-gray-900 mb-6">登录</h2>
-    <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg mb-4 text-sm"></div>
-    <div id="success-message" class="hidden bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded-lg mb-4 text-sm"></div>
-    <div class="space-y-4">
-      <div class="form-group">
-        <label for="email" class="block text-sm font-medium text-gray-700">邮箱:</label>
-        <input type="email" id="email" required class="mt-1 w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300">
-      </div>
-      <div class="form-group">
-        <label for="password" class="block text-sm font-medium text-gray-700">密码 (至少6位):</label>
-        <input type="password" id="password" required class="mt-1 w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-300">
-      </div>
-      <button id="auth-btn" class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 active:bg-blue-800 transition-all duration-300 transform active:scale-[0.98] flex items-center justify-center disabled:opacity-50">
-        <span id="btn-text">登录</span>
-        <div id="btn-spinner" class="spinner w-5 h-5 ml-2 hidden"></div>
-      </button>
-    </div>
-    <p class="text-center text-sm text-gray-600 mt-6">
-      <a href="#" id="toggle-link" class="font-medium text-blue-600 hover:text-blue-500 transition-colors duration-300">还没有账户？点此注册</a>
-    </p>
-  </div>
-
-  <script type="module">
-    import { signIn, signUp, redirectIfLoggedIn } from './auth.js';
-
-    const emailInput   = document.getElementById('email');
-    const passwordInput= document.getElementById('password');
-    const authBtn      = document.getElementById('auth-btn');
-    const toggleLink   = document.getElementById('toggle-link');
-    const formTitle    = document.getElementById('form-title');
-    const errorMsg     = document.getElementById('error-message');
-    const successMsg   = document.getElementById('success-message');
-    const btnText      = document.getElementById('btn-text');
-    const btnSpinner   = document.getElementById('btn-spinner');
-    const authCard     = document.getElementById('auth-card');
-    let isLoginMode = true;
-
-    // ---------- UI helpers（单份，避免重复声明） ----------
-    function showLoading(){
-      btnText.textContent = isLoginMode ? '登录中...' : '注册中...';
-      btnSpinner.classList.remove('hidden');
-      authBtn.disabled = true;
-      errorMsg.classList.add('hidden');
-      successMsg.classList.add('hidden');
-    }
-    function hideLoading(){
-      btnText.textContent = isLoginMode ? '登录' : '注册';
-      btnSpinner.classList.add('hidden');
-      authBtn.disabled = false;
-    }
-    function showError(message){
-      errorMsg.textContent = String(message ?? '出现错误，请稍后重试');
-      errorMsg.classList.remove('hidden');
-      authCard.classList.add('animate-shake');
-      setTimeout(() => authCard.classList.remove('animate-shake'), 500);
-    }
-    function showSuccess(message){
-      successMsg.textContent = String(message ?? '操作成功');
-      successMsg.classList.remove('hidden');
-    }
-
-    // ---------- 模式切换 ----------
-    toggleLink.addEventListener('click', (e) => {
-      e.preventDefault();
-      isLoginMode = !isLoginMode;
-      formTitle.textContent = isLoginMode ? '登录' : '注册';
-      btnText.textContent   = isLoginMode ? '登录' : '注册';
-      toggleLink.textContent= isLoginMode ? '还没有账户？点此注册' : '已有账户？点此登录';
-      errorMsg.classList.add('hidden');
-      successMsg.classList.add('hidden');
-    });
-
-    // ---------- 表单提交 ----------
-    authBtn.addEventListener('click', onSubmit);
-    [emailInput, passwordInput].forEach(el => el.addEventListener('keydown', e => {
-      if (e.key === 'Enter') onSubmit();
-    }));
-
-    async function onSubmit(){
-      showLoading();
-      const email = emailInput.value.trim();
-      const password = passwordInput.value;
-      try{
-        if(isLoginMode){
-          const { error } = await signIn(email, password);
-          if(error) throw error;
-          showSuccess('登录成功！正在跳转...');
-          const back = new URLSearchParams(window.location.search).get('redirect');
-          const dest = (function(){
-            if(!back) return 'index.html';
-            try{
-              const u = new URL(back, window.location.href);
-              return (u.origin === window.location.origin) ? (u.pathname + u.search + u.hash) : 'index.html';
-            }catch{ return 'index.html'; }
-          })();
-          setTimeout(() => { window.location.href = dest; }, 800);
-        }else{
-          const { error } = await signUp(email, password);
-          if(error) throw error;
-          showSuccess('注册成功！请检查邮箱完成验证。');
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>登录 / 注册 - 童澄未来</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { DEFAULT: '#FA7800', hover: '#c2410c', light: '#fff7ed' }
+                    }
+                }
+            }
         }
-      }catch(err){
-        showError(err?.message || err);
-      }finally{
-        hideLoading();
-      }
-    }
+    </script>
+    <style>
+        body { background: linear-gradient(135deg, #fff7ed 0%, #fff 100%); }
+        .fade-in { animation: fadeIn 0.3s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="h-screen flex items-center justify-center p-4">
 
-    // ---------- 已登录则跳转 ----------
-    redirectIfLoggedIn?.();
-  </script>
+    <div class="bg-white w-full max-w-md p-8 rounded-2xl shadow-xl border border-orange-100">
+        
+        <div class="flex justify-center mb-8">
+            <div class="flex items-center gap-2">
+                <img src="assets/logo.png" alt="Logo" class="w-10 h-10 rounded-lg shadow-lg shadow-orange-200 object-cover">
+                <span class="text-2xl font-bold text-gray-800 tracking-tight">童澄未来</span>
+            </div>
+        </div>
+
+        <div class="flex justify-center gap-8 mb-8 border-b border-gray-100 pb-2">
+            <button onclick="toggleMode('login')" id="tab-login" class="pb-2 border-b-2 border-brand text-brand font-bold transition">
+                登录账号
+            </button>
+            <button onclick="toggleMode('register')" id="tab-register" class="pb-2 border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition">
+                注册新用户
+            </button>
+        </div>
+
+        <form id="auth-form" class="space-y-5">
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">电子邮箱</label>
+                <input type="email" id="email" required placeholder="name@example.com" 
+                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition">
+            </div>
+
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-1">密码</label>
+                <input type="password" id="password" required placeholder="请输入6位以上密码" 
+                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition">
+            </div>
+
+            <div id="confirm-box" class="hidden fade-in">
+                <label class="block text-sm font-bold text-gray-700 mb-1">确认密码</label>
+                <input type="password" id="confirm-password" placeholder="请再次输入密码" 
+                    class="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-xl focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand transition">
+            </div>
+
+            <div id="error-msg" class="text-red-500 text-sm text-center hidden bg-red-50 p-2 rounded-lg"></div>
+            <div id="success-msg" class="text-green-600 text-sm text-center hidden bg-green-50 p-2 rounded-lg"></div>
+
+            <button type="submit" id="btn-submit" 
+                class="w-full py-3 bg-brand text-white font-bold rounded-xl hover:bg-brand-hover shadow-lg shadow-orange-200 transition transform hover:-translate-y-0.5">
+                立即登录
+            </button>
+        </form>
+
+        <p class="text-center text-xs text-gray-400 mt-6">
+            登录即代表您同意 <a href="#" class="underline hover:text-brand">用户协议</a> 和 <a href="#" class="underline hover:text-brand">隐私政策</a>
+        </p>
+    </div>
+
+    <script type="module">
+        import supabase from './client.js';
+
+        let isLogin = true;
+
+        window.toggleMode = (mode) => {
+            isLogin = (mode === 'login');
+            const tLogin = document.getElementById('tab-login');
+            const tReg = document.getElementById('tab-register');
+            const cBox = document.getElementById('confirm-box');
+            const btn = document.getElementById('btn-submit');
+            const msg = document.getElementById('error-msg');
+            const cInput = document.getElementById('confirm-password');
+
+            msg.classList.add('hidden'); 
+
+            if (isLogin) {
+                tLogin.className = "pb-2 border-b-2 border-brand text-brand font-bold transition";
+                tReg.className = "pb-2 border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition";
+                cBox.classList.add('hidden');
+                cInput.removeAttribute('required'); // 登录时不需要必填
+                btn.textContent = "立即登录";
+            } else {
+                tReg.className = "pb-2 border-b-2 border-brand text-brand font-bold transition";
+                tLogin.className = "pb-2 border-b-2 border-transparent text-gray-400 hover:text-gray-600 transition";
+                cBox.classList.remove('hidden');
+                cInput.setAttribute('required', 'true'); // 注册时必填
+                btn.textContent = "创建账户";
+            }
+        }
+
+        document.getElementById('auth-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const email = document.getElementById('email').value.trim();
+            const password = document.getElementById('password').value;
+            const confirmPwd = document.getElementById('confirm-password').value;
+            const btn = document.getElementById('btn-submit');
+            const errEl = document.getElementById('error-msg');
+            const succEl = document.getElementById('success-msg');
+
+            // 前端校验
+            errEl.classList.add('hidden');
+            succEl.classList.add('hidden');
+
+            if (!isLogin && password !== confirmPwd) {
+                errEl.textContent = "❌ 两次输入的密码不一致";
+                errEl.classList.remove('hidden');
+                return;
+            }
+
+            if (!isLogin && password.length < 6) {
+                errEl.textContent = "❌ 密码长度至少需要6位";
+                errEl.classList.remove('hidden');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.textContent = "处理中...";
+
+            try {
+                let error = null;
+                
+                if (isLogin) {
+                    // 登录
+                    const { error: signInErr } = await supabase.auth.signInWithPassword({ email, password });
+                    error = signInErr;
+                    if (!error) {
+                        const params = new URLSearchParams(window.location.search);
+                        const redirect = params.get('redirect') || 'index.html';
+                        window.location.href = redirect;
+                    }
+                } else {
+                    // 注册
+                    const { error: signUpErr } = await supabase.auth.signUp({ email, password });
+                    error = signUpErr;
+                    if (!error) {
+                        succEl.textContent = "✅ 注册成功！请直接登录（或检查邮箱验证）。";
+                        succEl.classList.remove('hidden');
+                        setTimeout(() => {
+                            // 自动填入密码并切换到登录态，方便用户直接点登录
+                            toggleMode('login');
+                            document.getElementById('success-msg').classList.remove('hidden'); // 保持成功提示
+                        }, 1500);
+                    }
+                }
+
+                if (error) throw error;
+
+            } catch (err) {
+                errEl.textContent = err.message === "Invalid login credentials" ? "邮箱或密码错误" : "❌ " + err.message;
+                errEl.classList.remove('hidden');
+            } finally {
+                btn.disabled = false;
+                btn.textContent = isLogin ? "立即登录" : "创建账户";
+            }
+        });
+    </script>
 </body>
 </html>

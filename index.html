@@ -1,120 +1,172 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>童澄未来 · CSP-J/S 备考中心</title>
-  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-  <style>
-    :root{ --brand:#f97316; --brand-weak:#ffedd5; --line:#ffe4cc; --ink:#1f2937; --muted:#64748b; --bg:#fff7ed; --card:#fff; }
-    *{box-sizing:border-box}
-    body{margin:0;background:var(--bg);font-family:-apple-system,BlinkMacSystemFont,'Segoe UI','PingFang SC','Microsoft YaHei',Roboto,Arial,sans-serif;color:var(--ink)}
-    a{color:inherit;text-decoration:none}
-    .nav{position:sticky;top:0;z-index:10;background:linear-gradient(135deg,#ffedd5,#fff7ed);border-bottom:1px solid var(--line)}
-    .nav .inner{max-width:1100px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;padding:14px 16px}
-    .brand{font-weight:800;color:#7c2d12}
-    .right a,.right button{display:inline-flex;align-items:center;gap:8px;margin-left:10px;border:1px solid var(--line);background:#fff;padding:8px 12px;border-radius:10px;cursor:pointer}
-    .right a.primary{background:var(--brand);color:#fff;border-color:var(--brand)}
-    .btn-link{background:#fff;border:1px solid var(--line);padding:8px 12px;border-radius:10px;cursor:pointer}
-    .wrap{max-width:1100px;margin:18px auto;padding:0 16px}
-    .title{font-size:22px;margin:6px 0 14px 0;color:#7c2d12;font-weight:800}
-    .grid{display:grid;grid-template-columns:1.2fr .8fr;gap:18px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px}
-    .card .head{display:flex;align-items:center;justify-content:space-between;margin-bottom:10px}
-    .card .head .h{font-weight:800;color:#9a3412}
-    .group{border:1px dashed var(--line);border-radius:10px;overflow:hidden}
-    .row{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px dashed var(--line)}
-    .row:last-child{border-bottom:none}
-    .row a{display:inline-flex;align-items:center}
-    .row .more{color:#9ca3af}
-    .muted{color:var(--muted);font-size:13px}
-    .footer{max-width:1100px;margin:24px auto 28px auto;padding:0 16px;display:flex;justify-content:space-between;align-items:center;color:#6b7280}
-    .copyright{font-size:12px;color:#9ca3af}
-    @media (max-width:980px){ .grid{grid-template-columns:1fr} .footer{flex-direction:column;gap:6px;align-items:flex-start} }
-  </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>童澄未来 - 信奥赛(CSP-J/S)一站式备考平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: { DEFAULT: '#FA7800', hover: '#c2410c', light: '#fff7ed' }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+        .hero-bg { background: linear-gradient(135deg, #fff7ed 0%, #fff 100%); }
+    </style>
 </head>
-<body>
-  <div class="nav">
-    <div class="inner">
-      <div class="brand">童澄未来 · CSP-J/S 备考中心</div>
-      <div class="right">
+<body class="text-gray-700">
+
+    <nav class="flex items-center justify-between px-8 h-16 bg-white border-b border-orange-100 fixed w-full top-0 z-50">
+        <div class="flex items-center gap-2">
+            <!-- <div class="w-8 h-8 bg-brand rounded-lg flex items-center justify-center text-white font-bold text-xl">童</div> -->
+             <img src="assets/logo.png" alt="Logo" class="w-10 h-10 rounded-lg shadow-lg shadow-orange-200 object-cover">
+            <span class="text-xl font-bold text-gray-800 tracking-tight">童澄未来</span>
+        </div>
         
-        <a href="account.html" data-require-login>我的账户</a>
-        <a class="primary" href="upgrade.html" data-require-login>升级为付费会员</a>
-      </div>
-    </div>
-  </div>
-
-  <div class="wrap">
-    <p class="title">系统化刷题 + 考点梳理</p>
-    <div class="grid">
-      <div>
-        <div class="card" data-section>
-          <div class="head"><div class="h">知识点梳理 · 数据结构</div><span class="muted">—</span></div>
-          <div class="group">
-            <div class="row"><a href="knowledge/stack.html">栈</a><span class="more">↗</span></div>
-            <div class="row"><a href="knowledge/tree.html">树</a><span class="more">↗</span></div>
-            <div class="row"><a href="knowledge/graph.html">图</a><span class="more">↗</span></div>
-          </div>
+        <div class="hidden md:flex items-center gap-8 font-medium text-sm">
+            <a href="#" class="text-brand">首页</a>
+            <a href="learn.html" class="hover:text-brand transition">学习中心</a>
+            <a href="#" onclick="alert('OJ 系统即将接入...')" class="hover:text-brand transition">在线 OJ</a>
+            <a href="upgrade.html" class="hover:text-brand transition">会员升级</a>
         </div>
 
-        <div class="card" style="margin-top:16px" data-section>
-          <div class="head"><div class="h">知识点梳理 · 核心算法</div><span class="muted">—</span></div>
-          <div class="group">
-            <div class="row"><a href="knowledge/recursion.html">递归</a><span class="more">↗</span></div>
-            <div class="row"><a href="knowledge/binary.html">二分</a><span class="more">↗</span></div>
-            <div class="row"><a href="knowledge/bfs.html">BFS</a><span class="more">↗</span></div>
-            <div class="row"><a href="knowledge/baoli.html">倍增</a><span class="more">↗</span></div>
-            <div class="row"><a href="knowledge/centroid.html">树的重心</a><span class="more">↗</span></div>
-            <div class="row"><a href="knowledge/LIS.html">LIS</a><span class="more">↗</span></div>
-            <div class="row"><a href="knowledge/dijkstra.html">Dijkstra</a><span class="more">↗</span></div>
-            <div class="row"><a href="knowledge/kruskal.html">最小生成树 MST</a><span class="more">↗</span></div>
-            <div class="row"><a href="knowledge/top.html">拓扑排序</a><span class="more">↗</span></div>
-          </div>
+        <div class="flex items-center gap-4">
+            <div id="auth-buttons" class="flex gap-3 text-sm">
+                <a href="login.html" class="px-4 py-2 border border-orange-200 rounded-lg hover:border-brand hover:text-brand transition">登录</a>
+                <a href="login.html" class="px-4 py-2 bg-brand text-white rounded-lg hover:bg-brand-hover transition shadow-sm shadow-orange-200">注册</a>
+            </div>
+            <div id="user-menu" class="hidden flex items-center gap-3">
+                <a href="account.html" id="user-email" class="text-sm font-bold text-gray-700 hover:text-brand"></a>
+                <button id="btn-logout" class="text-xs text-gray-400 hover:text-red-500">退出</button>
+            </div>
         </div>
+    </nav>
 
-        <div class="card" style="margin-top:16px" data-section>
-          <div class="head"><div class="h">知识点梳理 · C++ 语言与 STL</div><span class="muted">—</span></div>
-          <div class="group">
-            <div class="row"><a href="knowledge/vector.html">容器（vector/map/set）</a><span class="more">↗</span></div>
-            <div class="row"><a href="knowledge/sort.html">算法库（sort/lower_bound）</a><span class="more">↗</span></div>
-          </div>
+    <section class="hero-bg pt-32 pb-20 px-6">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center gap-12">
+            <div class="flex-1 space-y-6 text-center md:text-left">
+                <div class="inline-block px-3 py-1 bg-orange-100 text-brand text-xs font-bold rounded-full mb-2">2025 赛季备考开启 🚀</div>
+                <h1 class="text-4xl md:text-6xl font-extrabold text-gray-900 leading-tight">
+                    让信奥学习 <br>
+                    <span class="text-brand">更直观、更高效</span>
+                </h1>
+                <p class="text-lg text-gray-500 max-w-lg mx-auto md:mx-0">
+                    结合交互式课件与在线判题系统，为 CSP-J/S 选手打造的沉浸式学习体验。从零基础到国一，全程陪伴。
+                </p>
+                <div class="flex flex-col sm:flex-row gap-4 justify-center md:justify-start pt-4">
+                    <a href="learn.html" class="px-8 py-4 bg-brand text-white text-lg font-bold rounded-xl hover:bg-brand-hover transition shadow-lg shadow-orange-200 transform hover:-translate-y-1">
+                        开始学习
+                    </a>
+                    <a href="upgrade.html" class="px-8 py-4 bg-white border border-gray-200 text-gray-700 text-lg font-bold rounded-xl hover:border-brand hover:text-brand transition">
+                        查看课程体系
+                    </a>
+                </div>
+            </div>
+            <div class="flex-1 relative">
+                <div class="relative z-10 bg-white rounded-2xl shadow-2xl border border-gray-100 p-2 transform rotate-2 hover:rotate-0 transition duration-500">
+                    <img src="https://images.unsplash.com/photo-1517694712202-14dd9538aa97?ixlib=rb-1.2.1&auto=format&fit=crop&w=800&q=80" alt="Coding" class="rounded-xl">
+                    
+                    <div class="absolute -bottom-6 -left-6 bg-white p-4 rounded-xl shadow-lg border border-orange-50 flex items-center gap-3 animate-bounce" style="animation-duration: 3s;">
+                        <div class="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center text-green-600 text-xl">✅</div>
+                        <div>
+                            <div class="text-xs text-gray-400">最新提交</div>
+                            <div class="font-bold text-sm">BFS 最短路 <span class="text-green-500">+100分</span></div>
+                        </div>
+                    </div>
+                </div>
+                <div class="absolute top-10 right-10 w-64 h-64 bg-orange-200 rounded-full filter blur-3xl opacity-20 -z-0"></div>
+            </div>
         </div>
-      </div>
+    </section>
 
-      <div>
-        <div class="card" data-section>
-          <div class="head"><div class="h">训练营 / 讲义</div></div>
-          <div class="group">
-            <div class="row"><a href="">gesp 1级 · 2025</a><span class="more">↗</span></div>
-            <div class="row"><a href="">gesp 2级 · 2025</a><span class="more">↗</span></div>
-            <div class="row"><a href="">gesp 3级 · 2025</a><span class="more">↗</span></div>
-            <div class="row"><a href="">gesp 4级 · 2025</a><span class="more">↗</span></div>
-            <div class="row"><a href="">gesp 5级 · 2025</a><span class="more">↗</span></div>
-            <div class="row"><a href="">gesp 6级 · 2025</a><span class="more">↗</span></div>
-            <div class="row"><a href="">gesp 7级 · 2025</a><span class="more">↗</span></div>
-            <div class="row"><a href="">gesp 8级 · 2025</a><span class="more">↗</span></div>
-            <!-- <div class="row"><a href="csp2/day1.html">国庆集训 · day1</a><span class="more">↗</span></div>
-            <div class="row"><a href="csp2/day2.html">国庆集训 · day2</a><span class="more">↗</span></div>
-            <div class="row"><a href="csp2/day3.html">国庆集训 · day3</a><span class="more">↗</span></div>
-            <div class="row"><a href="csp2/day4.html">国庆集训 · day4</a><span class="more">↗</span></div>
-            <div class="row"><a href="csp2/day5.html">国庆集训 · day5</a><span class="more">↗</span></div> -->
-            <div class="row"><a href="lmcc/2025-CSP-S 初赛解析.html">CSP 复赛系统备考指南</a><span class="more">↗</span></div>
-          </div>
+    <section class="py-20 bg-white">
+        <div class="max-w-6xl mx-auto px-6">
+            <h2 class="text-3xl font-bold text-center mb-16 text-gray-800">为什么选择童澄未来？</h2>
+            <div class="grid md:grid-cols-3 gap-8">
+                <div class="p-8 rounded-2xl bg-gray-50 hover:bg-orange-50 transition duration-300 border border-transparent hover:border-orange-100 group">
+                    <div class="w-14 h-14 bg-white rounded-xl shadow-sm flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition">📚</div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">体系化课程</h3>
+                    <p class="text-gray-500 leading-relaxed">覆盖从 C++ 语法入门到 CSP-S 提高组全套知识点，结构清晰，循序渐进。</p>
+                </div>
+                <div class="p-8 rounded-2xl bg-gray-50 hover:bg-orange-50 transition duration-300 border border-transparent hover:border-orange-100 group">
+                    <div class="w-14 h-14 bg-white rounded-xl shadow-sm flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition">🎨</div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">交互式学习</h3>
+                    <p class="text-gray-500 leading-relaxed">告别枯燥的 PPT，通过动态演示组件 (Widgets) 直观理解复杂算法原理。</p>
+                </div>
+                <div class="p-8 rounded-2xl bg-gray-50 hover:bg-orange-50 transition duration-300 border border-transparent hover:border-orange-100 group">
+                    <div class="w-14 h-14 bg-white rounded-xl shadow-sm flex items-center justify-center text-3xl mb-6 group-hover:scale-110 transition">🚀</div>
+                    <h3 class="text-xl font-bold mb-3 text-gray-800">实战演练</h3>
+                    <p class="text-gray-500 leading-relaxed">每节课配备精选习题，支持在线提交与自动判分，实时反馈学习成果。</p>
+                </div>
+            </div>
         </div>
-      </div>
-    </div>
-  </div>
+    </section>
 
-  <div class="footer">
-    <div class="muted">欢迎，<span id="welcome-user">未登录</span></div>
-    <div id="auth-actions"></div>
-    <div class="copyright">© 上海童澄培训学校有限公司</div>
-  </div>
+    <section class="py-20 bg-brand text-white text-center px-6">
+        <h2 class="text-3xl font-bold mb-6">准备好开始你的信奥之旅了吗？</h2>
+        <p class="text-orange-100 mb-8 max-w-2xl mx-auto">加入数百名优秀的信奥选手，使用最先进的学习工具，冲击你的目标奖项。</p>
+        <a href="login.html" class="inline-block px-10 py-4 bg-white text-brand font-bold rounded-xl hover:bg-gray-100 transition shadow-lg">免费注册账号</a>
+    </section>
 
-  <!-- 固定顺序：client -> common -> guard -->
-  <script type="module" src="client.js"></script>
-  <script type="module" src="common.js"></script>
-  <script type="module" src="guard-first-free.auto.js"></script>
+    <footer class="bg-gray-900 text-gray-400 py-12 px-6 border-t border-gray-800">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row justify-between items-center gap-6">
+            <div class="text-sm">© 2025 童澄未来. All rights reserved.</div>
+            <div class="flex gap-6 text-sm">
+                <a href="#" class="hover:text-white">关于我们</a>
+                <a href="#" class="hover:text-white">联系客服</a>
+                <!-- <a href="admin-content.html" class="text-gray-600 hover:text-gray-400">教师入口</a> -->
+            </div>
+        </div>
+    </footer>
+
+    <script type="module">
+        import supabase from './client.js';
+
+        // 检查登录状态
+        (async () => {
+            const { data: { user } } = await supabase.auth.getUser();
+            
+            if (user) {
+                // 1. 界面切换：隐藏登录注册，显示用户菜单
+                document.getElementById('auth-buttons').classList.add('hidden');
+                const userMenu = document.getElementById('user-menu');
+                userMenu.classList.remove('hidden');
+                
+                // 显示邮箱前缀
+                document.getElementById('user-email').textContent = user.email.split('@')[0];
+
+                // 2. 核心逻辑：检查是否为管理员
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .single();
+
+                // 如果是管理员，动态插入“进入后台”按钮
+                if (profile?.role === 'admin' || profile?.role === 'teacher') {
+                    const adminBtn = document.createElement('a');
+                    adminBtn.href = 'admin-content.html';
+                    adminBtn.className = 'px-3 py-1.5 bg-gray-800 text-white text-xs font-bold rounded hover:bg-gray-700 transition flex items-center gap-1';
+                    adminBtn.innerHTML = '<span>⚙️ 进入后台</span>';
+                    
+                    // 把它插入到“退出”按钮的前面
+                    userMenu.insertBefore(adminBtn, document.getElementById('btn-logout'));
+                }
+            }
+        })();
+
+        // 登出逻辑
+        document.getElementById('btn-logout').addEventListener('click', async () => {
+            await supabase.auth.signOut();
+            window.location.reload();
+        });
+    </script>
 </body>
 </html>

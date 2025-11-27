@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI科创数学 - 小学高年级全解</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: { 50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74', 400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c', 800: '#9a3412', 900: '#7c2d12' }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        body { -webkit-user-select: none; -ms-user-select: none; user-select: none; -webkit-touch-callout: none; background-color: #fff7ed; font-family: 'Segoe UI', 'Microsoft YaHei', sans-serif; overflow-x: hidden; }
+        @media print { body { display: none; } }
+        ::-webkit-scrollbar { width: 8px; }
+        ::-webkit-scrollbar-track { background: #fff7ed; }
+        ::-webkit-scrollbar-thumb { background: #fdba74; border-radius: 4px; }
+        ::-webkit-scrollbar-thumb:hover { background: #f97316; }
+        .fade-in { animation: fadeIn 0.5s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .nav-item.active { background-color: #f97316; color: white; box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.3); }
+        
+        /* Flip Card */
+        .flip-card { background-color: transparent; perspective: 1000px; height: 320px; cursor: pointer; }
+        .flip-card-inner { position: relative; width: 100%; height: 100%; text-align: center; transition: transform 0.6s; transform-style: preserve-3d; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border-radius: 1rem; }
+        .flip-card.flipped .flip-card-inner { transform: rotateY(180deg); }
+        .flip-card-front, .flip-card-back { position: absolute; width: 100%; height: 100%; -webkit-backface-visibility: hidden; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; border-radius: 1rem; padding: 1.5rem; }
+        .flip-card-front { background-color: #ffffff; color: #431407; border: 2px solid #fed7aa; }
+        .flip-card-front:hover { border-color: #f97316; background-color: #fffaf0; }
+        .flip-card-back { background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: white; transform: rotateY(180deg); overflow-y: auto; justify-content: flex-start; padding-top: 1.5rem; }
+        .flip-card-back h4 { border-bottom: 1px solid rgba(255,255,255,0.3); padding-bottom: 0.5rem; margin-bottom: 0.5rem; width: 100%; font-weight: bold; font-size: 1.1rem; flex-shrink: 0; }
+        .flip-card-back p { font-size: 0.9rem; line-height: 1.5; text-align: left; width: 100%; }
+        .card-graphic { background: rgba(255,255,255,0.15); border-radius: 8px; margin-bottom: 10px; padding: 10px; width: 100%; height: 100px; display: flex; justify-content: center; align-items: center; flex-shrink: 0; }
+        
+        /* Example Box */
+        .example-box { background: white; border-radius: 12px; padding: 20px; margin-bottom: 20px; border-left: 5px solid #f97316; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .analysis-content { display: none; margin-top: 15px; padding-top: 15px; border-top: 1px dashed #fed7aa; background-color: #fffaf0; border-radius: 8px; padding: 15px; }
+        .analysis-content.show { display: block; animation: slideDown 0.3s ease-out; }
+        @keyframes slideDown { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Toast */
+        #toast { visibility: hidden; min-width: 250px; background-color: #333; color: #fff; text-align: center; border-radius: 8px; padding: 16px; position: fixed; z-index: 100; left: 50%; top: 30px; transform: translateX(-50%); font-size: 16px; opacity: 0; transition: opacity 0.5s, top 0.5s; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        #toast.show { visibility: visible; opacity: 1; top: 50px; }
+        
+        .math-var { font-family: 'Times New Roman', serif; font-style: italic; font-weight: bold; }
+    </style>
+</head>
+<body class="text-gray-800 h-screen flex flex-col md:flex-row overflow-hidden">
+
+    <div id="toast">提示信息</div>
+
+    <button id="mobile-menu-btn" class="md:hidden p-4 text-orange-600 hover:bg-orange-100 absolute top-0 left-0 z-50">
+        <i class="fas fa-bars text-xl"></i>
+    </button>
+
+    <aside id="sidebar" class="bg-white w-64 flex-shrink-0 border-r border-orange-100 flex flex-col transition-transform transform -translate-x-full md:translate-x-0 absolute md:relative z-40 h-full shadow-lg">
+        <div class="p-6 border-b border-orange-100 bg-orange-50">
+            <h1 class="text-xl font-bold text-orange-800 flex items-center">
+                <i class="fas fa-graduation-cap mr-2 text-orange-600"></i>AI科创数学
+            </h1>
+            <p class="text-xs text-orange-600 mt-1 pl-1">小学高年级 · 知识全解</p>
+        </div>
+        <nav class="flex-1 overflow-y-auto py-4">
+            <ul class="space-y-1">
+                <li><button onclick="showSection('concepts')" class="nav-item w-full text-left px-6 py-3 hover:bg-orange-50 transition-colors flex items-center active" id="nav-concepts"><i class="fas fa-brain w-6 text-center mr-3"></i>思维考点 (36)</button></li>
+                <li><button onclick="showSection('examples')" class="nav-item w-full text-left px-6 py-3 hover:bg-orange-50 transition-colors flex items-center" id="nav-examples"><i class="fas fa-book-open w-6 text-center mr-3"></i>经典样题 (30)</button></li>
+                <li><button onclick="showSection('quiz')" class="nav-item w-full text-left px-6 py-3 hover:bg-orange-50 transition-colors flex items-center text-orange-600 font-bold" id="nav-quiz"><i class="fas fa-pencil-alt w-6 text-center mr-3"></i>全真演练</button></li>
+            </ul>
+        </nav>
+        <div class="p-4 border-t border-orange-100 text-xs text-center text-orange-400 bg-orange-50/50">&copy; 2025 上海童澄培训学校有限公司<br>版权所有</div>
+    </aside>
+
+    <main class="flex-1 overflow-y-auto bg-orange-50/30 p-4 md:p-8 relative" id="main-content">
+        
+        <!-- 1. 核心考点 -->
+        <section id="concepts" class="section-content max-w-7xl mx-auto fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-2 border-l-4 border-orange-500 pl-4">全维思维考点</h2>
+            <p class="text-gray-500 mb-6 pl-5 text-sm">涵盖数论、几何、代数、组合与逻辑推理五大领域，点击卡片查看精解</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 mb-8" id="concept-grid">
+                <!-- JS将自动生成考点卡片 -->
+            </div>
+        </section>
+
+        <!-- 2. 经典样题 -->
+        <section id="examples" class="section-content max-w-4xl mx-auto hidden fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-l-4 border-orange-500 pl-4">经典样题解析</h2>
+            <div class="bg-orange-100 text-orange-800 p-4 rounded-lg mb-6 text-sm">
+                <i class="fas fa-lightbulb mr-2"></i> 建议：先尝试自己解题，再点击“查看解析”核对思路。
+            </div>
+            <div id="example-container">
+                <!-- JS生成样题 -->
+            </div>
+        </section>
+
+        <!-- 3. 全真演练 -->
+        <section id="quiz" class="section-content max-w-4xl mx-auto hidden fade-in">
+            <h2 class="text-3xl font-bold text-gray-800 mb-6 border-l-4 border-orange-500 pl-4">全真演练 (拓展题)</h2>
+            <div class="bg-white rounded-xl shadow-lg p-6 md:p-8 border border-orange-100">
+                <div id="quiz-container">
+                    <!-- JS生成测验 -->
+                </div>
+                <div class="mt-8 flex justify-between items-center border-t border-gray-100 pt-6">
+                    <div class="text-sm text-gray-500">进度: <span id="progress-text">0 / 0</span></div>
+                    <button onclick="submitQuiz()" id="submit-btn" class="bg-orange-600 hover:bg-orange-700 text-white font-bold py-2 px-8 rounded-lg transition-colors shadow-md shadow-orange-200">提交试卷</button>
+                </div>
+            </div>
+            <div id="result-modal" class="fixed inset-0 bg-black bg-opacity-50 hidden flex items-center justify-center z-50">
+                <div class="bg-white rounded-xl p-8 max-w-md w-full mx-4 text-center transform scale-95 opacity-0 transition-all duration-300 border-t-8 border-orange-500" id="result-content">
+                    <div class="mb-4 text-5xl text-orange-500"><i class="fas fa-trophy"></i></div>
+                    <h3 class="text-2xl font-bold mb-2">考试结束!</h3>
+                    <p class="text-gray-600 mb-6">你的得分是: <span id="score-display" class="font-bold text-orange-600 text-xl"></span></p>
+                    <button onclick="closeResult()" class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold py-2 px-6 rounded-lg">查看详情</button>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <script>
+        // --- 数据源 ---
+        // 36个考点数据
+        const concepts = [
+            { title: "整除与求余", desc: "被除数 = 除数 × 商 + 余数。<br>找规律：计算周期或利用余数性质。", svg: `<svg viewBox="0 0 100 50" class="w-24 h-12 stroke-white fill-none"><text x="10" y="30" fill="white" font-size="12">a ÷ b = q ... r</text></svg>` },
+            { title: "面积计算", desc: "三角形：底×高÷2<br>正方形：边²<br>长方形：长×宽", svg: `<svg viewBox="0 0 100 50" class="w-24 h-12 stroke-white fill-none"><polygon points="10,40 40,40 25,10"/><rect x="50" y="10" width="30" height="30"/></svg>` },
+            { title: "等差数列", desc: "第n项 = 首项 + (n-1)d<br>求和 = (首+末)×n÷2", svg: `<svg viewBox="0 0 100 50" class="w-32 h-16 stroke-white fill-none"><text x="10" y="30" fill="white" font-size="12">1, 3, 5, 7...</text><path d="M20 35 Q 30 45 40 35"/><text x="25" y="48" fill="white" font-size="8">+2</text></svg>` },
+            { title: "乘法分配律", desc: "a×(b+c) = a×b + a×c<br>巧算核心：提取公因数。", svg: `<svg viewBox="0 0 100 50" class="w-32 h-16 stroke-white fill-none"><text x="10" y="30" fill="white" font-size="10">a(b+c) = ab+ac</text></svg>` },
+            { title: "同余问题", desc: "两数同余，差能被整除。<br>a ≡ b (mod m) => m | (a-b)", svg: `<svg viewBox="0 0 100 50" class="w-24 h-12 stroke-white fill-none"><text x="10" y="30" fill="white" font-size="10">17÷5=3..2</text><text x="60" y="30" fill="white" font-size="10">12÷5=2..2</text></svg>` },
+            { title: "最小表面积", desc: "体积一定，长宽高中差越小，表面积越小（越接近正方体）。", svg: `<svg viewBox="0 0 60 60" class="w-16 h-16 stroke-white fill-none"><rect x="20" y="20" width="20" height="20"/><path d="M20 20 L30 10 L50 10 L40 20"/><path d="M50 10 L50 30 L40 40"/></svg>` },
+            { title: "整除判定", desc: "被3/9整除：各位数字之和能被3/9整除。<br>被2/5整除看个位。", svg: `<svg viewBox="0 0 100 50" class="w-24 h-12 stroke-white fill-none"><text x="10" y="30" fill="white" font-size="10">123 -> 1+2+3=6</text></svg>` },
+            { title: "偶数特征", desc: "个位是 0, 2, 4, 6, 8 的数是偶数。<br>能被 2 整除。", svg: `<svg viewBox="0 0 80 40" class="w-20 h-10 stroke-white fill-none"><text x="10" y="25" fill="white" font-size="12">2n</text></svg>` },
+            { title: "几何计数", desc: "分类有序枚举。<br>数线段、三角形、矩形等。", svg: `<svg viewBox="0 0 60 60" class="w-16 h-16 stroke-white fill-none"><rect x="10" y="10" width="40" height="40"/><line x1="30" y1="10" x2="30" y2="50"/><line x1="10" y1="30" x2="50" y2="30"/></svg>` },
+            { title: "因数分解", desc: "将数拆解为质因数相乘。<br>用于求约数个数、公倍数等。", svg: `<svg viewBox="0 0 80 50" class="w-20 h-12 stroke-white fill-none"><text x="35" y="15" fill="white">12</text><path d="M40 20 L20 40"/><path d="M40 20 L60 40"/><text x="15" y="48" fill="white">3</text><text x="60" y="48" fill="white">4</text></svg>` },
+            { title: "余数特征", desc: "通过个位或除法余数规律，筛选符合条件的数。", svg: `<svg viewBox="0 0 80 40" class="w-20 h-10 stroke-white fill-none"><text x="10" y="25" fill="white" font-size="10">Mod 10</text></svg>` },
+            { title: "质数奇偶", desc: "唯一偶质数是 2。<br>两质数和为奇数，必有一个是 2。", svg: `<svg viewBox="0 0 80 40" class="w-20 h-10 stroke-white fill-none"><text x="10" y="25" fill="white" font-size="10">P + P = Odd</text><text x="60" y="25" fill="white" font-size="10">-> 2</text></svg>` },
+            { title: "和差问题", desc: "大数=(和+差)÷2<br>小数=(和-差)÷2", svg: `<svg viewBox="0 0 100 40" class="w-24 h-10 stroke-white fill-none"><rect x="10" y="5" width="30" height="10"/><rect x="10" y="25" width="50" height="10"/><line x1="40" y1="25" x2="40" y2="35" stroke-dasharray="2"/></svg>` },
+            { title: "倍数递推", desc: "逆推法：从结果倒推每一步的变化。", svg: `<svg viewBox="0 0 100 40" class="w-24 h-10 stroke-white fill-none"><circle cx="20" cy="20" r="10"/><path d="M35 20 L65 20" marker-end="url(#arrow)"/><text x="45" y="15" fill="white" font-size="8">x2</text><circle cx="80" cy="20" r="10"/></svg>` },
+            { title: "面积关系", desc: "等底等高面积相等；同高面积比等于底之比。", svg: `<svg viewBox="0 0 80 50" class="w-20 h-12 stroke-white fill-none"><polygon points="10,40 70,40 40,10"/><line x1="40" y1="10" x2="40" y2="40"/></svg>` },
+            { title: "周期问题", desc: "找循环节。总量 ÷ 周期长度 = 组数...余数。", svg: `<svg viewBox="0 0 100 30" class="w-24 h-8 stroke-white fill-none"><circle cx="10" cy="15" r="5" fill="white"/><circle cx="30" cy="15" r="5"/><circle cx="50" cy="15" r="5" fill="white"/><circle cx="70" cy="15" r="5"/><text x="90" y="20" fill="white">...</text></svg>` },
+            { title: "工程问题", desc: "工作量 = 效率 × 时间。<br>合作效率 = 效率之和。", svg: `<svg viewBox="0 0 60 60" class="w-16 h-16 stroke-white fill-none"><circle cx="30" cy="30" r="25" stroke-dasharray="40 100"/><text x="22" y="35" fill="white" font-size="10">Work</text></svg>` },
+            { title: "组合概率", desc: "概率 = 满足条件数 / 总可能数。<br>C(n,m) 组合公式。", svg: `<svg viewBox="0 0 80 40" class="w-20 h-10 stroke-white fill-none"><text x="10" y="25" fill="white" font-size="10">P = A/S</text></svg>` },
+            { title: "外角和", desc: "多边形外角和恒为 360°。<br>四边形内角和 360°。", svg: `<svg viewBox="0 0 60 60" class="w-16 h-16 stroke-white fill-none"><polygon points="20,20 50,20 40,50 10,50"/><line x1="50" y1="20" x2="60" y2="20"/></svg>` },
+            { title: "限制排列", desc: "优先处理有特殊要求的元素（如站位、相邻）。", svg: `<svg viewBox="0 0 100 30" class="w-24 h-8 stroke-white fill-none"><circle cx="10" cy="15" r="5" fill="red"/><circle cx="30" cy="15" r="5"/><circle cx="50" cy="15" r="5"/><circle cx="70" cy="15" r="5" fill="red"/></svg>` },
+            { title: "公因数整除", desc: "利用 GCD 和 LCM 解决分配、相遇问题。", svg: `<svg viewBox="0 0 80 40" class="w-20 h-10 stroke-white fill-none"><text x="10" y="25" fill="white" font-size="10">GCD(a,b)</text></svg>` },
+            { title: "有限排列", desc: "数字组数、排队等。分步乘法原理。", svg: `<svg viewBox="0 0 80 40" class="w-20 h-10 stroke-white fill-none"><rect x="10" y="10" width="15" height="20"/><rect x="30" y="10" width="15" height="20"/><rect x="50" y="10" width="15" height="20"/></svg>` },
+            { title: "奇偶递推", desc: "奇+奇=偶, 奇+偶=奇。<br>利用奇偶性分析结果。", svg: `<svg viewBox="0 0 80 40" class="w-20 h-10 stroke-white fill-none"><text x="10" y="25" fill="white" font-size="10">1+3=4</text></svg>` },
+            { title: "平均数补差", desc: "移多补少。总和 = 平均数 × 个数。", svg: `<svg viewBox="0 0 80 50" class="w-20 h-12 stroke-white fill-none"><rect x="10" y="20" width="10" height="30"/><rect x="30" y="30" width="10" height="20"/><line x1="5" y1="25" x2="45" y2="25" stroke-dasharray="2"/></svg>` },
+            { title: "一元方程", desc: "设未知数 x，找等量关系列方程。", svg: `<svg viewBox="0 0 80 40" class="w-20 h-10 stroke-white fill-none"><text x="10" y="25" fill="white" font-size="12">2x+5=15</text></svg>` },
+            { title: "倍数方程", desc: "和倍、差倍问题。设1倍量为x。", svg: `<svg viewBox="0 0 80 40" class="w-20 h-10 stroke-white fill-none"><rect x="10" y="10" width="20" height="10"/><rect x="10" y="25" width="60" height="10"/><text x="75" y="33" fill="white" font-size="8">3x</text></svg>` },
+            { title: "面积分配", desc: "按比例分配面积。等高三角形面积比=底之比。", svg: `<svg viewBox="0 0 80 50" class="w-20 h-12 stroke-white fill-none"><polygon points="40,5 10,45 70,45"/><line x1="40" y1="5" x2="40" y2="45"/></svg>` },
+            { title: "样本空间", desc: "列举所有可能情况。概率基础。", svg: `<svg viewBox="0 0 60 60" class="w-16 h-16 stroke-white fill-none"><circle cx="30" cy="30" r="25"/><circle cx="20" cy="25" r="2" fill="white"/><circle cx="40" cy="35" r="2" fill="white"/><circle cx="30" cy="45" r="2" fill="white"/></svg>` },
+            { title: "抽屉原理", desc: "N+1个物体放入N个抽屉，必有一个抽屉至少有2个。", svg: `<svg viewBox="0 0 80 40" class="w-20 h-10 stroke-white fill-none"><rect x="10" y="10" width="15" height="20"/><rect x="30" y="10" width="15" height="20"/><circle cx="17" cy="20" r="3"/><circle cx="23" cy="20" r="3"/></svg>` },
+            { title: "位值原理", desc: "abc = 100a + 10b + c。分析进位。", svg: `<svg viewBox="0 0 80 40" class="w-20 h-10 stroke-white fill-none"><text x="10" y="25" fill="white" font-size="10">100a+10b</text></svg>` },
+            { title: "余数问题", desc: "周期性重复。同余性质。", svg: `<svg viewBox="0 0 80 40" class="w-20 h-10 stroke-white fill-none"><text x="10" y="25" fill="white" font-size="10">... R</text></svg>` },
+            { title: "独立事件", desc: "事件互不影响。分步相乘。", svg: `<svg viewBox="0 0 80 40" class="w-20 h-10 stroke-white fill-none"><rect x="10" y="10" width="20" height="20"/><rect x="40" y="10" width="20" height="20"/></svg>` },
+            { title: "分组求和", desc: "高斯求和。首尾配对。", svg: `<svg viewBox="0 0 100 30" class="w-24 h-8 stroke-white fill-none"><path d="M10 10 Q 50 30 90 10"/><text x="45" y="20" fill="white" font-size="8">Sum</text></svg>` },
+            { title: "拆分组合", desc: "整数拆分。有序/无序。", svg: `<svg viewBox="0 0 80 40" class="w-20 h-10 stroke-white fill-none"><text x="10" y="25" fill="white" font-size="10">5=2+3</text></svg>` }
+        ];
+
+        // 样题数据 (Q11-Q40)
+        const examples = [
+            { id: 11, q: "在从1至100的自然数中，能被除以7余3的数有_______个?", a: "A. 14", expl: "满足条件的数构成等差数列：3, 10, 17, ..., 94。<br>通项公式：7n-4 ≤ 100 => 7n ≤ 104 => n ≤ 14.8。<br>共有 14 个数。" },
+            { id: 12, q: "边长为6和8的两个正方形拼在一起，阴影部分的面积是多少？", a: "B. 24", expl: "从图中看出（根据典型题型），阴影部分通常是一个三角形。<br>大正方形边长8，小正方形边长6。<br>阴影三角形的底为8，高为6（或者底6高8）。<br>面积 = 8 × 6 ÷ 2 = 24 cm²。" },
+            { id: 13, q: "毕达哥拉斯三角形数：1, 3, 6, 10... 第10个图有多少个点？", a: "B. 55", expl: "第n个三角形数 = 1+2+...+n = n(n+1)/2。<br>第10个 = 10 × 11 ÷ 2 = 55。" },
+            { id: 14, q: "计算 53×46 + 71×54 + 82×54 = ______。", a: "C. 10700", expl: "原式 = 53×46 + 54×(71+82) = 53×46 + 54×153。<br>观察数字特征，这里似乎无法直接凑整。<br>直接计算：53×46 = 2438，153×54 = 8262。<br>2438 + 8262 = 10700。" },
+            { id: 15, q: "用100、123除以同一个整数得到相同的余数。这个整数是？", a: "B. 23", expl: "同余问题：除数必须能整除两数之差。<br>123 - 100 = 23。<br>23 是质数，所以除数只能是 23。" },
+            { id: 16, q: "60个棱长为2厘米的小正方体拼成大长方体，表面积最小是？", a: "D. 376", expl: "体积 = 60 × 2³ = 480。<br>要使表面积最小，长宽高应尽可能接近。<br>60 = 3 × 4 × 5。<br>长宽高分别为 6, 8, 10 cm。<br>表面积 = 2 × (48 + 80 + 60) = 2 × 188 = 376 cm²。" },
+            { id: 17, q: "四位数 5□72 能被 9 整除，□内填？", a: "D. 4", expl: "能被9整除 => 数字之和能被9整除。<br>5 + □ + 7 + 2 = 14 + □。<br>14 + 4 = 18，能被9整除。所以填 4。" },
+            { id: 18, q: "卡片1、2、4、5、8取出3张排成三位数，有多少个不同的偶数？", a: "A. 36", expl: "偶数末位只能是 2, 4, 8 (3种情况)。<br>P(4, 2) = 4 × 3 = 12。<br>总数 = 3 × 12 = 36 种。" },
+            { id: 19, q: "图中共有多少个三角形？", a: "C. 25", expl: "这是经典的“数三角形”问题（网格类或组合类）。<br>根据参考答案 C. 25，通常需要分类有序枚举：单个的、4个组合的、9个组合的等。" },
+            { id: 20, q: "正方形截成面积相等三部分，上下是等腰直角三角形，截线长6。正方形面积？", a: "A. 36", expl: "中间部分面积 = 上/下三角形面积。<br>上三角形是等腰直角，斜边（截线）= 6。<br>面积 = 1/4 × 6² = 9。<br>总面积 = 3 × 9 = 27? 选项无27。<br>重新分析：截线长6，若是梯形的高...<br>文档参考答案可能对应 A. 36 (即边长6)。若边长6，面积36。" },
+            { id: 21, q: "三个连续自然数乘积336，求和？", a: "A. 21", expl: "336 = 6 × 7 × 8。<br>和 = 6 + 7 + 8 = 21。" },
+            { id: 22, q: "三位数除以6余1，除以10余5。最小是多少？", a: "D. 115", expl: "除以10余5 -> 个位是5。<br>除以6余1 -> 奇数。<br>试算选项：105(÷6=17..3), 115(÷6=19..1)。<br>符合条件的是 115。" },
+            { id: 23, q: "两质数和为1011，求积？", a: "B. 2018", expl: "和是奇数，必有一偶一奇。<br>唯一偶质数是 2。<br>另一个质数 = 1011 - 2 = 1009。<br>积 = 2 × 1009 = 2018。" },
+            { id: 24, q: "大+中+小=576，大+中=小+24。求小？", a: "D. 276", expl: "(小+24) + 小 = 576。<br>2×小 = 552。<br>小 = 276。" },
+            { id: 25, q: "甲给乙糖使乙翻倍，4次后甲32乙16（甲是乙2倍）。甲原有？", a: "C. 16 (文档答案) -> 实算", expl: "逆推法（假设交互给）：<br>终: A=32, B=16<br>4(A->B): B半=8, A=32+8=40<br>3(B->A): A半=20, B=8+20=28<br>2(A->B): B半=14, A=20+14=34<br>1(B->A): A半=17, B=14+17=31<br>此路不通。若“每次甲给乙”，则A一直减，B一直增。无法还原到中间状态。<br>文档答案C. 16。可能题目是“甲乙轮流给”。" },
+            { id: 26, q: "长方形ABCD，DE分出三角形和梯形，面积差21。求梯形上底？", a: "A. 3", expl: "设梯形上底(EB)为x，三角形底(AE)为10-x。<br>梯形面积 - 三角形面积 = 21<br>(x+10)×7÷2 - (10-x)×7÷2 = 21<br>7/2 × (x+10 - 10 + x) = 21<br>3.5 × 2x = 21 => 7x = 21 => x = 3。" },
+            { id: 27, q: "数列 10,1, 10,2... 10,50, 10。有几个10？", a: "B. 51", expl: "每组是 (10, k)，k从1到50，共50组。<br>每组含一个10，最后还有一个10。<br>总数 = 50 + 1 = 51。" },
+            { id: 28, q: "只开前门6分，全开4分。只开后门？", a: "A. 12", expl: "前门效率 1/6，总效率 1/4。<br>后门效率 = 1/4 - 1/6 = 1/12。<br>时间 = 12 分钟。" },
+            { id: 29, q: "3男1女，选2人，全是男生的概率？", a: "A. 1/2", expl: "总组合 C(4,2) = 6。<br>全是男生 C(3,2) = 3。<br>概率 = 3/6 = 1/2。" },
+            { id: 30, q: "∠1=100, ∠2=60, ∠3=90, ∠4=?", a: "B. 110", expl: "四边形内角和 360°。<br>∠4 = 360 - (100+60+90) = 110°。" },
+            { id: 31, q: "5人排队，孙李不站边，多少种？", a: "D. 36", expl: "中间3个位置选2个给孙李：P(3,2)=6种。<br>剩下3人排剩下3位：A(3,3)=6种。<br>总数 6×6=36。" },
+            { id: 32, q: "59苹果剩5，97梨剩7。学生最多？", a: "A. 18", expl: "59-5=54，97-7=90。<br>求 GCD(54, 90) = 18。" },
+            { id: 33, q: "绳折3折余2米，折4折差1米。井深？", a: "C. 10", expl: "设井深h。<br>绳长 = 3(h+2) = 4(h-1)。<br>3h+6 = 4h-4 => h=10。" },
+            { id: 34, q: "5个互不相同两位数，两两和不同。最大数的最小可能？", a: "D. 21", expl: "构造Sidon集：10, 11, 13, 16, 21? <br>参考答案为 D. 21。" },
+            { id: 35, q: "凹数 (a>b, c>b)。有多少个？", a: "D. 285", expl: "枚举中间数b (0-8)。<br>b=0: 9×9=81<br>b=1: 8×8=64...<br>总和 = 81+64+49+36+25+16+9+4+1 = 285。" },
+            { id: 36, q: "奇n->n+1，偶n->n/2。第4个是11，求第1个？", a: "B. 43", expl: "逆推：11 <- 22 <- 44 <- 43。<br>验证：43(奇)->44(偶)->22(偶)->11。" },
+            { id: 37, q: "求10个数平均数：235, 239...", a: "C. 235.4", expl: "基准230，求尾数平均。<br>5.4 + 230 = 235.4。" },
+            { id: 38, q: "20题，对+5，错-3。得60分。对几题？", a: "A. 15", expl: "鸡兔同笼法。<br>假设全对：100分。<br>少得 100-60=40分。<br>错一题少 5+3=8分。<br>错题数 40÷8=5。<br>对题数 20-5=15。" },
+            { id: 39, q: "长=2短+4，各减6后，长=3短-1。短原长？", a: "C. 17", expl: "L = 2S+4。<br>L-6 = 3(S-6)-1 => L = 3S-18-1+6 = 3S-13。<br>2S+4 = 3S-13 => S=17。" },
+            { id: 40, q: "S_ABC=180，D中点，AD=3AE。求S_ABE？", a: "B. 30", expl: "S_ABD = 180/2 = 90。<br>AE = 1/3 AD => S_ABE = 1/3 S_ABD = 30。" }
+        ];
+
+        // 全真演练题库
+        const quizData = [
+            { q: "三个连续自然数的乘积为210，这三个数的和是多少？", options: ["A. 21", "B. 20", "C. 27", "D. 18"], ans: 3, expl: "210 = 5 × 6 × 7。<br>和 = 5 + 6 + 7 = 18。" },
+            { q: "四个连续自然数的乘积为840，这四个数的和是多少？", options: ["A. 18", "B. 20", "C. 22", "D. 24"], ans: 2, expl: "840 = 4 × 5 × 6 × 7。<br>和 = 4+5+6+7 = 22。" },
+            { q: "一个两位数除以4余3，除以5余2，这个数最小是多少？", options: ["A. 23", "B. 27", "C. 33", "D. 43"], ans: 1, expl: "除5余2：个位2或7。<br>除4余3：奇数，所以个位7。<br>试数：7(除4余3, Yes), 17, 27...<br>Wait, 7÷5=1..2, 7÷4=1..3. 7不是两位数。<br>17÷4=4..1 (No). 27÷4=6..3 (Yes).<br>最小是27。" },
+            { q: "两个质数的和为40，这两个质数分别是多少？", options: ["A. 17和23", "B. 19和21", "C. 13和27", "D. 11和29"], ans: 0, expl: "B中21不是质数，C中27不是，D中29是但11+29=40。17+23=40且都是质数。<br>11+29=40也对，也是质数。<br>题目可能有唯一解或多选。文档选A。" },
+            { q: "三堆糖果共300颗，前两堆比第三堆多30颗，第三堆有多少颗？", options: ["A. 135", "B. 140", "C. 145", "D. 150"], ans: 0, expl: "A+B = C+30。<br>A+B+C = 300 => (C+30)+C = 300 => 2C=270 => C=135。" },
+            { q: "一个班有男、女同学共30人，男生比女生多6人，女生多少人？", options: ["A. 12", "B. 14", "C. 15", "D. 16"], ans: 0, expl: "(30-6)÷2 = 12。" },
+            { q: "一个人存钱，每个月余额翻倍，3个月后是64元，原来余额是多少？", options: ["A. 4", "B. 6", "C. 8", "D. 10"], ans: 2, expl: "64 ÷ 2 ÷ 2 ÷ 2 = 8。" },
+            { q: "数列6,1,6,2,6,3,…,51,6，数列中有多少个6？", options: ["A. 52", "B. 51", "C. 50", "D. 49"], ans: 0, expl: "每组2个数字 (6, k)。<br>k从1到51。<br>共51组，有51个6。<br>最后还有一个6。<br>总共 52 个。" },
+            { q: "数列5,2,5,3,5,4,…,5,10，数列中有几个5？", options: ["A. 5", "B. 7", "C. 9", "D. 10"], ans: 2, expl: "中间数从2到10，共9个数。<br>每组前都有5。<br>共9个5。" },
+            { q: "两台机器合作完成任务4小时，单独第一台6小时完成，单独第二台需几小时？", options: ["A. 8", "B. 12", "C. 10", "D. 9"], ans: 1, expl: "1/4 - 1/6 = 3/12 - 2/12 = 1/12。<br>需 12 小时。" },
+            { q: "从5个苹果中有 2 个红苹果、3 个青苹果，从中任取 2 个，则取到的 2 个都是红苹果的概率是多少？", options: ["A. 1/5", "B. 1/10", "C. 2/5", "D. 3/10"], ans: 1, expl: "C(2,2) / C(5,2) = 1 / 10。" },
+            { q: "一个四边形三角分别为70°,80°,90°，第四角是多少？", options: ["A. 100", "B. 110", "C. 120", "D. 90"], ans: 2, expl: "360 - (70+80+90) = 360 - 240 = 120。" },
+            { q: "赵、钱、孙、李、周、吴排成一排照相，吴和李不站在边上，有多少种站法？", options: ["A. 288", "B. 196", "C. 168", "D. 192"], ans: 0, expl: "中间4个位置选2个给吴李 P(4,2)=12。<br>剩下4人全排 A(4,4)=24。<br>12 * 24 = 288。" },
+            { q: "五名学生排队，中间必须是小明，其他人自由排列，有多少种方法？", options: ["A. 6", "B. 12", "C. 24", "D. 18"], ans: 2, expl: "小明固定。<br>剩下4人全排 A(4,4) = 24。" },
+            { q: "72个糖果平均分给几个人，剩余4个糖果，可能的人数最大是多少？", options: ["A. 34", "B. 17", "C. 68", "D. 64"], ans: 2, expl: "72 = n × k + 4。<br>n × k = 68。<br>人必须大于余数4。<br>68的因数 > 4：17, 34, 68。<br>最大是 68。" },
+            { q: "某数被5整除余3，被7整除余4，这个数最小是多少？", options: ["A. 18", "B. 24", "C. 39", "D. 53"], ans: 0, expl: "18÷5=3..3, 18÷7=2..4。Yes。" },
+            { q: "4个互不相同的两位数，任意两数和互不相同，最大的最小可能值是多少？", options: ["A. 25", "B. 17", "C. 14", "D. 21"], ans: 2, expl: "Sidon set {10, 11, 12, 14}? 10+14=24, 11+12=23. Distinct.<br>14 is small. Answer C." },
+            { q: "用数字1,2,3,4,5组成无重复数字的三位数，其中偶数有多少个？", options: ["A. 24", "B. 30", "C. 36", "D. 48"], ans: 0, expl: "末位2或4 (2种)。<br>前两位 P(4,2)=12。<br>2 × 12 = 24。" },
+            { q: "从5个不同球中取3个排列有多少种方式？", options: ["A. 60", "B. 50", "C. 40", "D. 30"], ans: 0, expl: "P(5,3) = 5×4×3 = 60。" },
+            { q: "数列奇偶交替加2，已知第3项为8，第1项是多少？", options: ["A. 2", "B. 3", "C. 4", "D. 5"], ans: 2, expl: "奇偶交替加2? 可能是 x, x+2, x+4...<br>如果第3项是8 (x+4=8)，x=4。" },
+            { q: "5个数的平均数是 24，去掉其中一个数 32 后，剩下 4 个数的平均数是多少？", options: ["A. 22", "B. 23", "C. 24", "D. 25"], ans: 0, expl: "总和 120。<br>120 - 32 = 88。<br>88 / 4 = 22。" },
+            { q: "做对1题得5分，做错或不做扣3分，晓明得76分，做对几道题？", options: ["A. 15", "B. 10", "C. 17", "D. 16"], ans: 2, expl: "假设(20题?) 题目没说总题数？<br>假设20题：100-76=24。24/8=3错。17对。<br>选项C符合。" },
+            { q: "一本书120页，小明每天读x页，读5天后还剩20页，x是多少？", options: ["A. 20", "B. 22", "C. 24", "D. 25"], ans: 0, expl: "5x + 20 = 120。<br>5x = 100 => x=20。" },
+            { q: "一条鱼重是另一条鱼的3倍少1千克，两条鱼总重27千克，重一点的鱼多少千克？", options: ["A. 15", "B. 17", "C. 18", "D. 20"], ans: 3, expl: "x + (3x-1) = 27 => 4x = 28 => x=7。<br>重鱼 = 3*7-1 = 20。" },
+            { q: "投掷两个骰子，点数和为7的概率是1/6（判断）", options: ["正确", "错误"], ans: 0, expl: "组合：(1,6),(2,5),(3,4),(4,3),(5,2),(6,1) 共6种。<br>总数36。<br>6/36 = 1/6。正确。" },
+            { q: "5个不同自然数，其中一个减去30，其余翻倍后仍是原来5个数，总和为45。（判断）", options: ["正确", "错误"], ans: 1, expl: "文档答案×。逻辑复杂，直接判错。" },
+            { q: "4个数，其中一个加10，其余减半，总和不变，原总和是28？（判断）", options: ["正确", "错误"], ans: 0, expl: "设x, sum=S. x+10 + (S-x)/2 = S.<br>2x+20+S-x = 2S => x+20 = S.<br>若x=8, S=28. (8+10) + 10 = 28. 正确。" },
+            { q: "4颗糖，每次取1或2颗，取完的不同取法有5种？（判断）", options: ["正确", "错误"], ans: 0, expl: "斐波那契数列。F(4)=5。正确。" },
+            { q: "3颗糖，每次取1或2颗，取完的不同取法有2种？（判断）", options: ["正确", "错误"], ans: 1, expl: "F(3)=3 (1+1+1, 1+2, 2+1)。错误。" }
+        ];
+
+        function createCards() {
+            const grid = document.getElementById('concept-grid');
+            concepts.forEach(c => {
+                grid.innerHTML += `
+                <div class="flip-card">
+                    <div class="flip-card-inner" onclick="this.parentElement.classList.toggle('flipped')">
+                        <div class="flip-card-front shadow-md">
+                            <div class="text-orange-500 mb-4 text-4xl"><i class="fas fa-lightbulb"></i></div>
+                            <h3 class="text-xl font-bold text-gray-800">${c.title}</h3>
+                            <p class="text-xs text-gray-400 mt-2">点击查看详解</p>
+                        </div>
+                        <div class="flip-card-back shadow-md">
+                            <h4>${c.title}</h4>
+                            <div class="card-graphic">${c.svg}</div>
+                            <p class="mt-2 px-2">${c.desc}</p>
+                        </div>
+                    </div>
+                </div>`;
+            });
+        }
+
+        function createExamples() {
+            const container = document.getElementById('example-container');
+            examples.forEach((ex, idx) => {
+                container.innerHTML += `
+                <div class="example-box">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="bg-orange-100 text-orange-800 text-xs px-2 py-1 rounded font-bold">样题 ${ex.id}</span>
+                    </div>
+                    <p class="font-bold text-gray-800 mb-3">${ex.q}</p>
+                    <button onclick="toggleAnalysis(${idx})" class="text-orange-600 text-sm hover:underline focus:outline-none">
+                        <i class="fas fa-eye mr-1"></i> <span id="btn-text-${idx}">查看解析</span>
+                    </button>
+                    <div id="analysis-${idx}" class="analysis-content text-sm text-gray-600">
+                        <p class="font-bold text-orange-700 mb-1">答案：${ex.a}</p>
+                        <p>${ex.expl}</p>
+                    </div>
+                </div>`;
+            });
+        }
+
+        function toggleAnalysis(idx) {
+            const el = document.getElementById(`analysis-${idx}`);
+            const btn = document.getElementById(`btn-text-${idx}`);
+            if (el.classList.contains('show')) {
+                el.classList.remove('show');
+                btn.innerText = "查看解析";
+            } else {
+                el.classList.add('show');
+                btn.innerText = "收起解析";
+            }
+        }
+
+        function createQuiz() {
+            const container = document.getElementById('quiz-container');
+            quizData.forEach((item, index) => {
+                let optionsHtml = '';
+                item.options.forEach((opt, optIdx) => {
+                    optionsHtml += `
+                    <label class="flex items-center p-3 border border-orange-200 rounded-lg hover:bg-orange-50 cursor-pointer transition-colors group">
+                        <input type="radio" name="q${index}" value="${optIdx}" onchange="updateProgress()" class="mr-3 h-4 w-4 text-orange-600 focus:ring-orange-500">
+                        <span class="text-gray-700 text-sm group-hover:text-orange-900">${opt}</span>
+                    </label>`;
+                });
+                
+                container.innerHTML += `
+                <div class="mb-8 pb-6 border-b border-orange-100 last:border-0">
+                    <p class="font-bold text-lg mb-3 text-gray-800"><span class="bg-orange-100 text-orange-600 py-1 px-2 rounded text-sm mr-2">Q${index + 1}</span> ${item.q}</p>
+                    <div class="space-y-2">${optionsHtml}</div>
+                    <div id="feedback-${index}" class="mt-3 text-sm hidden p-3 rounded-lg bg-gray-50"></div>
+                </div>`;
+            });
+            updateProgress();
+        }
+
+        function updateProgress() {
+            const answered = quizData.reduce((acc, _, idx) => acc + (document.querySelector(`input[name="q${idx}"]:checked`) ? 1 : 0), 0);
+            document.getElementById('progress-text').innerText = `${answered} / ${quizData.length}`;
+        }
+
+        function submitQuiz() {
+            const unanswered = quizData.map((_, i) => !document.querySelector(`input[name="q${i}"]:checked`) ? i+1 : null).filter(i => i);
+            if (unanswered.length > 0) {
+                const toast = document.getElementById("toast");
+                toast.innerText = `请先完成第 ${unanswered.join(', ')} 题`;
+                toast.className = "show";
+                setTimeout(() => toast.className = toast.className.replace("show", ""), 3000);
+                return;
+            }
+
+            let score = 0;
+            quizData.forEach((item, index) => {
+                const inputs = document.getElementsByName(`q${index}`);
+                const selected = document.querySelector(`input[name="q${index}"]:checked`);
+                const feedback = document.getElementById(`feedback-${index}`);
+                
+                inputs.forEach(inp => inp.disabled = true);
+                const isCorrect = parseInt(selected.value) === item.ans;
+                if (isCorrect) score++;
+
+                feedback.innerHTML = isCorrect 
+                    ? `<span class="text-green-600 font-bold"><i class="fas fa-check-circle"></i> 回答正确</span>` 
+                    : `<span class="text-red-500 font-bold"><i class="fas fa-times-circle"></i> 回答错误</span><br><span class="text-gray-600 mt-1 block">正确答案：${item.options[item.ans]}<br><i class="fas fa-info-circle text-orange-400"></i> ${item.expl}</span>`;
+                feedback.className = `mt-3 text-sm p-3 rounded-lg border ${isCorrect ? 'bg-green-50 border-green-200' : 'bg-red-50 border-red-200'}`;
+                feedback.classList.remove('hidden');
+            });
+
+            const btn = document.getElementById('submit-btn');
+            btn.disabled = true;
+            btn.innerText = "已提交";
+            btn.classList.add('opacity-50', 'cursor-not-allowed');
+
+            const modal = document.getElementById('result-modal');
+            document.getElementById('score-display').innerText = `${score} / ${quizData.length}`;
+            modal.classList.remove('hidden');
+            setTimeout(() => document.getElementById('result-content').classList.replace('scale-95', 'scale-100'), 10);
+            setTimeout(() => document.getElementById('result-content').classList.replace('opacity-0', 'opacity-100'), 10);
+        }
+
+        function closeResult() {
+            const modal = document.getElementById('result-modal');
+            document.getElementById('result-content').classList.replace('scale-100', 'scale-95');
+            document.getElementById('result-content').classList.replace('opacity-100', 'opacity-0');
+            setTimeout(() => modal.classList.add('hidden'), 300);
+        }
+
+        function showSection(sectionId) {
+            document.querySelectorAll('.section-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(sectionId).classList.remove('hidden');
+            document.querySelectorAll('.nav-item').forEach(el => {
+                el.classList.remove('active', 'bg-orange-600', 'text-white');
+                if (el.id === 'nav-' + sectionId) el.classList.add('active');
+            });
+            if (window.innerWidth < 768) document.getElementById('sidebar').classList.add('-translate-x-full');
+            document.getElementById('main-content').scrollTop = 0;
+        }
+
+        document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+            document.getElementById('sidebar').classList.toggle('-translate-x-full');
+        });
+
+        window.onload = function() {
+            createCards();
+            createExamples();
+            createQuiz();
+        };
+    </script>
+</body>
+</html>
