@@ -138,6 +138,29 @@
         let currentId = null;
         let allTopics = [];
 
+        // 根据当前所有章节，更新分类自动补全选项
+        function updateCategorySuggestions() {
+            const datalist = document.getElementById('category-suggestions');
+            if (!datalist) return;
+
+            // 收集所有非空的分类
+            const set = new Set();
+            (allTopics || []).forEach(t => {
+                if (t.category && typeof t.category === 'string') {
+                    set.add(t.category.trim());
+                }
+            });
+
+            // 清空并重建 options
+            datalist.innerHTML = '';
+            Array.from(set).sort().forEach(cat => {
+                const opt = document.createElement('option');
+                opt.value = cat;
+                datalist.appendChild(opt);
+            });
+        }
+
+
         // 1. 初始化
         (async () => {
             const { data: { user } } = await supabase.auth.getUser();
@@ -194,66 +217,93 @@
         }
 
         // [!!] 上传逻辑 (复用之前的核心代码)
+        // 上传视频 / 课件的通用函数
         window.handleUpload = async (input, type) => {
             const file = input.files[0];
             if (!file) return;
 
-            // 这里的 token 仅用于请求签名，如果你 Node.js 后端做了校验，需要传
-            // 假设我们 Node 后端是用 JWT 校验的，这里可能比较麻烦，因为 Supabase 的 session 不通用。
-            // **临时方案**：建议暂时去掉 Node 后端 /generate-upload-url 的鉴权，或者简单点，直接用 fetch 请求。
-            // 考虑到是后台，我们假设你是管理员，这里先尝试直接请求。
-            
-            const progBar = document.getElementById(`${type}-progress`);
-            const progBox = document.getElementById(`${type}-progress-box`);
+            const progBar  = document.getElementById(`${type}-progress`);
+            const progBox  = document.getElementById(`${type}-progress-box`);
             const progText = document.getElementById(`${type}-progress-text`);
             const urlInput = document.getElementById(`${type}-url-input`);
-            
+
+            // 初始化进度 UI
             progBox.classList.remove('hidden');
             progBar.value = 0;
             progText.textContent = '准备上传...';
 
             try {
-                // 1. 获取 Node.js 后端的 Token (这一步比较特殊，因为我们跨了系统)
-                // 如果你的 Node 后端还需要 JWT，这里会报错。
-                // 建议：把 Node 后端的 generate-upload-url 改成不需要 auth，或者用一个固定的 API Key。
-                // 这里为了演示，假设你已经把 Node 后端的 authMiddleware 去掉了或者适配了。
-                
-                // 获取 R2 签名
+                // 1. 向 Node 后端申请 R2 上传签名
                 const presignRes = await fetch(GENERATE_URL_API, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' }, // 暂时不传 Token
-                    body: JSON.stringify({ fileName: file.name, contentType: file.type })
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        fileName: file.name,
+                        contentType: file.type || 'application/octet-stream',
+                    }),
                 });
 
-                if (!presignRes.ok) throw new Error('获取上传许可失败，请检查后端配置');
+                if (!presignRes.ok) {
+                    throw new Error('获取上传许可失败，请检查后端配置');
+                }
+
                 const { uploadUrl, publicUrl } = await presignRes.json();
 
-                // 2. 直传 R2
+                // 2. 直传到 R2
                 await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
-                    xhr.upload.onprogress = e => {
+
+                    xhr.upload.onprogress = (e) => {
                         if (e.lengthComputable) {
                             const pct = (e.loaded / e.total) * 100;
                             progBar.value = pct;
                             progText.textContent = `${Math.round(pct)}%`;
                         }
                     };
-                    xhr.onload = () => xhr.status === 200 ? resolve() : reject();
-                    xhr.onerror = () => reject();
+
+                    xhr.onload = () => {
+                        if (xhr.status >= 200 && xhr.status < 300) {
+                            progBar.value = 100;
+                            progText.textContent = '100%';
+                            resolve();
+                        } else {
+                            reject(new Error('上传失败，状态码 ' + xhr.status));
+                        }
+                    };
+
+                    xhr.onerror = () => reject(new Error('网络错误，请检查连接'));
+
                     xhr.open('PUT', uploadUrl);
-                    xhr.setRequestHeader('Content-Type', file.type);
+                    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
                     xhr.send(file);
                 });
 
                 // 3. 回填 URL
                 urlInput.value = publicUrl;
                 progText.textContent = '✅ 上传完成，请点击保存';
-                
+
+                // 成功后 1.5 秒自动收起进度条
+                setTimeout(() => {
+                    progBox.classList.add('hidden');
+                    progBar.value = 0;
+                }, 1500);
             } catch (e) {
+                console.error('上传出错:', e);
+                progText.textContent = '❌ 上传失败，请重试';
+
+                // 失败时 2 秒后也自动收起，防止一直挂在那里
+                setTimeout(() => {
+                    progBox.classList.add('hidden');
+                    progBar.value = 0;
+                }, 2000);
+
                 alert('上传出错: ' + e.message);
-                progText.textContent = '❌ 失败';
+            } finally {
+                // 清空 input 的值，保证选择“同一个文件”时也会触发 change 事件
+                input.value = '';
             }
-        }
+        };
+
 
         window.saveCurrentTopic = async () => {
             if (!currentId) return;
