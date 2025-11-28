@@ -1,0 +1,1062 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>NOIP 考前一夜 · 终极冲刺</title>
+    <!-- 引入 Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- 引入 React 和 ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+    <!-- 引入 Babel 用于解析 JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- 防作弊脚本：禁用右键和 F12 -->
+    <script>
+        document.addEventListener('contextmenu', function(e) {
+            e.preventDefault();
+            return false;
+        });
+
+        document.addEventListener('keydown', function(e) {
+            // 禁用 F12
+            if (e.keyCode === 123) {
+                e.preventDefault();
+                return false;
+            }
+            // 禁用 Ctrl+Shift+I (检查)
+            if (e.ctrlKey && e.shiftKey && e.keyCode === 73) {
+                e.preventDefault();
+                return false;
+            }
+        });
+    </script>
+
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+            background-color: #f9fafb;
+            color: #333;
+            user-select: none;
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useMemo, useEffect } = React;
+
+        // 图标组件
+        const Icons = {
+            BookOpen: ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>,
+            Terminal: ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>,
+            CheckCircle: ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>,
+            ArrowRight: ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><line x1="5" y1="12" x2="19" y2="12"/><polyline points="12 5 19 12 12 19"/></svg>,
+            GitMerge: ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M6 21V9a9 9 0 0 0 9 9"/></svg>,
+            GitPullRequest: ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="18" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><path d="M13 6h3a2 2 0 0 1 2 2v7"/><line x1="6" y1="9" x2="6" y2="21"/></svg>,
+            Share2: ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>,
+            PlayCircle: ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><polygon points="10 8 16 12 10 16 10 8"/></svg>,
+            RotateCcw: ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M1 4v6h6"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>,
+            ChevronRight: ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="9 18 15 12 9 6"/></svg>,
+            ChevronLeft: ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><polyline points="15 18 9 12 15 6"/></svg>,
+            AlertCircle: ({size=24, className=""}) => <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        };
+
+        // ==========================================
+        //  NEW: 算法交互组件
+        // ==========================================
+
+        // --- 1. LCA Demo ---
+        const LCADemo = () => {
+            const [step, setStep] = useState(0);
+            const nodes = {
+                1: {x: 200, y: 40, d:1},
+                2: {x: 100, y: 100, d:2}, 3: {x: 300, y: 100, d:2},
+                4: {x: 50, y: 160, d:3}, 5: {x: 150, y: 160, d:3},
+                6: {x: 180, y: 220, d:4} // 5's child
+            };
+            const edges = [['1','2'],['1','3'],['2','4'],['2','5'],['5','6']];
+            
+            // Query: LCA(4, 6). 4(d=3), 6(d=4).
+            const steps = [
+                { text: "目标：求 LCA(4, 6)。Node 4 深度=3, Node 6 深度=4。", hl: ['4','6'] },
+                { text: "Step 1 (对齐深度)：6 比 4 深。6 向上跳到父节点 5 (深度3)。", hl: ['4','5'], arr: {from:'6', to:'5'} },
+                { text: "Step 2 (倍增上跳)：现在 4 和 5 深度相同，但 4!=5。尝试一起向上跳。", hl: ['4','5'] },
+                { text: "Step 2.1：4 跳到 2, 5 跳到 2。发现跳到了同一个点 2。", hl: ['2'], arr: [{from:'4',to:'2'}, {from:'5',to:'2'}] },
+                { text: "LCA 锁定：既然跳一步就相同了，说明 LCA 就是 2 (或者 2 的子节点，算法实现细节不同)。最终答案 LCA(4,6) = 2。", hl: ['2'], isFinal: true }
+            ];
+
+            return <BaseDemo title="LCA 演示 (Query: 4, 6)" steps={steps} nodes={nodes} edges={edges} step={step} setStep={setStep} />;
+        };
+
+        // --- 2. Tree DP Demo ---
+        const TreeDPDemo = () => {
+            const [step, setStep] = useState(0);
+            const nodes = {
+                1: {x: 200, y: 50, v: 5},
+                2: {x: 100, y: 150, v: 10},
+                3: {x: 300, y: 150, v: 20}
+            };
+            const edges = [['1','2'], ['1','3']];
+            // dp[u][0]: 不选, dp[u][1]: 选
+            const steps = [
+                { text: "目标：求最大独立集权值 (没有上司的舞会)。红色数字为快乐值。", hl: [] },
+                { text: "处理叶子 2：dp[2][0]=0 (不来), dp[2][1]=10 (来)。", hl: ['2'], table: {2:{0:0, 1:10}} },
+                { text: "处理叶子 3：dp[3][0]=0 (不来), dp[3][1]=20 (来)。", hl: ['3'], table: {2:{0:0, 1:10}, 3:{0:0, 1:20}} },
+                { text: "回溯到根 1 (考虑子节点 2)：dp[1][0]+=max(0,10)=10, dp[1][1]+=0=0。", hl: ['1','2'], table: {2:{0:0, 1:10}, 3:{0:0, 1:20}, 1:{0:10, 1:5}} },
+                { text: "回溯到根 1 (考虑子节点 3)：dp[1][0]+=max(0,20)=30, dp[1][1]+=0=5。", hl: ['1','3'], table: {2:{0:0, 1:10}, 3:{0:0, 1:20}, 1:{0:30, 1:5}} },
+                { text: "最终答案：max(dp[1][0], dp[1][1]) = 30。", hl: ['1'], table: {2:{0:0, 1:10}, 3:{0:0, 1:20}, 1:{0:30, 1:5}}, isFinal: true }
+            ];
+
+            return <BaseDemo title="树形 DP 演示" steps={steps} nodes={nodes} edges={edges} step={step} setStep={setStep} extraUI={
+                steps[step].table && (
+                    <div className="absolute top-2 right-2 bg-white/90 p-2 text-xs border rounded shadow">
+                        <div className="font-bold border-b mb-1">DP Table</div>
+                        {Object.entries(steps[step].table).map(([k,v]) => (
+                            <div key={k} className={steps[step].hl.includes(k) ? "text-orange-600 font-bold" : ""}>
+                                Node {k}: [0]={v[0]}, [1]={v[1]}
+                            </div>
+                        ))}
+                    </div>
+                )
+            }/>;
+        };
+
+        // --- 3. Tarjan Demo ---
+        const TarjanDemo = () => {
+            const [step, setStep] = useState(0);
+            const nodes = {
+                1: {x: 200, y: 50},
+                2: {x: 100, y: 150},
+                3: {x: 300, y: 150}
+            };
+            // 1->2, 2->3, 3->1 (Cycle)
+            const edges = [['1','2'], ['2','3'], ['3','1']];
+            const steps = [
+                { text: "Tarjan 找 SCC。图中有环 1-2-3-1。", stack: [], dfn: {}, low: {} },
+                { text: "DFS(1): 入栈。dfn[1]=1, low[1]=1。", stack: [1], dfn: {1:1}, low: {1:1}, hl:['1'] },
+                { text: "DFS(2): 入栈。dfn[2]=2, low[2]=2。", stack: [1,2], dfn: {1:1,2:2}, low: {1:1,2:2}, hl:['2'] },
+                { text: "DFS(3): 入栈。dfn[3]=3, low[3]=3。", stack: [1,2,3], dfn: {1:1,2:2,3:3}, low: {1:1,2:2,3:3}, hl:['3'] },
+                { text: "回溯 3->1 (返祖边): 1 在栈中。low[3] = min(low[3], dfn[1]) = 1。", stack: [1,2,3], dfn: {1:1,2:2,3:3}, low: {1:1,2:2,3:1}, hl:['3'], arr:{from:'3',to:'1'} },
+                { text: "回溯 2->3 (树边): low[2] = min(low[2], low[3]) = 1。", stack: [1,2,3], dfn: {1:1,2:2,3:3}, low: {1:1,2:1,3:1}, hl:['2'] },
+                { text: "回溯 1->2 (树边): low[1] = min(low[1], low[2]) = 1。", stack: [1,2,3], dfn: {1:1,2:2,3:3}, low: {1:1,1:1,3:1}, hl:['1'] },
+                { text: "1 完成：dfn[1] == low[1]。发现 SCC 根！弹出栈中 1 及以上所有点。", stack: [], dfn: {1:1,2:2,3:3}, low: {1:1,1:1,3:1}, hl:['1','2','3'], isFinal: true, scc: "{1, 2, 3}" }
+            ];
+
+            return <BaseDemo title="Tarjan 演示" steps={steps} nodes={nodes} edges={edges} step={step} setStep={setStep} isDirected={true} extraUI={
+                <div className="absolute top-2 right-2 bg-white/90 p-2 text-xs border rounded shadow w-32">
+                    <div className="font-bold border-b mb-1">状态</div>
+                    <div>Stack: [{steps[step].stack.join(', ')}]</div>
+                    <div className="mt-1 border-t pt-1">
+                        {Object.entries(steps[step].low).map(([k,v]) => (
+                            <div key={k}>Node {k}: L={v}, D={steps[step].dfn[k]}</div>
+                        ))}
+                    </div>
+                    {steps[step].scc && <div className="mt-1 text-red-600 font-bold">SCC: {steps[step].scc}</div>}
+                </div>
+            }/>;
+        };
+
+        // --- 通用演示外壳 ---
+        const BaseDemo = ({ title, steps, nodes, edges, step, setStep, isDirected=false, extraUI=null }) => {
+            const current = steps[step];
+            return (
+                <div className="bg-white p-4 rounded-xl border border-orange-100 shadow-sm">
+                    <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                        <h4 className="font-bold text-gray-700 flex items-center text-sm">
+                            <Icons.PlayCircle size={16} className="mr-2 text-orange-500" /> {title}
+                        </h4>
+                        <div className="flex space-x-2">
+                            <button onClick={() => setStep(Math.max(0, step - 1))} disabled={step === 0} className="p-1 rounded hover:bg-gray-100 disabled:opacity-30"><Icons.ChevronLeft size={20}/></button>
+                            <div className="px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-xs font-mono font-bold">Step {step}/{steps.length - 1}</div>
+                            <button onClick={() => setStep(Math.min(steps.length - 1, step + 1))} disabled={step === steps.length - 1} className="p-1 rounded hover:bg-gray-100 disabled:opacity-30"><Icons.ChevronRight size={20}/></button>
+                        </div>
+                    </div>
+                    <div className="relative h-64 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden mb-3">
+                        <svg className="w-full h-full">
+                            <defs>
+                                <marker id="arrow" markerWidth="10" markerHeight="10" refX="22" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#CBD5E0" /></marker>
+                                <marker id="arrow-hl" markerWidth="10" markerHeight="10" refX="22" refY="3" orient="auto" markerUnits="strokeWidth"><path d="M0,0 L0,6 L9,3 z" fill="#F6AD55" /></marker>
+                            </defs>
+                            {edges.map(([u,v], i) => {
+                                const n1 = nodes[u], n2 = nodes[v];
+                                const isHl = current.hl && current.hl.includes(u) && current.hl.includes(v);
+                                return <line key={i} x1={n1.x} y1={n1.y} x2={n2.x} y2={n2.y} stroke={isHl ? "#F6AD55" : "#CBD5E0"} strokeWidth={isHl?3:2} markerEnd={isDirected ? (isHl?"url(#arrow-hl)":"url(#arrow)") : ""} />;
+                            })}
+                            {/* Arrows for movement */}
+                            {current.arr && (Array.isArray(current.arr) ? current.arr : [current.arr]).map((a, i) => {
+                                const n1 = nodes[a.from], n2 = nodes[a.to];
+                                return <line key={`arr-${i}`} x1={n1.x+10} y1={n1.y} x2={n2.x+10} y2={n2.y} stroke="#E53E3E" strokeWidth="2" strokeDasharray="4,2" markerEnd="url(#arrow-hl)" />;
+                            })}
+                            {Object.entries(nodes).map(([k, n]) => (
+                                <g key={k}>
+                                    <circle cx={n.x} cy={n.y} r="14" fill={current.hl && current.hl.includes(k) ? "#FEKQ88" : "white"} stroke={current.hl && current.hl.includes(k) ? "#ED8936" : "#4A5568"} strokeWidth="2" className="transition-colors duration-300" />
+                                    <text x={n.x} y={n.y} dy="4" textAnchor="middle" fontSize="12" fontWeight="bold" fill="#2D3748">{k}</text>
+                                    {n.v && <text x={n.x+16} y={n.y} dy="4" fontSize="10" fill="#E53E3E">{n.v}</text>}
+                                </g>
+                            ))}
+                        </svg>
+                        {extraUI}
+                    </div>
+                    <div className="bg-orange-50/50 p-3 rounded-lg border border-orange-100 min-h-[50px] text-sm text-gray-700">{current.text}</div>
+                </div>
+            );
+        };
+
+        // ... 保留原有的 TruckDemo, TransportDemo ...
+        const TruckDemo = () => {
+          const [step, setStep] = useState(0); 
+          
+          const nodes = {
+            A: { x: 50, y: 100 },
+            B: { x: 150, y: 60 },
+            C: { x: 150, y: 140 },
+            D: { x: 250, y: 100 },
+            E: { x: 350, y: 100 },
+          };
+
+          const kruskalSteps = [
+            { id: 'start', desc: "准备开始 Kruskal 算法：将所有边按权值从大到小排序。" },
+            { id: 'D-E', u: 'D', v: 'E', w: 7, action: 'accept', desc: "检查边 D-E (7)：权值最大。两点未连通 -> 加入 MST。" },
+            { id: 'B-D', u: 'B', v: 'D', w: 6, action: 'accept', desc: "检查边 B-D (6)：两点未连通 -> 加入 MST。" },
+            { id: 'A-B', u: 'A', v: 'B', w: 5, action: 'accept', desc: "检查边 A-B (5)：两点未连通 -> 加入 MST。" },
+            { id: 'B-C', u: 'B', v: 'C', w: 4, action: 'accept', desc: "检查边 B-C (4)：两点未连通 -> 加入 MST。" },
+            { id: 'C-D', u: 'C', v: 'D', w: 3, action: 'reject', desc: "检查边 C-D (3)：C 和 D 已通过 B 连通 (环: B-C-D) -> 舍弃。" },
+            { id: 'A-C', u: 'A', v: 'C', w: 2, action: 'reject', desc: "检查边 A-C (2)：A 和 C 已通过 B 连通 (环: A-B-C) -> 舍弃。" },
+            { id: 'query', desc: "MST 构建完成。现在可以在树上用 LCA 快速查询路径瓶颈。" },
+          ];
+
+          const allEdges = [
+            { id: 'D-E', u: 'D', v: 'E', w: 7 },
+            { id: 'B-D', u: 'B', v: 'D', w: 6 },
+            { id: 'A-B', u: 'A', v: 'B', w: 5 },
+            { id: 'B-C', u: 'B', v: 'C', w: 4 },
+            { id: 'C-D', u: 'C', v: 'D', w: 3 },
+            { id: 'A-C', u: 'A', v: 'C', w: 2 },
+          ];
+
+          const currentDesc = kruskalSteps[step].desc;
+
+          const getEdgeStyle = (edgeId) => {
+            const edgeStepIndex = kruskalSteps.findIndex(s => s.id === edgeId);
+            if (step < edgeStepIndex) return { color: "#CBD5E0", width: 2, opacity: 0.5 };
+            if (step === edgeStepIndex) return { color: "#3182CE", width: 4, opacity: 1, highlight: true };
+            const action = kruskalSteps[edgeStepIndex].action;
+            if (action === 'accept') return { color: "#F6AD55", width: 3, opacity: 1 };
+            if (action === 'reject') return { color: "#A0AEC0", width: 1, opacity: 0.2, dashed: true };
+            return { color: "#CBD5E0", width: 2, opacity: 0.5 };
+          };
+
+          return (
+            <div className="bg-white p-4 rounded-xl border border-orange-100 shadow-sm">
+              <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                <h4 className="font-bold text-gray-700 flex items-center text-sm">
+                  <Icons.GitMerge size={16} className="mr-2 text-orange-500" /> 
+                  算法演示：最大生成树 (Kruskal)
+                </h4>
+                <div className="flex space-x-2">
+                   <button 
+                     onClick={() => setStep(Math.max(0, step - 1))}
+                     disabled={step === 0}
+                     className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                   >
+                     <Icons.ChevronLeft size={20} />
+                   </button>
+                   <div className="px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-xs font-mono font-bold flex items-center">
+                     Step {step} / {kruskalSteps.length - 1}
+                   </div>
+                   <button 
+                     onClick={() => setStep(Math.min(kruskalSteps.length - 1, step + 1))}
+                     disabled={step === kruskalSteps.length - 1}
+                     className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                   >
+                     <Icons.ChevronRight size={20} />
+                   </button>
+                </div>
+              </div>
+
+              <div className="relative h-48 bg-gray-50 rounded-lg border border-gray-100 overflow-hidden mb-3">
+                <svg className="w-full h-full">
+                  {allEdges.map((edge) => {
+                    const start = nodes[edge.u];
+                    const end = nodes[edge.v];
+                    const style = getEdgeStyle(edge.id);
+                    const isPathQuery = step === 7 && ['A-B', 'B-D', 'D-E'].includes(edge.id);
+                    const finalColor = isPathQuery ? "#E53E3E" : style.color;
+                    const finalWidth = isPathQuery ? 4 : style.width;
+                    
+                    return (
+                      <g key={edge.id}>
+                        <line 
+                          x1={start.x} y1={start.y} 
+                          x2={end.x} y2={end.y} 
+                          stroke={finalColor} 
+                          strokeWidth={finalWidth}
+                          strokeOpacity={style.opacity}
+                          strokeDasharray={style.dashed ? "5,5" : "0"}
+                          className="transition-all duration-300"
+                        />
+                        <rect 
+                          x={(start.x + end.x)/2 - 8} 
+                          y={(start.y + end.y)/2 - 8} 
+                          width="16" height="16" 
+                          rx="4"
+                          fill="white"
+                          className={style.opacity < 0.5 ? "opacity-40" : "opacity-100"}
+                        />
+                        <text 
+                          x={(start.x + end.x)/2} 
+                          y={(start.y + end.y)/2} 
+                          dy="4"
+                          textAnchor="middle" 
+                          fontSize="10"
+                          fill={isPathQuery ? "#E53E3E" : (style.highlight ? "#2B6CB0" : "#718096")}
+                          fontWeight={style.highlight ? "bold" : "normal"}
+                        >
+                          {edge.w}
+                        </text>
+                      </g>
+                    );
+                  })}
+                  {Object.entries(nodes).map(([label, pos]) => (
+                    <g key={label}>
+                      <circle 
+                        cx={pos.x} cy={pos.y} r="12" 
+                        fill="white" 
+                        stroke={step === 7 && (label === 'A' || label === 'E') ? "#E53E3E" : "#4A5568"} 
+                        strokeWidth={step === 7 && (label === 'A' || label === 'E') ? 3 : 2}
+                        className="transition-colors duration-300"
+                      />
+                      <text x={pos.x} y={pos.y} dy="4" textAnchor="middle" fontSize="11" fontWeight="bold" fill="#2D3748">{label}</text>
+                    </g>
+                  ))}
+                </svg>
+              </div>
+
+              <div className="bg-orange-50/50 p-3 rounded-lg border border-orange-100 min-h-[60px] flex items-center">
+                <div className="text-sm text-gray-700 leading-snug">
+                   <span className="font-bold text-orange-600 mr-2">
+                     {step === 0 ? "Start" : step === 7 ? "Query" : `Check #${step}`}
+                   </span>
+                   {currentDesc}
+                   {step === 7 && (
+                     <div className="mt-1 text-red-600 font-bold text-xs">
+                       查询路径 A &rarr; E: 瓶颈边权值为 5 (min of 5, 6, 7)。
+                     </div>
+                   )}
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        const TransportDemo = () => {
+          const [step, setStep] = useState(0);
+          const targetLimit = 14;
+          
+          const steps = [
+            {
+              title: "初始检查",
+              desc: `二分设定的时间限制 T = ${targetLimit}。我们需要检查是否存在两条“超长路径”。`,
+              highlights: [],
+              removed: null,
+              status: 'init'
+            },
+            {
+              title: "识别超长路径",
+              desc: "Path A (3->4) 长度 23 > 14。Path B (1->4) 长度 18 > 14。这都是“不合格路径”。",
+              highlights: ['pathA', 'pathB'],
+              removed: null,
+              status: 'bad'
+            },
+            {
+              title: "寻找公共边 (差分)",
+              desc: "要让所有不合格路径变短，必须删去它们的公共边。公共边集 = {1-2, 2-4}。",
+              highlights: ['common'],
+              removed: null,
+              status: 'diff'
+            },
+            {
+              title: "贪心删边",
+              desc: "在公共边中，边 1-2 权值 10，边 2-4 权值 8。贪心选择最大的边 1-2。",
+              highlights: ['select-1-2'],
+              removed: null,
+              status: 'greedy'
+            },
+            {
+              title: "验证结果",
+              desc: "删去 1-2 后：Path A 变为 13 ≤ 14，Path B 变为 8 ≤ 14。Check 成功！",
+              highlights: ['pathA', 'pathB'],
+              removed: '1-2',
+              status: 'success'
+            }
+          ];
+
+          const currentStep = steps[step];
+          const edges = [
+            { id: '1-3', u: {x: 200, y: 50}, v: {x: 100, y: 150}, w: 5 },
+            { id: '1-2', u: {x: 200, y: 50}, v: {x: 300, y: 150}, w: 10 },
+            { id: '2-4', u: {x: 300, y: 150}, v: {x: 350, y: 250}, w: 8 },
+          ];
+
+          const getEdgeVisuals = (edgeId) => {
+            const isRemoved = currentStep.removed === edgeId;
+            let color = "#CBD5E0"; 
+            let width = 2;
+            let dashed = false;
+
+            if (isRemoved) {
+              color = "#CBD5E0";
+              dashed = true;
+              return { color, width, dashed, labelColor: "#A0AEC0" };
+            }
+
+            if (step === 1) {
+              if (['1-3', '1-2', '2-4'].includes(edgeId)) color = "#E53E3E"; 
+            }
+            if (step === 2) {
+              if (['1-2', '2-4'].includes(edgeId)) {
+                color = "#805AD5";
+                width = 4;
+              }
+            }
+            if (step === 3) {
+              if (edgeId === '1-2') {
+                color = "#38A169";
+                width = 5;
+              } else if (edgeId === '2-4') {
+                color = "#805AD5"; 
+                width = 4;
+              }
+            }
+            if (step === 4) {
+              color = "#38A169"; 
+            }
+
+            return { color, width, dashed, labelColor: isRemoved ? "#A0AEC0" : "#DD6B20" };
+          };
+
+          return (
+            <div className="bg-white p-4 rounded-xl border border-orange-100 shadow-sm">
+              <div className="flex justify-between items-center mb-4 border-b border-gray-100 pb-2">
+                <h4 className="font-bold text-gray-700 flex items-center text-sm">
+                  <Icons.PlayCircle size={16} className="mr-2 text-orange-500" /> 
+                  算法演示：Check 函数逻辑
+                </h4>
+                <div className="flex space-x-2">
+                   <button 
+                     onClick={() => setStep(Math.max(0, step - 1))}
+                     disabled={step === 0}
+                     className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                   >
+                     <Icons.ChevronLeft size={20} />
+                   </button>
+                   <div className="px-3 py-1 bg-orange-50 text-orange-700 rounded-full text-xs font-mono font-bold flex items-center">
+                     Step {step} / {steps.length - 1}
+                   </div>
+                   <button 
+                     onClick={() => setStep(Math.min(steps.length - 1, step + 1))}
+                     disabled={step === steps.length - 1}
+                     className="p-1 rounded hover:bg-gray-100 disabled:opacity-30 transition-colors"
+                   >
+                     <Icons.ChevronRight size={20} />
+                   </button>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-4 h-56">
+                <div className="col-span-2 relative bg-gray-50 rounded-lg border border-gray-100">
+                   <svg className="w-full h-full">
+                     {step === 1 && (
+                       <>
+                         <path d="M 100 150 L 200 50 L 300 150 L 350 250" fill="none" stroke="#E53E3E" strokeWidth="8" strokeOpacity="0.15" strokeLinecap="round" strokeLinejoin="round"/>
+                         <path d="M 200 50 L 300 150 L 350 250" fill="none" stroke="#3182CE" strokeWidth="4" strokeOpacity="0.2" strokeLinecap="round" strokeLinejoin="round"/>
+                       </>
+                     )}
+
+                     {edges.map((edge) => {
+                       const style = getEdgeVisuals(edge.id);
+                       return (
+                         <g key={edge.id}>
+                           <line 
+                             x1={edge.u.x} y1={edge.u.y} x2={edge.v.x} y2={edge.v.y} 
+                             stroke={style.color} 
+                             strokeWidth={style.width} 
+                             strokeDasharray={style.dashed ? "5,5" : "0"}
+                             className="transition-all duration-300"
+                           />
+                           <circle 
+                              cx={(edge.u.x + edge.v.x)/2} cy={(edge.u.y + edge.v.y)/2} r="10" 
+                              fill="white" stroke="#E2E8F0"
+                           />
+                           <text 
+                              x={(edge.u.x + edge.v.x)/2} y={(edge.u.y + edge.v.y)/2} dy="4" 
+                              textAnchor="middle" fontSize="10" fontWeight="bold"
+                              fill={style.labelColor}
+                           >
+                             {currentStep.removed === edge.id ? "0" : edge.w}
+                           </text>
+                         </g>
+                       );
+                     })}
+                     <circle cx="200" cy="50" r="12" fill="#2D3748" /> <text x="200" y="55" fill="white" textAnchor="middle" fontSize="10">1</text>
+                     <circle cx="100" cy="150" r="12" fill="#2D3748" /> <text x="100" y="155" fill="white" textAnchor="middle" fontSize="10">3</text>
+                     <circle cx="300" cy="150" r="12" fill="#2D3748" /> <text x="300" y="155" fill="white" textAnchor="middle" fontSize="10">2</text>
+                     <circle cx="350" cy="250" r="12" fill="#2D3748" /> <text x="350" y="255" fill="white" textAnchor="middle" fontSize="10">4</text>
+                   </svg>
+                   {step === 1 && (
+                     <div className="absolute top-2 left-2 text-[10px] space-y-1">
+                       <div className="flex items-center"><div className="w-3 h-3 bg-red-100 border border-red-200 mr-1"></div> Path A (23)</div>
+                       <div className="flex items-center"><div className="w-3 h-3 bg-blue-100 border border-blue-200 mr-1"></div> Path B (18)</div>
+                     </div>
+                   )}
+                </div>
+
+                <div className="col-span-1 flex flex-col justify-center text-sm space-y-3">
+                   <div className="font-bold text-gray-800 border-b border-gray-100 pb-1">
+                     {currentStep.title}
+                   </div>
+                   <div className="text-gray-600 text-xs leading-relaxed">
+                     {currentStep.desc}
+                   </div>
+                   
+                   {step === 4 && (
+                      <div className="bg-green-50 text-green-700 p-2 rounded text-xs font-bold flex items-center">
+                        <Icons.CheckCircle size={14} className="mr-1"/> 判定通过 (Return True)
+                      </div>
+                   )}
+                   {step === 1 && (
+                      <div className="bg-red-50 text-red-700 p-2 rounded text-xs font-bold flex items-center">
+                        <Icons.AlertCircle size={14} className="mr-1"/> 发现超长路径
+                      </div>
+                   )}
+                </div>
+              </div>
+            </div>
+          );
+        };
+
+        const NOIPLastSprint = () => {
+          const [activeTab, setActiveTab] = useState('algorithms');
+          const [activeAlgo, setActiveAlgo] = useState(0);
+          const [activeProblem, setActiveProblem] = useState(0);
+          const [showHint, setShowHint] = useState(false);
+          const [showDemo, setShowDemo] = useState(true);
+          const [showAlgoDemo, setShowAlgoDemo] = useState(true); // Control Algorithm Demo
+
+          const theme = {
+            primary: '#FF8C00', // 童澄橙
+            codeBg: '#F9FAFB', 
+            codeText: '#2D3748',
+          };
+
+          const algorithms = [
+            {
+              title: "LCA 倍增法 (Lowest Common Ancestor)",
+              icon: <Icons.GitMerge size={20} />,
+              desc: "树上问题的“瑞士军刀”。解决路径查询、树上距离的核心。",
+              interactive: <LCADemo />,
+              keyPoints: [
+                "倍增思想：fa[u][i] 表示 u 向上跳 2^i 步的祖先。",
+                "核心递推：fa[u][i] = fa[ fa[u][i-1] ][ i-1 ]。",
+                "口诀：先跳到同一深度，再一起向上跳。",
+                "复杂度：预处理 O(N log N)，查询 O(log N)。"
+              ],
+              code: `// 1. DFS 预处理 fa 数组和 depth 深度
+void dfs(int u, int p) {
+    depth[u] = depth[p] + 1;
+    fa[u][0] = p;
+    for(int i = 1; i < 20; i++) 
+        fa[u][i] = fa[fa[u][i-1]][i-1]; // 核心转移
+        
+    for(int v : adj[u]) {
+        if(v != p) dfs(v, u);
+    }
+}
+
+// 2. 查询 LCA(x, y)
+int lca(int x, int y) {
+    if(depth[x] < depth[y]) swap(x, y); // 让 x 更深
+    // 步骤一：x 向上跳，直到和 y 同深
+    for(int i = 19; i >= 0; i--) {
+        if(depth[fa[x][i]] >= depth[y]) x = fa[x][i];
+    }
+    if(x == y) return x;
+    
+    // 步骤二：一起向上跳，直到父亲相同
+    for(int i = 19; i >= 0; i--) {
+        if(fa[x][i] != fa[y][i]) {
+            x = fa[x][i]; y = fa[y][i];
+        }
+    }
+    return fa[x][0];
+}`
+            },
+            {
+              title: "树形 DP (Tree DP)",
+              icon: <Icons.Share2 size={20} />,
+              desc: "NOIP 绝对重点。解决树上的最值、计数问题。",
+              interactive: <TreeDPDemo />,
+              keyPoints: [
+                "状态设计：通常 dp[u][0/1] 表示节点 u 选或不选。",
+                "转移方向：从子节点 (sons) 向父节点 (root) 汇总信息。",
+                "常见模型：最大独立集（没有上司的舞会）、树上背包（选课）。"
+              ],
+              code: `// 模型：没有上司的舞会 (父子不能同时选)
+// dp[u][0]: u 不来，dp[u][1]: u 来
+
+void dfs(int u) {
+    dp[u][0] = 0; 
+    dp[u][1] = happy[u];
+    
+    for(int v : adj[u]) {
+        dfs(v); // 先递归解决子问题
+        
+        // 状态转移
+        // u 不来，v 可来可不来，取最大
+        dp[u][0] += max(dp[v][0], dp[v][1]);
+        
+        // u 来了，v 绝对不能来
+        dp[u][1] += dp[v][0];
+    }
+}`
+            },
+            {
+              title: "Tarjan 缩点 (SCC)",
+              icon: <Icons.GitPullRequest size={20} />,
+              desc: "处理有向图成环问题。将图转化为 DAG 后进行 DP。",
+              interactive: <TarjanDemo />,
+              keyPoints: [
+                "核心变量：dfn[u] (时间戳), low[u] (追溯值)。",
+                "判环条件：low[u] == dfn[u]，说明 u 是 SCC 的根。",
+                "缩点后：新点权值 = SCC 内原点权值之和。新图是 DAG。"
+              ],
+              code: `void tarjan(int u) {
+    dfn[u] = low[u] = ++timer;
+    stk.push(u); in_stk[u] = true;
+    
+    for(int v : adj[u]) {
+        if(!dfn[v]) {
+            tarjan(v);
+            low[u] = min(low[u], low[v]); // 树边更新
+        } else if(in_stk[v]) {
+            low[u] = min(low[u], dfn[v]); // 返祖边更新
+        }
+    }
+    
+    // 发现 SCC
+    if(low[u] == dfn[u]) {
+        scc_cnt++;
+        int y;
+        do {
+            y = stk.top(); stk.pop();
+            in_stk[y] = false;
+            id[y] = scc_cnt; // 记录所属 SCC 编号
+            // scc_val[scc_cnt] += val[y]; // 累加权值
+        } while(u != y);
+    }
+}`
+            }
+          ];
+
+          const problems = [
+            {
+              title: "NOIP 2013 - 货车运输",
+              tag: "最大生成树 + LCA",
+              desc: "在图上求两点间路径，使得路径上“最小边权”最大。即经典的“瓶颈路”问题。",
+              interactive: <TruckDemo />,
+              analysis: [
+                "模型转化：求两点间最小边权最大，这是最大生成树（Maximum Spanning Tree）的性质。树上的路径就是最优路径。",
+                "步骤一 (Kruskal)：按边权从大到小排序，使用并查集构建最大生成树。注意图可能不连通，构建出的是森林。",
+                "步骤二 (LCA 倍增)：在树上求任意两点 u, v 的路径最小值。我们在倍增数组 fa[u][i] 的基础上，增加 minv[u][i] 记录 u 到 2^i 祖先路径上的最小值。",
+                "查询逻辑：query(x, y) 时，在跳跃过程中不断更新 ans = min(ans, minv...)"
+              ],
+              pseudo: `1. 边按权值降序排序 (descending order)
+2. Kruskal 算法建树 (并查集) -> 得到一颗最大生成树
+3. DFS 预处理 LCA:
+     fa[u][i] = fa[fa[u][i-1]][i-1]
+     minv[u][i] = min(minv[u][i-1], minv[fa[u][i-1]][i-1]) // 维护区间最小值
+4. 处理 Q 个询问 query(x, y):
+     用 LCA 算法求路径，跳跃时同步 update ans
+     if find(x) != find(y) return -1 // 不连通`,
+              fullCode: `#include <iostream>
+#include <vector>
+#include <algorithm>
+using namespace std;
+
+const int MAXN = 10005, INF = 1e9;
+struct Edge { int u, v, w; };
+bool cmp(Edge a, Edge b) { return a.w > b.w; } // 降序
+
+int fa[MAXN][20], minv[MAXN][20], dep[MAXN]; // LCA相关
+int p[MAXN]; // 并查集
+vector<pair<int,int>> adj[MAXN]; // 生成树邻接表
+vector<Edge> edges;
+
+int find(int x) { return p[x] == x ? x : p[x] = find(p[x]); }
+
+void dfs(int u, int f, int w, int d) {
+    dep[u] = d; fa[u][0] = f; minv[u][0] = w;
+    for(int i=1; i<20; i++) {
+        fa[u][i] = fa[fa[u][i-1]][i-1];
+        minv[u][i] = min(minv[u][i-1], minv[fa[u][i-1]][i-1]);
+    }
+    for(auto& e : adj[u]) {
+        if(e.first != f) dfs(e.first, u, e.second, d+1);
+    }
+}
+
+int query(int x, int y) {
+    if(find(x) != find(y)) return -1;
+    int ans = INF;
+    if(dep[x] < dep[y]) swap(x, y);
+    for(int i=19; i>=0; i--) {
+        if(dep[fa[x][i]] >= dep[y]) {
+            ans = min(ans, minv[x][i]);
+            x = fa[x][i];
+        }
+    }
+    if(x == y) return ans;
+    for(int i=19; i>=0; i--) {
+        if(fa[x][i] != fa[y][i]) {
+            ans = min(ans, min(minv[x][i], minv[y][i]));
+            x = fa[x][i]; y = fa[y][i];
+        }
+    }
+    return min(ans, min(minv[x][0], minv[y][0]));
+}
+
+int main() {
+    // 省略输入...
+    // 核心是先跑 Kruskal 建最大生成树
+    sort(edges.begin(), edges.end(), cmp);
+    for(auto& e : edges) {
+        int fx = find(e.u), fy = find(e.v);
+        if(fx != fy) {
+            p[fx] = fy;
+            adj[e.u].push_back({e.v, e.w});
+            adj[e.v].push_back({e.u, e.w});
+        }
+    }
+    // 对每个连通块跑 DFS
+    for(int i=1; i<=n; i++) if(!dep[i]) dfs(i, 0, INF, 1);
+    // query...
+}`
+            },
+            {
+              title: "NOIP 2015 - 运输计划",
+              tag: "二分 + LCA + 树上差分",
+              desc: "有一棵树，你可以将任意一条边的权值变为 0。求变换后，最长路径的最短时间是多少。",
+              interactive: <TransportDemo />,
+              analysis: [
+                "考点综合：这是一道综合了二分答案、LCA、树上差分的高难度题目。",
+                "二分答案：看到“最大值最小”，直接二分时间 T。问题转化为：能否删去一条边，使得所有长度 > T 的路径在减去这条边后，长度都 <= T。",
+                "Check 逻辑：",
+                "1. 找出所有长度 > T 的路径（记为不合格路径）。",
+                "2. 我们必须删去一条边，且这条边必须被**所有**不合格路径经过（公共边）。",
+                "3. 利用**树上差分**快速找出被所有不合格路径覆盖的边，并在其中选一条权值最大的边 max_w。",
+                "4. 判断：如果不合格路径中最长的一条 - max_w <= T，则 check 成功。"
+              ],
+              pseudo: `function check(limit):
+    cnt = 0 // 统计不合格路径数
+    max_len = 0 // 不合格路径中的最大长度
+    clear(diff) // 清空差分数组
+    
+    for i from 1 to M:
+        if query[i].dist > limit:
+            cnt++
+            max_len = max(max_len, query[i].dist)
+            // 树上差分标记：u, v 加，lca 减
+            u = query[i].u, v = query[i].v, lca = query[i].lca
+            diff[u]++, diff[v]++, diff[lca] -= 2
+            
+    if cnt == 0 return true // 没有超长路径
+    
+    // DFS 求前缀和，找被经过 cnt 次的边中权值最大的
+    max_removable = get_max_edge_covered_cnt_times(root, cnt)
+    
+    return (max_len - max_removable <= limit)`,
+              fullCode: `#include <iostream>
+// ... (LCA 预处理省略，同上) ...
+
+int diff[MAXN]; // 差分数组
+int max_edge_w = 0; // 记录满足条件的边中的最大权值
+
+// 树上差分求前缀和
+void dfs_diff(int u, int fa, int target_cnt) {
+    for(auto& e : adj[u]) {
+        int v = e.to;
+        if(v == fa) continue;
+        dfs_diff(v, u, target_cnt);
+        diff[u] += diff[v]; // 子树信息累加上来
+        
+        // 如果这条边被经过了 target_cnt 次
+        if(diff[v] == target_cnt) {
+            max_edge_w = max(max_edge_w, e.w);
+        }
+    }
+}
+
+bool check(int limit) {
+    memset(diff, 0, sizeof(diff));
+    int cnt = 0, max_len = 0;
+    
+    for(int i=1; i<=m; i++) {
+        if(qs[i].dist > limit) {
+            cnt++;
+            max_len = max(max_len, qs[i].dist);
+            // 边差分：点权代表该点到父节点的边
+            diff[qs[i].u]++; 
+            diff[qs[i].v]++;
+            diff[qs[i].lca] -= 2;
+        }
+    }
+    if(cnt == 0) return true;
+    
+    max_edge_w = 0;
+    dfs_diff(1, 0, cnt);
+    
+    return max_len - max_edge_w <= limit;
+}
+
+// 主函数逻辑：
+// 1. 预处理 LCA 和每条查询路径的原始长度
+// 2. 二分答案 l=0, r=max_dist
+// 3. 输出 ans`
+            }
+          ];
+
+          return (
+            <div className="min-h-screen bg-gray-50 text-gray-800 font-sans flex flex-col">
+              <header style={{ backgroundColor: theme.primary }} className="text-white p-6 shadow-md select-none">
+                <div className="max-w-5xl mx-auto flex justify-between items-center">
+                  <div>
+                    <h1 className="text-3xl font-bold tracking-tight">NOIP 考前一夜 · 终极冲刺 (Hard Ver.)</h1>
+                    <p className="text-orange-100 mt-2 text-sm opacity-90">进阶算法与压轴题型 · 结合 DP 与 图论</p>
+                  </div>
+                  <div className="hidden md:flex space-x-4">
+                     <div className="px-4 py-2 bg-white/20 rounded-full text-sm backdrop-blur-sm animate-pulse">
+                        难度升级: On
+                     </div>
+                  </div>
+                </div>
+              </header>
+
+              <main className="flex-grow max-w-5xl mx-auto w-full p-6 grid grid-cols-1 md:grid-cols-12 gap-6">
+                
+                <div className="md:col-span-3 space-y-4">
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+                     <div className="p-4 bg-gray-50 border-b border-gray-100 font-semibold text-gray-500 text-xs uppercase tracking-wider">
+                       复习模块
+                     </div>
+                     <button 
+                       onClick={() => setActiveTab('algorithms')}
+                       className={`w-full text-left p-4 flex items-center transition-colors ${activeTab === 'algorithms' ? 'bg-orange-50 text-orange-600 font-medium' : 'hover:bg-gray-50'}`}
+                     >
+                       <Icons.ArrowRight size={18} className="mr-3" /> 高频考点 (DP & Graph)
+                     </button>
+                     <button 
+                       onClick={() => setActiveTab('problems')}
+                       className={`w-full text-left p-4 flex items-center transition-colors ${activeTab === 'problems' ? 'bg-orange-50 text-orange-600 font-medium' : 'hover:bg-gray-50'}`}
+                     >
+                       <Icons.Terminal size={18} className="mr-3" /> 经典真题 (压轴级)
+                     </button>
+                  </div>
+
+                  <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+                    <h3 className="font-bold text-gray-700 mb-2">💡 进阶提醒</h3>
+                    <ul className="text-sm text-gray-600 space-y-2 list-disc list-inside">
+                      <li>LCA 数组要开 20 层</li>
+                      <li>注意图是否连通 (森林)</li>
+                      <li>树上差分 Lca 处减 2</li>
+                      <li>Tarjan 记得入栈出栈</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <div className="md:col-span-9">
+                  
+                  {activeTab === 'algorithms' && (
+                    <div className="space-y-6 animate-in fade-in duration-500">
+                      <div className="flex space-x-2 overflow-x-auto pb-2">
+                        {algorithms.map((algo, idx) => (
+                          <button
+                            key={idx}
+                            onClick={() => {setActiveAlgo(idx); setShowAlgoDemo(true);}}
+                            className={`px-4 py-2 rounded-lg text-sm font-medium whitespace-nowrap transition-all ${
+                              activeAlgo === idx 
+                                ? 'bg-orange-500 text-white shadow-md transform scale-105' 
+                                : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'
+                            }`}
+                          >
+                            {algo.title.split('(')[0]}
+                          </button>
+                        ))}
+                      </div>
+
+                      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                        <div className="p-6 border-b border-gray-100 flex items-center bg-orange-50/30">
+                           <div className="p-2 bg-orange-100 text-orange-600 rounded-lg mr-4">
+                             {algorithms[activeAlgo].icon}
+                           </div>
+                           <div>
+                             <h2 className="text-xl font-bold text-gray-800">{algorithms[activeAlgo].title}</h2>
+                             <p className="text-sm text-gray-500 mt-1">{algorithms[activeAlgo].desc}</p>
+                           </div>
+                        </div>
+
+                        <div className="p-6">
+                            {/* Algorithm Demo Toggle */}
+                            <div className="mb-4">
+                                <button 
+                                    onClick={() => setShowAlgoDemo(!showAlgoDemo)}
+                                    className="flex items-center text-blue-600 font-medium hover:text-blue-700 transition-colors"
+                                >
+                                    <Icons.PlayCircle size={18} className="mr-2" />
+                                    {showAlgoDemo ? "隐藏演示" : "进入交互演示"}
+                                </button>
+                            </div>
+
+                            {showAlgoDemo && algorithms[activeAlgo].interactive && (
+                                <div className="mb-8 animate-in fade-in zoom-in duration-300">
+                                    {algorithms[activeAlgo].interactive}
+                                </div>
+                            )}
+                        
+                            <div className="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider mb-3">关键点 / Key Points</h3>
+                                <ul className="space-y-3">
+                                {algorithms[activeAlgo].keyPoints.map((point, i) => (
+                                    <li key={i} className="flex items-start text-sm text-gray-700">
+                                    <Icons.CheckCircle size={16} className="text-green-500 mr-2 mt-0.5 flex-shrink-0" />
+                                    <span>{point}</span>
+                                    </li>
+                                ))}
+                                </ul>
+                            </div>
+                            <div>
+                                <div className="flex justify-between items-center mb-2">
+                                <h3 className="text-sm font-bold text-gray-400 uppercase tracking-wider">模板代码 / Template</h3>
+                                <span className="text-xs text-orange-400 font-mono">C++</span>
+                                </div>
+                                <pre className="p-4 rounded-lg overflow-x-auto text-sm font-mono border border-gray-100 h-64 overflow-y-auto" style={{ backgroundColor: theme.codeBg, color: theme.codeText }}>
+                                {algorithms[activeAlgo].code}
+                                </pre>
+                            </div>
+                            </div>
+                        </div>
+                      </div>
+                    </div>
+                  )}
+
+                  {activeTab === 'problems' && (
+                     <div className="space-y-6 animate-in fade-in duration-500">
+                        <div className="flex space-x-2">
+                          {problems.map((prob, idx) => (
+                            <button
+                              key={idx}
+                              onClick={() => {setActiveProblem(idx); setShowHint(false); setShowDemo(true);}}
+                              className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${
+                                activeProblem === idx 
+                                  ? 'bg-orange-500 text-white shadow-md' 
+                                  : 'bg-white text-gray-600 border border-gray-200'
+                              }`}
+                            >
+                              题目 {idx + 1}: {prob.title.split('-')[1]}
+                            </button>
+                          ))}
+                        </div>
+
+                        <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                          <div className="p-6 border-b border-gray-100">
+                            <div className="flex items-center justify-between mb-2">
+                              <span className="px-3 py-1 bg-orange-100 text-orange-700 text-xs font-bold rounded-full">
+                                {problems[activeProblem].tag}
+                              </span>
+                              <span className="text-gray-400 text-xs">{problems[activeProblem].title}</span>
+                            </div>
+                            <h2 className="text-2xl font-bold text-gray-800 mb-4">题目描述</h2>
+                            <p className="text-gray-600 leading-relaxed bg-gray-50 p-4 rounded-lg border border-gray-100">
+                              {problems[activeProblem].desc}
+                            </p>
+                          </div>
+
+                          <div className="p-6 bg-white">
+                            <div className="flex space-x-4 mb-4">
+                              <button 
+                                onClick={() => setShowHint(!showHint)}
+                                className="flex items-center text-orange-600 font-medium hover:text-orange-700 transition-colors"
+                              >
+                                <Icons.BookOpen size={18} className="mr-2" />
+                                {showHint ? "收起解析" : "点击查看解题思路"}
+                              </button>
+                              
+                              <button 
+                                onClick={() => setShowDemo(!showDemo)}
+                                className="flex items-center text-blue-600 font-medium hover:text-blue-700 transition-colors"
+                              >
+                                <Icons.PlayCircle size={18} className="mr-2" />
+                                {showDemo ? "隐藏演示" : "进入交互演示"}
+                              </button>
+                            </div>
+
+                            {showDemo && (
+                              <div className="mb-6 animate-in fade-in zoom-in duration-300">
+                                {problems[activeProblem].interactive}
+                              </div>
+                            )}
+
+                            {showHint && (
+                              <div className="space-y-6 animate-in fade-in slide-in-from-top-2 duration-300">
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    <div className="space-y-4">
+                                        <h3 className="font-bold text-gray-800 border-l-4 border-orange-400 pl-3">思路分析</h3>
+                                        <ul className="space-y-2">
+                                            {problems[activeProblem].analysis.map((item, i) => (
+                                                <li key={i} className="text-sm text-gray-600 flex items-start">
+                                                    <Icons.ArrowRight size={14} className="mt-1 mr-2 text-orange-300 flex-shrink-0" />
+                                                    {item}
+                                                </li>
+                                            ))}
+                                        </ul>
+                                        
+                                        <h3 className="font-bold text-gray-800 border-l-4 border-orange-400 pl-3 mt-6">伪代码逻辑</h3>
+                                        <pre className="text-xs bg-gray-50 p-3 rounded border border-gray-200 text-gray-600 font-mono whitespace-pre-wrap">
+                                            {problems[activeProblem].pseudo}
+                                        </pre>
+                                    </div>
+
+                                    <div>
+                                        <h3 className="font-bold text-gray-800 border-l-4 border-orange-400 pl-3 mb-4">参考代码</h3>
+                                        <div className="relative group">
+                                            <pre className="p-4 rounded-lg text-sm font-mono overflow-x-auto h-96 overflow-y-auto border border-gray-200 shadow-inner" style={{ backgroundColor: '#fff', color: theme.codeText }}>
+                                                {problems[activeProblem].fullCode}
+                                            </pre>
+                                        </div>
+                                    </div>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                     </div>
+                  )}
+
+                </div>
+              </main>
+
+              <footer className="mt-auto py-6 text-center text-gray-400 text-sm border-t border-gray-100 bg-white select-none">
+                <p>© 2025 童澄未来 (Tongcheng Future) · 为信奥学子领航</p>
+              </footer>
+            </div>
+          );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<NOIPLastSprint />);
+    </script>
+</body>
+</html>

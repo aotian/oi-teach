@@ -12,6 +12,9 @@
         body{background:#f8fafc}
         .loader { border: 3px solid #f3f3f3; border-top: 3px solid #FA7800; border-radius: 50%; width: 20px; height: 20px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        /* 模态框样式 */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); justify-content: center; align-items: center; z-index: 100; }
+        .modal.show { display: flex; }
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -43,9 +46,12 @@
                 <p class="text-gray-500 text-sm mt-1">管理所有注册用户的角色与权限</p>
             </div>
             <div class="flex gap-3">
+                <button onclick="openBatchModal()" class="bg-brand text-white px-4 py-2 rounded-lg hover:bg-brand-hover transition text-sm font-bold flex items-center gap-2 shadow-sm">
+                    ⚡ 批量注册学员
+                </button>
                 <input type="text" id="filter-input" placeholder="搜索邮箱..." class="border border-gray-300 rounded-lg px-3 py-2 text-sm focus:ring-2 focus:ring-brand outline-none w-64">
                 <button onclick="loadAllUsers()" class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition text-sm font-bold flex items-center gap-2">
-                    🔄 刷新列表
+                    🔄 刷新
                 </button>
             </div>
         </div>
@@ -67,6 +73,26 @@
         </div>
 
     </main>
+
+    <div id="batch-modal" class="modal">
+        <div class="bg-white rounded-xl shadow-xl w-[600px] p-6 relative">
+            <h3 class="text-lg font-bold text-gray-800 mb-4 border-b pb-2">批量导入学员账号</h3>
+            
+            <div class="bg-yellow-50 text-yellow-700 p-3 rounded text-xs mb-4 border border-yellow-200">
+                <strong>📝 格式说明：</strong> 请每行输入一个账号，格式为 <b>邮箱,密码</b> (中间用英文逗号)。<br>
+                默认角色为“免费学员 (free_user)”。
+            </div>
+
+            <textarea id="batch-input" rows="8" class="w-full border border-gray-300 rounded-lg p-3 text-sm font-mono focus:ring-2 focus:ring-brand outline-none mb-4" placeholder="student01@test.com,123456&#10;student02@test.com,123456"></textarea>
+            
+            <div id="batch-result" class="text-sm mb-4 max-h-32 overflow-y-auto hidden"></div>
+
+            <div class="flex justify-end gap-3">
+                <button onclick="closeBatchModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded font-bold">取消</button>
+                <button onclick="handleBatchRegister()" class="px-6 py-2 bg-brand text-white rounded font-bold hover:bg-brand-hover shadow-md transition">开始导入</button>
+            </div>
+        </div>
+    </div>
 
     <script type="module">
         import supabase from './client.js';
@@ -94,7 +120,6 @@
             const tbody = document.getElementById('user-list-body');
             tbody.innerHTML = '<tr><td colspan="4" class="py-10 text-center text-gray-400"><div class="flex justify-center items-center gap-2"><div class="loader"></div> 正在从数据库拉取名单...</div></td></tr>';
 
-            // 调用后端 RPC 函数
             const { data, error } = await supabase.rpc('get_all_users');
 
             if (error) {
@@ -106,7 +131,6 @@
             renderList(allUsers);
         }
 
-        // 渲染列表
         function renderList(users) {
             const tbody = document.getElementById('user-list-body');
             tbody.innerHTML = '';
@@ -120,26 +144,29 @@
                 const row = document.createElement('tr');
                 row.className = "border-b border-gray-50 hover:bg-orange-50/30 transition group";
                 
-                // 角色样式
                 let roleBadge = '';
                 if (u.role === 'admin') roleBadge = '<span class="bg-red-100 text-red-700 px-2 py-1 rounded-md text-xs font-bold border border-red-200">👑 管理员</span>';
                 else if (u.role === 'teacher') roleBadge = '<span class="bg-blue-100 text-blue-700 px-2 py-1 rounded-md text-xs font-bold border border-blue-200">🧑‍🏫 老师</span>';
                 else if (u.role === 'paid_user') roleBadge = '<span class="bg-yellow-100 text-yellow-700 px-2 py-1 rounded-md text-xs font-bold border border-yellow-200">💎 Pro会员</span>';
                 else roleBadge = '<span class="bg-gray-100 text-gray-500 px-2 py-1 rounded-md text-xs font-bold border border-gray-200">🌱 免费</span>';
 
-                // 操作按钮 (排除自己)
                 let actions = '';
                 if (u.id === currentAdminId) {
                     actions = '<span class="text-gray-400 italic text-xs mr-2">当前登录</span>';
                 } else {
                     actions = `
-                        <select onchange="changeRole('${u.id}', '${u.email}', this.value)" class="text-xs border border-gray-300 rounded px-2 py-1 bg-white hover:border-brand focus:outline-none cursor-pointer">
-                            <option value="" disabled selected>⚡ 变更角色...</option>
-                            <option value="free_user">🌱 降级为免费</option>
-                            <option value="paid_user">💎 设为 Pro会员</option>
-                            <option value="teacher">🧑‍🏫 设为老师</option>
-                            <option value="admin">👑 设为管理员</option>
-                        </select>
+                        <div class="flex items-center justify-end gap-2">
+                            <select onchange="changeRole('${u.id}', '${u.email}', this.value)" class="text-xs border border-gray-300 rounded px-2 py-1 bg-white hover:border-brand focus:outline-none cursor-pointer">
+                                <option value="" disabled selected>⚡ 变更...</option>
+                                <option value="free_user">🌱 降级为免费</option>
+                                <option value="paid_user">💎 设为 Pro会员</option>
+                                <option value="teacher">🧑‍🏫 设为老师</option>
+                                <option value="admin">👑 设为管理员</option>
+                            </select>
+                            <button onclick="deleteUser('${u.id}', '${u.email}')" class="text-xs bg-red-50 text-red-600 px-3 py-1 rounded border border-red-100 hover:bg-red-600 hover:text-white transition">
+                                删除
+                            </button>
+                        </div>
                     `;
                 }
 
@@ -148,50 +175,96 @@
                         <div class="font-bold text-gray-800 text-base">${u.email}</div>
                         <div class="text-xs text-gray-400 font-mono mt-0.5">${u.id}</div>
                     </td>
-                    <td class="py-4 px-6 text-gray-500">
-                        ${new Date(u.created_at).toLocaleDateString()}
-                    </td>
-                    <td class="py-4 px-6">
-                        ${roleBadge}
-                    </td>
-                    <td class="py-4 px-6 text-right">
-                        ${actions}
-                    </td>
+                    <td class="py-4 px-6 text-gray-500">${new Date(u.created_at).toLocaleDateString()}</td>
+                    <td class="py-4 px-6">${roleBadge}</td>
+                    <td class="py-4 px-6 text-right">${actions}</td>
                 `;
                 tbody.appendChild(row);
             });
         }
 
-        // 修改角色逻辑
         window.changeRole = async (uid, email, newRole) => {
             const roleNames = { 'free_user': '免费用户', 'paid_user': 'Pro会员', 'teacher': '教研老师', 'admin': '管理员' };
-            
             if (!confirm(`确认要将用户 [${email}] 的身份修改为 【${roleNames[newRole]}】 吗？`)) {
-                loadAllUsers(); // 取消则刷新回原样
-                return;
+                loadAllUsers(); return;
             }
-
-            const { error } = await supabase.rpc('admin_set_role', {
-                target_user_id: uid,
-                new_role: newRole
-            });
-
-            if (error) {
-                alert('修改失败: ' + error.message);
-            } else {
-                // 局部刷新 (或者直接刷新全表)
-                // alert('修改成功！');
-                loadAllUsers(); 
-            }
+            const { error } = await supabase.rpc('admin_set_role', { target_user_id: uid, new_role: newRole });
+            if (error) alert('修改失败: ' + error.message);
+            else loadAllUsers(); 
         }
 
-        // 前端搜索过滤
         document.getElementById('filter-input').addEventListener('input', (e) => {
             const key = e.target.value.toLowerCase();
             const filtered = allUsers.filter(u => u.email.toLowerCase().includes(key) || u.id.includes(key));
             renderList(filtered);
         });
 
+        // --- 批量注册逻辑 ---
+        window.openBatchModal = () => {
+            document.getElementById('batch-modal').classList.add('show');
+            document.getElementById('batch-input').value = '';
+            document.getElementById('batch-result').classList.add('hidden');
+        }
+        window.closeBatchModal = () => document.getElementById('batch-modal').classList.remove('show');
+
+        window.handleBatchRegister = async () => {
+            const input = document.getElementById('batch-input').value.trim();
+            if (!input) return alert('请输入账号信息');
+
+            const lines = input.split('\n');
+            const resultDiv = document.getElementById('batch-result');
+            resultDiv.classList.remove('hidden');
+            resultDiv.innerHTML = '<div class="text-blue-500">⏳ 正在处理中，请稍候...</div>';
+
+            let successCount = 0;
+            let failCount = 0;
+            let logs = '';
+
+            for (const line of lines) {
+                const [email, password] = line.split(',').map(s => s.trim());
+                if (!email || !password) continue;
+
+                // [核心] 调用我们在第一步创建的 SQL 函数
+                const { data, error } = await supabase.rpc('admin_create_user', {
+                    new_email: email,
+                    new_password: password,
+                    new_role: 'free_user' // 默认创建为免费学员
+                });
+
+                if (error) {
+                    failCount++;
+                    logs += `<div class="text-red-500 text-xs">❌ ${email}: ${error.message}</div>`;
+                } else {
+                    successCount++;
+                    logs += `<div class="text-green-600 text-xs">✅ ${email}: 创建成功</div>`;
+                }
+            }
+
+            resultDiv.innerHTML = `
+                <div class="font-bold mb-2">处理完成：成功 ${successCount} / 失败 ${failCount}</div>
+                <div class="bg-gray-50 p-2 rounded border border-gray-100 h-24 overflow-y-auto">${logs}</div>
+            `;
+            
+            if (successCount > 0) loadAllUsers();
+        }
+        // [!!] 新增：删除用户逻辑
+        window.deleteUser = async (uid, email) => {
+            // 1. 二次确认，防止手滑
+            const confirmMsg = `⚠️ 高危操作警告！\n\n确定要彻底删除用户 [${email}] 吗？\n此操作无法撤销，该用户的所有数据将被清除。`;
+            if (!confirm(confirmMsg)) return;
+
+            // 2. 调用后端 SQL 函数
+            const { error } = await supabase.rpc('admin_delete_user', {
+                target_user_id: uid
+            });
+
+            if (error) {
+                alert('删除失败: ' + error.message);
+            } else {
+                // alert('用户已删除'); // 可选：不弹窗直接刷新体验更好
+                loadAllUsers(); // 刷新列表
+            }
+        }
     </script>
 </body>
 </html>
