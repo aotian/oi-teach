@@ -259,6 +259,8 @@
                 // 2) 用原生 XHR 上传到 R2（你后面的代码可以原样保留）
                 const xhr = new XMLHttpRequest();
                 xhr.open('PUT', uploadUrl, true);
+                xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
+
                 xhr.upload.onprogress = (evt) => {
                     if (evt.lengthComputable) {
                         const percent = Math.round((evt.loaded / evt.total) * 100);
@@ -270,8 +272,6 @@
                     if (xhr.status === 200 || xhr.status === 204) {
                         progBar.value = 100;
                         progText.textContent = '上传成功 ✓';
-
-                        // 写回 URL 输入框
                         urlInput.value = publicUrl;
                     } else {
                         console.error('R2 上传失败:', xhr.status, xhr.responseText);
@@ -284,6 +284,7 @@
                     alert('上传失败：网络连接错误');
                 };
                 xhr.send(file);
+
 
                 // 3. 回填 URL
                 urlInput.value = publicUrl;
