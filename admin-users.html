@@ -163,6 +163,10 @@
                                 <option value="teacher">🧑‍🏫 设为老师</option>
                                 <option value="admin">👑 设为管理员</option>
                             </select>
+                            // 在 actions 变量里添加按钮
+                            <button onclick="resetPassword('${u.id}', '${u.email}')" class="text-xs bg-blue-50 text-blue-600 px-3 py-1 rounded border border-blue-100 hover:bg-blue-600 hover:text-white transition">
+                                🔑 改密
+                            </button>
                             <button onclick="deleteUser('${u.id}', '${u.email}')" class="text-xs bg-red-50 text-red-600 px-3 py-1 rounded border border-red-100 hover:bg-red-600 hover:text-white transition">
                                 删除
                             </button>
@@ -264,6 +268,21 @@
                 // alert('用户已删除'); // 可选：不弹窗直接刷新体验更好
                 loadAllUsers(); // 刷新列表
             }
+        }
+        window.resetPassword = async (uid, email) => {
+            const newPwd = prompt(`请输入用户 [${email}] 的新密码：`);
+            if (!newPwd || newPwd.trim().length < 6) {
+                if(newPwd !== null) alert('密码长度至少 6 位');
+                return;
+            }
+            
+            const { error } = await supabase.rpc('admin_reset_password', {
+                target_user_id: uid,
+                new_password: newPwd.trim()
+            });
+
+            if (error) alert('修改失败: ' + error.message);
+            else alert('✅ 密码修改成功！');
         }
     </script>
 </body>
