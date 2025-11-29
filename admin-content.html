@@ -317,7 +317,7 @@
 
             try {
                 // 1. 解析文件名
-                const fileKey = fileUrl.split('/').pop();
+                const fileKey = decodeURIComponent(fileUrl.split('/').pop());
 
                 // 2. 调用 Edge Function 删除 R2 文件
                 const { data: sessionData } = await supabase.auth.getSession();
