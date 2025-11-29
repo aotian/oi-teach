@@ -29,7 +29,7 @@ serve(async (req) => {
     // 4. 初始化 R2 客户端
     const S3 = new S3Client({
       region: 'auto',
-      endpoint: `https://${R2_ACCOUNT_ID}.r2.cloudflarestorage.com`,
+      endpoint: `https://${cjsipcanyugnvrikcinx}.r2.cloudflarestorage.com`,
       credentials: {
         accessKeyId: R2_ACCESS_KEY_ID,
         secretAccessKey: R2_SECRET_ACCESS_KEY,

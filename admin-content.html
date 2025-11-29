@@ -129,11 +129,11 @@
 
     <script type="module">
         import supabase from './client.js';
-
+        const EDGE_FUNCTION_NAME = 'upload-r2';
         // [!!] Node.js 后端地址 (用于获取上传签名)
         // 请替换为你真实的 Vercel 后端地址
-        const NODE_API_URL = 'https://bilivideo-back.vercel.app'; 
-        const GENERATE_URL_API = `${NODE_API_URL}/generate-upload-url`;
+        // const NODE_API_URL = 'https://bilivideo-back.vercel.app'; 
+        // const GENERATE_URL_API = `${NODE_API_URL}/generate-upload-url`;
 
         let currentId = null;
         let allTopics = [];
@@ -235,51 +235,55 @@
             progText.textContent = '准备上传...';
 
             try {
-                // 1. 向 Node 后端申请 R2 上传签名
-                const presignRes = await fetch(GENERATE_URL_API, {
-                    method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        // [!!] 必须带上 Authorization 头，否则 Supabase 会拦截
-                        'Authorization': 'Bearer ' + supabase.supabaseKey 
+                // 1) 通过 Supabase Edge Function 获取 R2 上传地址
+                const { data, error } = await supabase.functions.invoke(EDGE_FUNCTION_NAME, {
+                    body: {
+                        fileName: file.name,
+                        contentType: file.type,
+                        // 可选：你想区分视频 / 课件，也可以一起传过去
+                        type,
                     },
-                    body: JSON.stringify({ fileName: file.name, contentType: file.type })
                 });
 
-                if (!presignRes.ok) {
-                    throw new Error('获取上传许可失败，请检查后端配置');
+                if (error) {
+                    console.error('Edge Function error:', error);
+                    throw new Error('获取上传许可失败：' + (error.message || '请检查后端配置'));
                 }
 
-                const { uploadUrl, publicUrl } = await presignRes.json();
+                const { uploadUrl, publicUrl } = data || {};
 
-                // 2. 直传到 R2
-                await new Promise((resolve, reject) => {
-                    const xhr = new XMLHttpRequest();
+                if (!uploadUrl || !publicUrl) {
+                    throw new Error('后端返回数据不完整，请检查 Edge Function 返回值');
+                }
 
-                    xhr.upload.onprogress = (e) => {
-                        if (e.lengthComputable) {
-                            const pct = (e.loaded / e.total) * 100;
-                            progBar.value = pct;
-                            progText.textContent = `${Math.round(pct)}%`;
-                        }
-                    };
+                // 2) 用原生 XHR 上传到 R2（你后面的代码可以原样保留）
+                const xhr = new XMLHttpRequest();
+                xhr.open('PUT', uploadUrl, true);
+                xhr.upload.onprogress = (evt) => {
+                    if (evt.lengthComputable) {
+                        const percent = Math.round((evt.loaded / evt.total) * 100);
+                        progBar.value = percent;
+                        progText.textContent = `上传中... ${percent}%`;
+                    }
+                };
+                xhr.onload = () => {
+                    if (xhr.status === 200 || xhr.status === 204) {
+                        progBar.value = 100;
+                        progText.textContent = '上传成功 ✓';
 
-                    xhr.onload = () => {
-                        if (xhr.status >= 200 && xhr.status < 300) {
-                            progBar.value = 100;
-                            progText.textContent = '100%';
-                            resolve();
-                        } else {
-                            reject(new Error('上传失败，状态码 ' + xhr.status));
-                        }
-                    };
-
-                    xhr.onerror = () => reject(new Error('网络错误，请检查连接'));
-
-                    xhr.open('PUT', uploadUrl);
-                    xhr.setRequestHeader('Content-Type', file.type || 'application/octet-stream');
-                    xhr.send(file);
-                });
+                        // 写回 URL 输入框
+                        urlInput.value = publicUrl;
+                    } else {
+                        console.error('R2 上传失败:', xhr.status, xhr.responseText);
+                        progText.textContent = '上传失败，请稍后重试';
+                        alert('上传失败：' + xhr.status);
+                    }
+                };
+                xhr.onerror = () => {
+                    progText.textContent = '上传失败（网络错误）';
+                    alert('上传失败：网络连接错误');
+                };
+                xhr.send(file);
 
                 // 3. 回填 URL
                 urlInput.value = publicUrl;
