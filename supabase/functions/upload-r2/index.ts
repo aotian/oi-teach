@@ -2,8 +2,8 @@
 
 import { serve } from "https://deno.land/std@0.196.0/http/server.ts";
 // [!!] 引入 DeleteObjectCommand
-import { S3Client, PutObjectCommand, DeleteObjectCommand } from "https://esm.sh/@aws-sdk/client-s3@3.257.0";
-import { getSignedUrl } from "https://esm.sh/@aws-sdk/s3-request-presigner@3.257.0";
+import { S3Client, PutObjectCommand } from "npm:@aws-sdk/client-s3";
+import { getSignedUrl } from "npm:@aws-sdk/s3-request-presigner";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
