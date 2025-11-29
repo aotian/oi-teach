@@ -216,8 +216,10 @@
             renderList();
         }
 
-        // [!!] 上传逻辑 (复用之前的核心代码)
+        
         // 上传视频 / 课件的通用函数
+
+        const GENERATE_URL_API = 'https://cjsipcanyugnvrikcinx.supabase.co/functions/v1/upload-r2';
         window.handleUpload = async (input, type) => {
             const file = input.files[0];
             if (!file) return;
@@ -236,11 +238,12 @@
                 // 1. 向 Node 后端申请 R2 上传签名
                 const presignRes = await fetch(GENERATE_URL_API, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        fileName: file.name,
-                        contentType: file.type || 'application/octet-stream',
-                    }),
+                    headers: { 
+                        'Content-Type': 'application/json',
+                        // [!!] 必须带上 Authorization 头，否则 Supabase 会拦截
+                        'Authorization': 'Bearer ' + supabase.supabaseKey 
+                    },
+                    body: JSON.stringify({ fileName: file.name, contentType: file.type })
                 });
 
                 if (!presignRes.ok) {

@@ -1,0 +1,21 @@
+# Supabase auto-generated and sensitive folders
+.branches
+.temp
+.tokens
+.supabase
+
+# Build caches
+deno.jsonc
+deno.lock
+.deno/
+
+# Node related (in case you add npm deps)
+node_modules/
+
+# dotenvx
+.env.keys
+.env.local
+.env.*.local
+
+# Logs
+*.log
