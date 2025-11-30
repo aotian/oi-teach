@@ -18,7 +18,7 @@
     <header class="bg-white border-b border-gray-200 px-6 h-16 flex justify-between items-center shadow-sm shrink-0 z-50">
         <div class="flex items-center gap-8">
             <div class="font-bold text-gray-800 text-lg flex items-center gap-2">
-                <img src="assets/logo.png" class="w-7 h-7 rounded object-cover">
+                <img src="libs/logo.png" class="w-7 h-7 rounded object-cover">
                 童澄后台
             </div>
             <nav class="flex bg-gray-100 p-1 rounded-lg">
@@ -69,48 +69,47 @@
                     </div>
                 </div>
 
-                <div class="px-6 py-4 border-b border-gray-100 bg-orange-50/30 grid grid-cols-2 gap-8">
+                <div class="px-6 py-4 border-b border-gray-100 bg-orange-50/30 grid grid-cols-3 gap-6">
                     <div>
-                        <label class="block text-xs font-bold text-orange-600 mb-2">🎥 教学视频 (video_url)</label>
+                        <label class="block text-xs font-bold text-orange-600 mb-2">🎥 教学视频 (.mp4)</label>
                         <div class="flex gap-2">
-                            <input type="text" id="video-url-input" class="flex-1 text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-500" placeholder="上传后自动填入链接..." readonly>
-                            
-                            <label id="btn-upload-video" class="cursor-pointer bg-orange-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-orange-600 transition flex items-center shrink-0">
-                                选择视频
+                            <input type="text" id="video-url-input" class="flex-1 text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-500" placeholder="https://..." readonly>
+                            <label id="btn-upload-video" class="cursor-pointer bg-orange-500 text-white px-2 py-1 rounded text-xs font-bold hover:bg-orange-600 transition flex items-center shrink-0">
+                                上传
                                 <input type="file" class="hidden" accept="video/*" onchange="window.handleUpload(this, 'video')">
                             </label>
-
-                            <button id="btn-delete-video" onclick="window.deleteSingleFile('video')" class="hidden bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition shrink-0 border border-red-200">
-                                删除视频
-                            </button>
+                            <button id="btn-delete-video" onclick="window.deleteSingleFile('video')" class="hidden bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-bold hover:bg-red-200 transition shrink-0 border border-red-200">删</button>
                         </div>
-                        <div id="video-progress-box" class="hidden mt-2">
-                            <progress id="video-progress" value="0" max="100" class="w-full h-1.5"></progress>
-                            <div id="video-progress-text" class="text-[10px] text-orange-500 text-right">0%</div>
-                        </div>
+                        <div id="video-progress-box" class="hidden mt-1"><progress id="video-progress" value="0" max="100" class="w-full h-1"></progress></div>
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-blue-600 mb-2">📄 课件资料 (resource_url)</label>
+                        <label class="block text-xs font-bold text-purple-600 mb-2">⚡ 交互式网页 (.html)</label>
                         <div class="flex gap-2">
-                            <input type="text" id="resource-url-input" class="flex-1 text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-500" placeholder="上传后自动填入链接..." readonly>
-                            
-                            <label id="btn-upload-resource" class="cursor-pointer bg-blue-500 text-white px-3 py-1 rounded text-xs font-bold hover:bg-blue-600 transition flex items-center shrink-0">
-                                选择文件
+                            <input type="text" id="html-url-input" class="flex-1 text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-500" placeholder="https://..." readonly>
+                            <label id="btn-upload-html" class="cursor-pointer bg-purple-500 text-white px-2 py-1 rounded text-xs font-bold hover:bg-purple-600 transition flex items-center shrink-0">
+                                上传
+                                <input type="file" class="hidden" accept=".html,.htm" onchange="window.handleUpload(this, 'html')">
+                            </label>
+                            <button id="btn-delete-html" onclick="window.deleteSingleFile('html')" class="hidden bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-bold hover:bg-red-200 transition shrink-0 border border-red-200">删</button>
+                        </div>
+                        <div id="html-progress-box" class="hidden mt-1"><progress id="html-progress" value="0" max="100" class="w-full h-1"></progress></div>
+                    </div>
+
+                    <div>
+                        <label class="block text-xs font-bold text-blue-600 mb-2">📄 附件资料 (PDF/Zip)</label>
+                        <div class="flex gap-2">
+                            <input type="text" id="resource-url-input" class="flex-1 text-xs border border-gray-300 rounded px-2 py-1 bg-white text-gray-500" placeholder="https://..." readonly>
+                            <label id="btn-upload-resource" class="cursor-pointer bg-blue-500 text-white px-2 py-1 rounded text-xs font-bold hover:bg-blue-600 transition flex items-center shrink-0">
+                                上传
                                 <input type="file" class="hidden" accept=".pdf,.zip,.ppt,.pptx" onchange="window.handleUpload(this, 'resource')">
                             </label>
-
-                            <button id="btn-delete-resource" onclick="window.deleteSingleFile('resource')" class="hidden bg-red-100 text-red-600 px-3 py-1 rounded text-xs font-bold hover:bg-red-200 transition shrink-0 border border-red-200">
-                                删除课件
-                            </button>
+                            <button id="btn-delete-resource" onclick="window.deleteSingleFile('resource')" class="hidden bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-bold hover:bg-red-200 transition shrink-0 border border-red-200">删</button>
                         </div>
-                        <div id="resource-progress-box" class="hidden mt-2">
-                            <progress id="resource-progress" value="0" max="100" class="w-full h-1.5"></progress>
-                            <div id="resource-progress-text" class="text-[10px] text-blue-500 text-right">0%</div>
-                        </div>
+                        <div id="resource-progress-box" class="hidden mt-1"><progress id="resource-progress" value="0" max="100" class="w-full h-1"></progress></div>
                     </div>
                     
-                     <div class="col-span-2 mt-2">
+                     <div class="col-span-3 mt-0">
                         <label class="block text-xs font-bold text-gray-500 mb-1">关联 OJ 题目 ID (oj_problem_id)</label>
                         <input id="edit-oj-id" type="text" class="w-full border border-gray-300 rounded px-2 py-1 text-xs" placeholder="例如: 1001">
                     </div>
@@ -122,7 +121,7 @@
                 </div>
 
                 <div class="p-4 border-t border-gray-100 flex justify-between items-center bg-gray-50">
-                    <button onclick="window.deleteTopic()" class="text-red-500 hover:text-red-700 text-sm font-bold px-4 py-2 hover:bg-red-50 rounded transition">🗑️ 删除整个章节</button>
+                    <button onclick="window.deleteTopic()" class="text-red-500 hover:text-red-700 text-sm font-bold px-4 py-2 hover:bg-red-50 rounded transition">🗑️ 删除此章节</button>
                     <div class="flex gap-4 items-center">
                         <span id="save-status" class="text-sm font-bold text-green-600 hidden bg-green-100 px-3 py-1 rounded-full">✅ 已保存</span>
                         <button onclick="window.saveCurrentTopic()" class="bg-orange-500 text-white px-8 py-2.5 rounded-lg font-bold hover:bg-orange-600 shadow-md hover:shadow-lg transition transform active:scale-95">保存更改</button>
@@ -140,8 +139,7 @@
     <script type="module">
         import supabase from './client.js';
 
-        // [!!] 你的 Edge Function 地址
-        // 请填入你真实的地址
+        // [!!] 你的 Edge Function 地址 (请确认无误)
         const GENERATE_URL_API = 'https://cjsipcanyugnvrikcinx.supabase.co/functions/v1/upload-r2';
 
         let currentId = null;
@@ -187,32 +185,30 @@
                 item.className = 'px-4 py-3 border-b border-gray-100 hover:bg-orange-50 cursor-pointer text-sm flex justify-between items-center group transition';
                 if(t.id === currentId) item.classList.add('bg-orange-100', 'text-orange-800', 'font-bold', 'border-orange-200');
                 
-                const badge = t.video_url ? '📺 ' : '📄 ';
+                // 图标逻辑：有视频>有HTML>有课件
+                let badge = '📄 ';
+                if(t.video_url) badge = '📺 ';
+                else if(t.html_url) badge = '⚡ ';
+
                 item.innerHTML = `<div class="truncate w-36 flex items-center">${badge}${t.name}</div><div class="text-xs text-gray-400 group-hover:text-orange-400">${t.category}</div>`;
                 item.onclick = () => window.selectTopic(t);
                 el.appendChild(item);
             });
         }
 
-        // [!!] 更新 UI 状态：根据是否有 URL 切换 上传/删除 按钮
+        // 更新所有文件上传/删除按钮的状态
         function updateFileButtons() {
-            const vidUrl = document.getElementById('video-url-input').value;
-            if (vidUrl) {
-                document.getElementById('btn-upload-video').classList.add('hidden');
-                document.getElementById('btn-delete-video').classList.remove('hidden');
-            } else {
-                document.getElementById('btn-upload-video').classList.remove('hidden');
-                document.getElementById('btn-delete-video').classList.add('hidden');
-            }
-
-            const resUrl = document.getElementById('resource-url-input').value;
-            if (resUrl) {
-                document.getElementById('btn-upload-resource').classList.add('hidden');
-                document.getElementById('btn-delete-resource').classList.remove('hidden');
-            } else {
-                document.getElementById('btn-upload-resource').classList.remove('hidden');
-                document.getElementById('btn-delete-resource').classList.add('hidden');
-            }
+            const checkList = ['video', 'html', 'resource'];
+            checkList.forEach(type => {
+                const url = document.getElementById(`${type}-url-input`).value;
+                if (url) {
+                    document.getElementById(`btn-upload-${type}`).classList.add('hidden');
+                    document.getElementById(`btn-delete-${type}`).classList.remove('hidden');
+                } else {
+                    document.getElementById(`btn-upload-${type}`).classList.remove('hidden');
+                    document.getElementById(`btn-delete-${type}`).classList.add('hidden');
+                }
+            });
         }
 
         window.selectTopic = (t) => {
@@ -228,124 +224,106 @@
             
             document.getElementById('video-url-input').value = t.video_url || '';
             document.getElementById('resource-url-input').value = t.resource_url || '';
+            // [!!] 新增 HTML 字段回显
+            document.getElementById('html-url-input').value = t.html_url || '';
             document.getElementById('edit-oj-id').value = t.oj_problem_id || '';
             
-            updateFileButtons(); // [!!] 初始化按钮状态
+            updateFileButtons(); 
             renderList();
         }
 
-        // 上传逻辑 (带节流优化)
+        // 上传逻辑
         window.handleUpload = async (input, type) => {
             const file = input.files[0];
             if (!file) return;
 
             const progBar  = document.getElementById(`${type}-progress`);
             const progBox  = document.getElementById(`${type}-progress-box`);
-            const progText = document.getElementById(`${type}-progress-text`);
             const urlInput = document.getElementById(`${type}-url-input`);
 
-            progBox.classList.remove('hidden');
-            progBar.value = 0;
-            progText.textContent = '准备上传...';
+            if(progBox) progBox.classList.remove('hidden');
+            if(progBar) progBar.value = 0;
 
             try {
-                // 1. 获取签名
                 const { data: sessionData } = await supabase.auth.getSession();
                 const token = sessionData?.session?.access_token;
 
                 const presignRes = await fetch(GENERATE_URL_API, {
                     method: 'POST',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` 
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ fileName: file.name, contentType: file.type })
                 });
 
                 if (!presignRes.ok) throw new Error('获取上传许可失败');
                 const { uploadUrl, publicUrl } = await presignRes.json();
 
-                // 2. 直传 R2 (带节流)
                 await new Promise((resolve, reject) => {
                     const xhr = new XMLHttpRequest();
-                    let lastUpdate = 0; // 节流变量
-
+                    let lastUpdate = 0; 
                     xhr.upload.onprogress = (event) => {
-                        if (event.lengthComputable) {
+                        if (event.lengthComputable && progBar) {
                             const now = Date.now();
-                            // [优化] 每 100ms 才更新一次界面
                             if (now - lastUpdate > 100 || event.loaded === event.total) {
                                 lastUpdate = now;
-                                const percent = (event.loaded / event.total) * 100;
-                                progBar.value = percent;
-                                progText.textContent = `${Math.round(percent)}%`;
+                                progBar.value = (event.loaded / event.total) * 100;
                             }
                         }
                     };
-                    xhr.onload = () => xhr.status === 200 ? resolve() : reject(new Error(`R2 响应: ${xhr.status}`));
-                    xhr.onerror = () => reject(new Error('网络中断'));
+                    xhr.onload = () => xhr.status === 200 ? resolve() : reject(new Error(`R2 Error: ${xhr.status}`));
+                    xhr.onerror = () => reject(new Error('Network Error'));
                     xhr.open('PUT', uploadUrl);
                     xhr.setRequestHeader('Content-Type', file.type);
                     xhr.send(file);
                 });
 
                 urlInput.value = publicUrl;
-                progText.textContent = '✅ 上传完成，请点击保存';
-                updateFileButtons(); // 更新按钮状态
+                updateFileButtons();
+                if(progBox) setTimeout(() => progBox.classList.add('hidden'), 1000);
                 
             } catch (e) {
                 console.error(e);
                 alert('上传出错: ' + e.message);
-                progText.textContent = '❌ 失败';
+                if(progBox) progBox.classList.add('hidden');
             } finally {
                 input.value = '';
             }
         };
 
-        // [!!] V1.26 单独删除文件功能
         window.deleteSingleFile = async (type) => {
             if (!currentId) return;
             const urlInput = document.getElementById(`${type}-url-input`);
             const fileUrl = urlInput.value;
             if (!fileUrl) return;
 
-            if (!confirm(`确定要删除这个${type === 'video' ? '视频' : '课件'}文件吗？\n\n云端文件将被永久删除！`)) return;
+            if (!confirm('确定要删除该云端文件吗？无法恢复！')) return;
 
             const btn = document.getElementById(`btn-delete-${type}`);
             const originalText = btn.textContent;
-            btn.textContent = '删除中...'; btn.disabled = true;
+            btn.textContent = '...'; btn.disabled = true;
 
             try {
-                // 1. 解析文件名
                 const fileKey = decodeURIComponent(fileUrl.split('/').pop());
-
-                // 2. 调用 Edge Function 删除 R2 文件
                 const { data: sessionData } = await supabase.auth.getSession();
                 const token = sessionData?.session?.access_token;
 
                 await fetch(GENERATE_URL_API, {
                     method: 'DELETE',
-                    headers: { 
-                        'Content-Type': 'application/json',
-                        'Authorization': `Bearer ${token}` 
-                    },
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify({ fileKey })
                 });
 
-                // 3. 更新数据库 (置空对应字段)
                 const updatePayload = {};
+                // [!!] 映射字段名
                 if (type === 'video') updatePayload.video_url = '';
-                else updatePayload.resource_url = '';
+                else if (type === 'resource') updatePayload.resource_url = '';
+                else if (type === 'html') updatePayload.html_url = '';
 
                 const { error } = await supabase.from('topics').update(updatePayload).eq('id', currentId);
-
                 if (error) throw error;
 
-                // 4. 更新界面
                 urlInput.value = '';
                 updateFileButtons();
-                loadTopics(); // 刷新左侧图标
-                alert('文件已删除');
+                loadTopics(); 
 
             } catch (e) {
                 alert('删除失败: ' + e.message);
@@ -368,6 +346,8 @@
                 is_free: document.getElementById('edit-free').checked,
                 video_url: document.getElementById('video-url-input').value,
                 resource_url: document.getElementById('resource-url-input').value,
+                // [!!] 保存 HTML 字段
+                html_url: document.getElementById('html-url-input').value,
                 oj_problem_id: document.getElementById('edit-oj-id').value
             };
 
@@ -379,12 +359,11 @@
                 const status = document.getElementById('save-status');
                 status.classList.remove('hidden');
                 setTimeout(() => status.classList.add('hidden'), 2000);
-                loadTopics(); 
-                updateFileButtons(); // 确保按钮状态正确
+                loadTopics();
+                updateFileButtons();
             }
         }
 
-        // ... createNewTopic 保持不变 ...
         window.createNewTopic = async () => {
             const name = prompt("请输入新课程名称:");
             if (!name) return;
@@ -394,22 +373,22 @@
             window.selectTopic(data[0]);
         }
         
-        // [!!] 删除整个章节 (包含关联文件)
         window.deleteTopic = async () => {
             if (!currentId) return;
-            if (!confirm('⚠️ 确定要删除此章节吗？\n\n这将同时从云端删除关联的视频和课件文件，无法恢复！')) return;
+            if (!confirm('⚠️ 确定要删除此章节吗？云端文件将一并删除！')) return;
 
-            // 尝试删除关联文件
             const vidUrl = document.getElementById('video-url-input').value;
             const resUrl = document.getElementById('resource-url-input').value;
+            const htmlUrl = document.getElementById('html-url-input').value;
+            
             const filesToDelete = [];
-            if(vidUrl) filesToDelete.push(vidUrl.split('/').pop());
-            if(resUrl) filesToDelete.push(resUrl.split('/').pop());
+            if(vidUrl) filesToDelete.push(decodeURIComponent(vidUrl.split('/').pop()));
+            if(resUrl) filesToDelete.push(decodeURIComponent(resUrl.split('/').pop()));
+            if(htmlUrl) filesToDelete.push(decodeURIComponent(htmlUrl.split('/').pop()));
 
             if (filesToDelete.length > 0) {
                 const { data: session } = await supabase.auth.getSession();
                 const token = session?.session?.access_token;
-                // 并发删除
                 await Promise.all(filesToDelete.map(fileKey => 
                     fetch(GENERATE_URL_API, {
                         method: 'DELETE',
