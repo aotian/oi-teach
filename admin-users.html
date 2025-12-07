@@ -215,7 +215,11 @@
             const input = document.getElementById('batch-input').value.trim();
             if (!input) return alert('请输入账号信息');
 
-            const lines = input.split('\n');
+            const lines = input
+                .replace(/，/g, ',') // 兼容中文逗号
+                .split('\n')
+                .map(line => line.trim())
+                .filter(Boolean);
             const resultDiv = document.getElementById('batch-result');
             resultDiv.classList.remove('hidden');
             resultDiv.innerHTML = '<div class="text-blue-500">⏳ 正在处理中，请稍候...</div>';
@@ -225,8 +229,20 @@
             let logs = '';
 
             for (const line of lines) {
-                const [email, password] = line.split(',').map(s => s.trim());
-                if (!email || !password) continue;
+                const [rawEmail, rawPassword] = line.split(',').map(s => (s || '').trim());
+                if (!rawEmail || !rawPassword) {
+                    failCount++;
+                    logs += `<div class="text-red-500 text-xs">❌ ${line || '(空行)'}: 格式错误，需使用 邮箱,密码</div>`;
+                    continue;
+                }
+
+                const email = rawEmail.toLowerCase().normalize('NFC');
+                const password = rawPassword.normalize('NFC');
+                if (password.length < 6) {
+                    failCount++;
+                    logs += `<div class="text-red-500 text-xs">❌ ${email}: 密码至少 6 位</div>`;
+                    continue;
+                }
 
                 // [核心] 调用我们在第一步创建的 SQL 函数
                 const { data, error } = await supabase.rpc('admin_create_user', {
