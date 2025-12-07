@@ -38,7 +38,7 @@
         <aside class="w-72 bg-white border-r border-gray-200 flex flex-col">
             <div class="p-4 border-b flex justify-between items-center bg-gray-50">
                 <span class="font-bold text-sm text-gray-700">课程章节列表</span>
-                <button onclick="window.createNewTopic()" class="text-xs bg-orange-500 text-white px-3 py-1.5 rounded hover:bg-orange-600 transition shadow-sm">+ 新建章节</button>
+                <button id="btn-create-topic" class="text-xs bg-orange-500 text-white px-3 py-1.5 rounded hover:bg-orange-600 transition shadow-sm">+ 新建章节</button>
             </div>
             <div id="topic-list" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
         </aside>
@@ -392,6 +392,9 @@
             await loadTopics();
             window.selectTopic(data[0]);
         }
+
+        // 采用显式事件绑定，避免在某些环境下找不到 window.createNewTopic
+        document.getElementById('btn-create-topic')?.addEventListener('click', () => window.createNewTopic());
         
         window.deleteTopic = async () => {
             if (!currentId) return;
