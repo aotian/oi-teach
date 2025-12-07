@@ -106,6 +106,25 @@
             }
         }
 
+        // 将包含非 ASCII 的邮箱映射为可被 Supabase 接受的安全 ASCII 形式
+        const buildAuthEmail = (input) => {
+            const trimmed = input.trim().normalize('NFC');
+            const hasNonAscii = /[^\x00-\x7F]/.test(trimmed);
+
+            if (!hasNonAscii) {
+                return { authEmail: trimmed.toLowerCase(), rawEmail: null };
+            }
+
+            // 使用 URL 安全的 base64 作为本地部分，确保 Supabase 校验通过
+            const base64 = btoa(unescape(encodeURIComponent(trimmed)))
+                .replace(/\+/g, '-')
+                .replace(/\//g, '_')
+                .replace(/=+$/g, '');
+
+            const alias = `u-${base64}@unicode.tcw.local`;
+            return { authEmail: alias, rawEmail: trimmed };
+        };
+
         document.getElementById('auth-form').addEventListener('submit', async (e) => {
             e.preventDefault();
             const email = document.getElementById('email').value.trim();
@@ -131,7 +150,7 @@
                 return;
             }
 
-            const sanitizedEmail = email.trim().toLowerCase().normalize('NFC');
+            const { authEmail, rawEmail } = buildAuthEmail(email);
 
             btn.disabled = true;
             btn.textContent = "处理中...";
@@ -141,7 +160,7 @@
                 
                 if (isLogin) {
                     // 登录
-                    const { error: signInErr } = await supabase.auth.signInWithPassword({ email: sanitizedEmail, password });
+                    const { error: signInErr } = await supabase.auth.signInWithPassword({ email: authEmail, password });
                     error = signInErr;
                     if (!error) {
                         const params = new URLSearchParams(window.location.search);
@@ -150,7 +169,11 @@
                     }
                 } else {
                     // 注册
-                    const { error: signUpErr } = await supabase.auth.signUp({ email: sanitizedEmail, password });
+                    const { error: signUpErr } = await supabase.auth.signUp({
+                        email: authEmail,
+                        password,
+                        options: rawEmail ? { data: { raw_email: rawEmail } } : undefined
+                    });
                     error = signUpErr;
                     if (!error) {
                         succEl.textContent = "✅ 注册成功！请直接登录（或检查邮箱验证）。";
@@ -166,7 +189,8 @@
                 if (error) throw error;
 
             } catch (err) {
-                errEl.textContent = err.message === "Invalid login credentials" ? "邮箱或密码错误" : "❌ " + err.message;
+                const friendly = err.message === "Invalid login credentials" ? "邮箱或密码错误" : err.message;
+                errEl.textContent = `❌ ${friendly}${rawEmail ? "（已自动兼容中文邮箱，若仍失败请联系客服）" : ''}`;
                 errEl.classList.remove('hidden');
             } finally {
                 btn.disabled = false;
