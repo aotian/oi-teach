@@ -38,7 +38,7 @@
         <aside class="w-72 bg-white border-r border-gray-200 flex flex-col">
             <div class="p-4 border-b flex justify-between items-center bg-gray-50">
                 <span class="font-bold text-sm text-gray-700">课程章节列表</span>
-                <button onclick="window.createNewTopic()" class="text-xs bg-orange-500 text-white px-3 py-1.5 rounded hover:bg-orange-600 transition shadow-sm">+ 新建章节</button>
+                <button id="btn-create-topic" class="text-xs bg-orange-500 text-white px-3 py-1.5 rounded hover:bg-orange-600 transition shadow-sm">+ 新建章节</button>
             </div>
             <div id="topic-list" class="flex-1 overflow-y-auto p-2 space-y-1"></div>
         </aside>
@@ -237,6 +237,12 @@
             const file = input.files[0];
             if (!file) return;
 
+            if (!currentId) {
+                alert('请先选择或创建一个章节再上传素材');
+                input.value = '';
+                return;
+            }
+
             const progBar  = document.getElementById(`${type}-progress`);
             const progBox  = document.getElementById(`${type}-progress-box`);
             const urlInput = document.getElementById(`${type}-url-input`);
@@ -277,6 +283,17 @@
                 });
 
                 urlInput.value = publicUrl;
+
+                const fieldMap = { video: 'video_url', html: 'html_url', resource: 'resource_url' };
+                const column = fieldMap[type];
+                if (column) {
+                    const { error: updateError } = await supabase
+                        .from('topics')
+                        .update({ [column]: publicUrl })
+                        .eq('id', currentId);
+                    if (updateError) throw updateError;
+                }
+
                 updateFileButtons();
                 if(progBox) setTimeout(() => progBox.classList.add('hidden'), 1000);
                 
@@ -338,10 +355,13 @@
             const originalText = btn.textContent;
             btn.textContent = '保存中...'; btn.disabled = true;
 
+            const orderInput = parseInt(document.getElementById('edit-order').value);
+            const safeOrder = Number.isFinite(orderInput) ? orderInput : 999;
+
             const updates = {
                 name: document.getElementById('edit-name').value,
                 category: document.getElementById('edit-category').value,
-                order_no: parseInt(document.getElementById('edit-order').value),
+                order_no: safeOrder,
                 content: document.getElementById('edit-content').value,
                 is_free: document.getElementById('edit-free').checked,
                 video_url: document.getElementById('video-url-input').value,
@@ -372,6 +392,9 @@
             await loadTopics();
             window.selectTopic(data[0]);
         }
+
+        // 采用显式事件绑定，避免在某些环境下找不到 window.createNewTopic
+        document.getElementById('btn-create-topic')?.addEventListener('click', () => window.createNewTopic());
         
         window.deleteTopic = async () => {
             if (!currentId) return;
